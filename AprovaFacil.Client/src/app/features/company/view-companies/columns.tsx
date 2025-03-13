@@ -17,27 +17,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/pop
 import { Separator } from "@/app/components/ui/separator"
 import { useRemoveCompanyMutation } from "@/app/api/companyApiSlice"
 import { toast } from "@/hooks/use-toast";
-
-export type Company = {
-  id: number;
-  cnpj: string;
-  trade_name: string;
-  legal_name: string;
-  postal_code: string;
-  state: string;
-  city: string;
-  street: string;
-  neighborhood: string;
-  number: string;
-  complement?: string;
-  phone: string;
-  email: string;
-};
+import { Company } from "@/types/company"
 
 const useColumns = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [removeCompany, { isLoading: isLoadingRemoveCompany, isSuccess: isSuccessRemoveCompany, isError: isErrorRemoveCompany }] = useRemoveCompanyMutation();
+  const [removeCompany] = useRemoveCompanyMutation();
 
   const columns: ColumnDef<Company>[] = [
     {

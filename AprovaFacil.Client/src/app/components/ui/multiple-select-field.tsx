@@ -9,15 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/pop
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar"
 import { Badge } from "@/app/components/ui/badge"
 import { cn } from "@/lib/utils"
-
-// Tipo para os usuários
-type UserType = {
-  id: number
-  nome: string
-  cargo: string
-  setor: string
-  urlPicture?: string
-}
+import { UserResponse } from "@/types/auth"
 
 // Função auxiliar para obter iniciais do nome
 const getInitials = (name: string) => {
@@ -35,7 +27,7 @@ export function MultiSelectUserField({
   isUsersFetching = false,
 }: {
   form: any
-  users?: UserType[]
+  users?: UserResponse[]
   isUsersFetching?: boolean
 }) {
   const [openPopoverUser, setOpenPopoverUser] = useState(false)
@@ -59,10 +51,10 @@ export function MultiSelectUserField({
   }
 
   // Filtra apenas diretores
-  const diretores = users?.filter((x) => x.cargo === "Diretor") || []
+  const diretores = users?.filter((x) => x.role === "Director") || []
 
   // Obtém os nomes dos diretores selecionados
-  const selectedDiretoresNames = diretores.filter((user) => selectedIds.includes(user.id)).map((user) => user.nome)
+  const selectedDiretoresNames = diretores.filter((user) => selectedIds.includes(user.id)).map((user) => user.full_name)
 
   // Texto a ser exibido no botão
   const buttonText =
@@ -123,15 +115,15 @@ export function MultiSelectUserField({
                       <CommandItem
                         tabIndex={3}
                         key={user.id}
-                        value={user.nome}
+                        value={user.full_name}
                         onSelect={() => {
                           toggleUserSelection(user.id)
                           // Não fechamos o popover para permitir múltiplas seleções
                         }}
                       >
                         <Avatar>
-                          <AvatarImage src={user.urlPicture} />
-                          <AvatarFallback>{getInitials(user.nome)}</AvatarFallback>
+                          <AvatarImage src={user.picture_url} />
+                          <AvatarFallback>{getInitials(user.full_name)}</AvatarFallback>
                         </Avatar>
                         <div
                           className={cn(
@@ -139,9 +131,9 @@ export function MultiSelectUserField({
                             selectedIds.includes(user.id) ? "font-semibold" : "font-normal",
                           )}
                         >
-                          <p>{user.nome}</p>
+                          <p>{user.full_name}</p>
                           <small className="text-[14px] font-normal text-foreground/80">
-                            {user.cargo} | {user.setor}
+                            {user.role} | {user.department}
                           </small>
                         </div>
                         <Check className={cn("ml-auto", selectedIds.includes(user.id) ? "opacity-100" : "opacity-0")} />

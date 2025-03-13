@@ -1,62 +1,20 @@
-import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
-import { User } from "../features/users/User";
-
-const fakeUsers: User[] = [
-  {
-    id: 1,
-    nome: "João Souza",
-    cargo: "Basico",
-    setor: "Engenharia",
-    urlPicture: "https://avatar.iran.liara.run/public/5"
-  },
-  {
-    id: 2,
-    nome: "Felipe Nunes",
-    cargo: "Gerente",
-    setor: "Engenharia",
-    urlPicture: "https://avatar.iran.liara.run/public/43"
-  },
-  {
-    id: 3,
-    nome: "Manoel Silva",
-    cargo: "Financeiro",
-    setor: "Financeiro",
-    urlPicture: "https://avatar.iran.liara.run/public/29" 
-  },
-  {
-    id: 4,
-    nome: "Gustavo Lopes",
-    cargo: "Diretor",
-    setor: "Recursos Humanos",
-    urlPicture: "https://avatar.iran.liara.run/public/46"
-  },
-  {
-    id: 5,
-    nome: "Leonardo Gouvea",
-    cargo: "Diretor",
-    setor: "Engenharia",
-    urlPicture: "https://avatar.iran.liara.run/public/41"
-  },
-]
+import { UserResponse } from "@/types/auth";
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export const userApi = createApi({
   reducerPath: "userApi",
-  baseQuery: fakeBaseQuery(),
+  baseQuery: fetchBaseQuery({ baseUrl: "https://localhost:7296/api/user" }),
+  tagTypes: ["Users"],
   endpoints: (builder) => ({
-    getUsers: builder.query<User[], void>({
-      queryFn: async () => {
-        return new Promise((resolve, reject) => {
-          setTimeout(() => {
-            if (Math.random() < 0) {
-              reject(new Error("Falha ao buscar os dados"));
-            } else {
-              resolve({data: fakeUsers});
-            }
-          }, 1500);
-        })
-      }
-    })
+    getUsers: builder.query<UserResponse[], void>({
+      query: () => '',
+      providesTags: ["Users"]
+    }),
+
+    getUser: builder.query<UserResponse | undefined, number>({
+      query: (idUser) => `/${idUser}`
+    }),
   })
 });
 
-export const { useGetUsersQuery } = userApi;
+export const { useGetUsersQuery, useGetUserQuery } = userApi;

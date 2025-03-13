@@ -6,9 +6,10 @@ import { Separator } from '../components/ui/separator'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '../components/ui/breadcrumb'
 import { BreadcrumbProvider, useBreadcrumb } from '../context/breadkcrumb-context'
 import React from 'react'
-import { Toaster } from '../components/ui/toaster'
+import { Toaster } from 'sonner'
 
 function AppHeader() {
+
   const { breadcrumbs } = useBreadcrumb();
 
   return (

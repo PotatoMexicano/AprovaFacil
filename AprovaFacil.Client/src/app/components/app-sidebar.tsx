@@ -4,13 +4,14 @@ import {
   LifeBuoy,
   PackagePlus,
   PackageSearch,
-  Building2
+  Building2,
+  UsersIcon
 } from "lucide-react"
 
 import { NavRequests } from "@/app/components/nav-requests"
 import { NavCompanies } from "@/app/components/nav-companies"
 import { NavSecondary } from "@/app/components/nav-secondary"
-import { NavUser } from "@/app/components/nav-user"
+import { NavAuthUser } from "@/app/components/nav-auth-user"
 import {
   Sidebar,
   SidebarContent,
@@ -20,6 +21,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/app/components/ui/sidebar"
+import { NavUsers } from "./nav-users"
+import { useGetCurrentUserQuery } from "../api/authApiSlice"
 
 const data = {
   user: {
@@ -47,6 +50,13 @@ const data = {
       icon: LifeBuoy,
     }
   ],
+  users: [
+    {
+      name: "Usuários",
+      url: "/users",
+      icon: UsersIcon,
+    }
+  ],
   companies: [
     {
       name: "Empresa",
@@ -57,6 +67,9 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+
+  const { data: authData, error: authError, isLoading: isAuthLoading } = useGetCurrentUserQuery();
+
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -79,10 +92,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <NavRequests items={data.navMain} />
         <NavCompanies projects={data.companies} />
+        <NavUsers users={data.users} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        {authData && (
+          <NavAuthUser user={authData} />
+        )}
       </SidebarFooter>
     </Sidebar>
   )
