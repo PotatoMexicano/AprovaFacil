@@ -16,14 +16,14 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/app/components/ui/separator";
 import CurrencyFormField from "@/app/components/ui/currency-form-field";
-import { useGetUsersQuery } from "@/app/api/userApiSlice";
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar";
 import FileUpload from "@/app/components/ui/file-upload";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MultiSelectUserField } from "@/app/components/ui/multiple-select-field";
 import { useRegisterRequestMutation } from "@/app/api/requestApiSlice";
-import { toast } from "@/hooks/use-toast";
 import formSchema from "@/app/schemas/requestSchema";
+import { useGetUsersQuery } from "@/app/api/userApiSlice";
+import { toast } from "sonner";
 
 const getInitials = (fullName: string) => {
   if (!fullName) return "";
@@ -46,7 +46,7 @@ export default function NewRequestPage() {
 
   const { data: companies, isFetching: isCompaniesFetching } = useGetCompaniesQuery();
   const { data: users, isFetching: isUsersFetching } = useGetUsersQuery();
-  const [registerRequest, { isLoading: isLoadingRegisterRequest, isError: isErrorRegisterRequest, isSuccess: isSuccessRegisterRequest }] = useRegisterRequestMutation();
+  const [registerRequest, {isSuccess: isSuccessRegisterRequest, error: errorRegisterRequest}] = useRegisterRequestMutation();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -74,14 +74,13 @@ export default function NewRequestPage() {
     try {
       console.log(values);
       await registerRequest(values).unwrap();
+      toast.success('Requisição cadastrada !');
+      
     } catch (error) {
       console.error(error)
 
       if (error instanceof Error) {
-        toast({
-          title: 'Falha ao registrar requisição',
-          description: error.message,
-        })
+        toast.info(error.message)
       }
     }
   }
@@ -108,7 +107,7 @@ export default function NewRequestPage() {
                         <FormItem>
                           <FormLabel>Nota Fiscal</FormLabel>
                           <FormControl>
-                            <FileUpload {...field} value={value} onChange={onChange} label="Nota Fiscal" required icon={UploadCloud} tabIndex={1} />
+                            <FileUpload {...field} value={value} onChange={onChange} label="Nota Fiscal" icon={UploadCloud} tabIndex={1} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -164,7 +163,7 @@ export default function NewRequestPage() {
                                 )}>
                                 {field.value
                                   ? users?.find(
-                                    (user) => user.id === Number(field.value))?.nome
+                                    (user) => user.id === Number(field.value))?.full_name
                                   : "Selecione uma pessoa"}
                                 <User className="text-foreground opacity-50" />
                               </Button>
@@ -177,11 +176,11 @@ export default function NewRequestPage() {
                                 {isUsersFetching && (<CommandEmpty>Carregando pessoas...</CommandEmpty>)}
                                 {!isUsersFetching && users && (<CommandEmpty>Nenhuma pessoa encontrada.</CommandEmpty>)}
                                 <CommandGroup>
-                                  {users?.filter(x => x.cargo === "Gerente")?.map((user) => (
+                                  {users?.filter(x => x.role === "Manager")?.map((user) => (
                                     <CommandItem
                                       tabIndex={3}
                                       key={user.id}
-                                      value={user.nome}
+                                      value={user.full_name}
                                       onSelect={() => {
                                         form.setValue("managerId", user.id)
                                         form.trigger("managerId")
@@ -189,16 +188,16 @@ export default function NewRequestPage() {
                                         setIdPopoverUser(user.id)
                                       }}>
                                       <Avatar>
-                                        <AvatarImage src={user.urlPicture} />
-                                        <AvatarFallback>{getInitials(user.nome)}</AvatarFallback>
+                                        <AvatarImage src={user.picture_url} />
+                                        <AvatarFallback>{getInitials(user.full_name)}</AvatarFallback>
                                       </Avatar>
                                       <div className={cn("flex flex-col text-[18px] p-2",
                                         idPopoverUser === user.id
                                           ? "font-semibold"
                                           : "font-normal"
                                       )}>
-                                        <p>{user.nome}</p>
-                                        <small className="text-[14px] font-normal text-foreground/80">{user.cargo} | {user.setor}</small>
+                                        <p>{user.full_name}</p>
+                                        <small className="text-[14px] font-normal text-foreground/80">{user.role} | {user.department}</small>
                                       </div>
                                       <Check
                                         className={cn(

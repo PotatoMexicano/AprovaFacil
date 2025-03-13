@@ -1,37 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Eye, FileText, FileSpreadsheet, AlertCircle } from "lucide-react"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
-
+import { useEffect } from "react"
+import { AlertCircle } from "lucide-react"
 import { Badge } from "@/app/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card"
 import { useBreadcrumb } from "@/app/context/breadkcrumb-context"
-import { useToast } from "@/hooks/use-toast"
 import { Skeleton } from "@/app/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/app/components/ui/alert"
-
-// Tipos para as requisições
-type StatusType = "aprovado" | "pendente" | "recusado" | "expirado"
-
-interface Requisicao {
-  id: string
-  notaFiscal: {
-    nome: string
-    url: string
-  }
-  orcamento: {
-    nome: string
-    url: string
-  }
-  validador: string
-  empresa: string
-  dataPagamento: Date
-  valor: number
-  observacao: string
-  status: StatusType
-}
+import { Requisicao } from "@/types/request"
+import useColumns from "./columns"
+import { useGetCompaniesQuery } from "@/app/api/companyApiSlice"
+import { DataTable } from "../../company/view-companies/data-table"
 
 // Dados de exemplo
 const requisicoes: Requisicao[] = [
@@ -124,7 +103,6 @@ const requisicoes: Requisicao[] = [
 
 // Adicionar estado para controlar a visualização de anexos
 export default function ViewRequestsPage() {
-  const { toast } = useToast();
   const { setBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {

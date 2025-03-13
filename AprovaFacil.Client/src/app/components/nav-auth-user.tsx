@@ -2,11 +2,8 @@
 
 import {
   BadgeCheck,
-  Bell,
   ChevronsUpDown,
-  CreditCard,
   LogOut,
-  Sparkles,
 } from "lucide-react"
 
 import {
@@ -29,17 +26,28 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/app/components/ui/sidebar"
+import { UserResponse } from "@/types/auth"
+import { useLogoutMutation } from "../api/authApiSlice"
+import { useNavigate } from "react-router-dom"
+import { useAppDispatch } from "../store/store"
+import { clearUser } from "@/auth/authSlice"
 
-export function NavUser({
-  user,
-}: {
-  user: {
-    name: string
-    email: string
-    avatar: string
-  }
-}) {
+interface Props {
+  user: UserResponse
+}
+
+
+export function NavAuthUser({ user }: Props) {
+  const [funcLogout] = useLogoutMutation();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const { isMobile } = useSidebar()
+  
+  const logout = async () => {
+    await funcLogout().unwrap();
+    dispatch(clearUser());
+    navigate('/login', {replace: true});
+  };
 
   return (
     <SidebarMenu>
@@ -51,11 +59,11 @@ export function NavUser({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">JD</AvatarFallback>
+                <AvatarImage src={user.picture_url} alt={user.full_name} />
+                <AvatarFallback className="rounded-lg">{user.full_name}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user.name}</span>
+                <span className="truncate font-semibold">{user.full_name}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -69,40 +77,26 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">JD</AvatarFallback>
+                  <AvatarImage src={user.picture_url} alt={user.full_name} />
+                  <AvatarFallback className="rounded-lg">{user.full_name}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user.name}</span>
+                  <span className="truncate font-semibold">{user.full_name}</span>
+                  <span className="truncate font-thin">{user.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
                 <BadgeCheck />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
+                Minha conta
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {logout()}}>
               <LogOut />
-              Log out
+              Sair
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

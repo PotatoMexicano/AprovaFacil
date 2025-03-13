@@ -1,17 +1,7 @@
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Request } from "@/types/request";
 import { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
-
-export type Request = {
-  managerId: number;
-  directorsIds: number[],
-  companyId: number;
-  paymentDate: Date,
-  amount: number;
-  note?: string;
-  invoice: File,
-  budget?: File
-}
 
 const useColumns = () => {
   const navigate = useNavigate();

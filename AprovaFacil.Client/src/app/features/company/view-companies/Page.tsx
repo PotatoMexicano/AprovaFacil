@@ -8,14 +8,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/app/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import useColumns from "./columns";
-import { Badge } from "@/app/components/ui/badge";
 import { Outlet } from "react-router-dom";
+import { Button } from "@/app/components/ui/button";
 
 export default function ViewCompaniesPage() {
   const { toast } = useToast();
   const { setBreadcrumbs } = useBreadcrumb();
 
-  const { data: companies, error: errorCompany, isError: isCompanyError, isLoading: isCompanyLoading, refetch } = useGetCompaniesQuery();
+  const { data: companies, error: errorCompany, isError: isCompanyError, isLoading: isCompanyLoading } = useGetCompaniesQuery();
   const columns = useColumns();
 
   useEffect(() => {
@@ -37,7 +37,9 @@ export default function ViewCompaniesPage() {
         <CardHeader>
           <CardTitle className="text-2xl w-full flex justify-between">
             Empresas cadastradas
-            <Badge className="m-2" variant={"default"}> {isCompanyLoading ? "..." : companies?.length} Empresas </Badge>
+            <Button asChild><a href="/company/register">Adicionar empresa</a></Button>
+            
+            {/* <Badge className="m-2" variant={"default"}> {isCompanyLoading ? "..." : companies?.length} Empresas </Badge> */}
           </CardTitle>
           <CardDescription>Empresas cadastradas para emissão de nota fiscal.</CardDescription>
         </CardHeader>
