@@ -1,6 +1,6 @@
 ﻿namespace AprovaFacil.Server.DTOs;
 
-public class HttpRequestDTO
+public class HttpRequest
 {
     public Int32 ManagerId { get; set; }
     public Int32[]? DirectorsIds { get; set; }

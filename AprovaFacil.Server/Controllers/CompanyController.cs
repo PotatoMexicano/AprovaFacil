@@ -9,7 +9,7 @@ namespace AprovaFacil.Server.Controllers;
 public class CompanyController(CompanyInterfaces.ICompanyService companyService) : ControllerBase
 {
     [HttpGet("")]
-    public async Task<ActionResult<CompanyDTO[]>> GetAllCompany(CancellationToken cancellation = default)
+    public async Task<ActionResult<CompanyDTO[]>> GetAllCompanies(CancellationToken cancellation = default)
     {
         CompanyDTO[] companies = await companyService.GetAllCompanies(cancellation);
         return Ok(companies);
