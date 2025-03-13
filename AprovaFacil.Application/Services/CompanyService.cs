@@ -1,5 +1,5 @@
-﻿using AprovaFacil.Domain.DTOs;
-using AprovaFacil.Domain.Extensions;
+﻿using AprovaFacil.Application.Extensions;
+using AprovaFacil.Domain.DTOs;
 using AprovaFacil.Domain.Interfaces;
 using AprovaFacil.Domain.Models;
 using Serilog;

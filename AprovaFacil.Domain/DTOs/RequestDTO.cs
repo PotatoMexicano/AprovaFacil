@@ -2,7 +2,7 @@
 
 public class RequestDTO
 {
-    public Int64 Id { get; set; }
+    public Int32 Id { get; set; }
     public Int32 ManagerId { get; set; }
     public Int32[] DirectorsIds { get; set; } = [];
     public Int32 CompanyId { get; set; }
