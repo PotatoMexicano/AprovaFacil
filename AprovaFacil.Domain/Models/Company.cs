@@ -2,7 +2,7 @@
 
 public class Company
 {
-    public Int64 Id { get; set; }
+    public Int32 Id { get; set; }
     public String CNPJ { get; set; }
     public String TradeName { get; set; }
     public String LegalName { get; set; }
