@@ -1,8 +1,10 @@
-using AprovaFacil.Infra.Data.Context;
 using AprovaFacil.Infra.IoC;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Exceptions;
+using System.Net;
 
 namespace AprovaFacil.Server;
 
@@ -11,6 +13,21 @@ public class Program
     public static void Main(String[] args)
     {
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.Listen(IPAddress.Any, 7296, listenOptions =>
+            {
+                listenOptions.Protocols = HttpProtocols.Http2;
+                listenOptions.UseHttps(@"E:\Desenvolvimento\CSharp\AprovaFacil\certificado\localhost.pfx", "12345678");
+            });
+
+            options.Listen(IPAddress.Any, 5118, listenOptions =>
+            {
+                listenOptions.Protocols = HttpProtocols.Http1;
+            });
+
+        });
 
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
@@ -42,6 +59,11 @@ public class Program
 
         builder.Services.AddInfrastructure(builder.Configuration);
 
+        builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
+            .AddCookie(IdentityConstants.ApplicationScheme);
+
+        builder.Services.AddAuthorization();
+
         WebApplication app = builder.Build();
 
         app.UseDefaultFiles();
@@ -51,19 +73,16 @@ public class Program
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
-            app.MapScalarApiReference();
+            app.MapScalarApiReference(opt => opt.AddServer(new ScalarServer("https://localhost:7296")));
         }
 
-        using (IServiceScope scope = app.Services.CreateScope())
-        {
-            ApplicationDbContext dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            DependencyInjection.SeedData(dbContext);
-        }
+        DependencyInjection.SeedData(app.Services);
 
         app.UseCors("AllowLocalhost");
 
         app.UseHttpsRedirection();
 
+        app.UseAuthentication();
         app.UseAuthorization();
 
         app.MapControllers();

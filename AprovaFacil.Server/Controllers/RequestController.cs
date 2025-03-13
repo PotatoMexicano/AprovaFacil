@@ -9,7 +9,7 @@ namespace AprovaFacil.Server.Controllers;
 public class RequestController : ControllerBase
 {
     [HttpPost("register")]
-    public async Task<ActionResult> RegisterRequest([FromForm] HttpRequestDTO request, CancellationToken cancellation = default)
+    public async Task<ActionResult> RegisterRequest([FromForm] DTOs.HttpRequest request, CancellationToken cancellation = default)
     {
         if (request.Invoice != null)
         {
