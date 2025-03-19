@@ -22,40 +22,9 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
 
-        SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<String>("Jwt:Key")));
-
-        services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; // Usar JWT em vez de cookies
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        }).AddJwtBearer(options =>
-        {
-            options.RequireHttpsMetadata = false;
-            options.SaveToken = true;
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = key,
-                ValidateIssuer = false,
-                ValidateAudience = false,
-                ValidateLifetime = true
-            };
-        });
-
-        services.Configure<CookiePolicyOptions>(options =>
-        {
-            options.CheckConsentNeeded = context => true;  // Ou false dependendo da sua política de consentimento
-            options.MinimumSameSitePolicy = SameSiteMode.None; // Permite cookies entre diferentes subdomínios
-        });
-
-        services.ConfigureApplicationCookie(options =>
-        {
-            options.Cookie.SecurePolicy = CookieSecurePolicy.None;
-        });
-
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
-        services.AddDbContext();
+        services.AddDbContext(configuration);
 
         services.AddServices();
         services.AddRepositories();
@@ -93,7 +62,7 @@ public static class DependencyInjection
         return services;
     }
 
-    internal static IServiceCollection AddDbContext(this IServiceCollection services)
+    internal static IServiceCollection AddDbContext(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddHttpContextAccessor();
 
@@ -111,6 +80,26 @@ public static class DependencyInjection
         }).AddEntityFrameworkStores<ApplicationDbContext>()
         .AddDefaultTokenProviders()
         .AddSignInManager<SignInManager<ApplicationUser>>();
+
+        SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<String>("Jwt:Key")));
+
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; // Usar JWT em vez de cookies
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(options =>
+        {
+            options.RequireHttpsMetadata = false;
+            options.SaveToken = true;
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = key,
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true
+            };
+        });
 
         // Registrar serviços da Application
         services.AddScoped<UserExtensions>();
