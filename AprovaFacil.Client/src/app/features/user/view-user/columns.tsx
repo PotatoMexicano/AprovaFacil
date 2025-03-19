@@ -1,0 +1,277 @@
+"use client"
+
+import { ArrowRightLeftIcon, MoreHorizontal, Settings } from "lucide-react"
+import { Button } from "@/app/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/app/components/ui/dropdown-menu"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/app/components/ui/alert-dialog"
+//import { useNavigate } from "react-router-dom"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { ColumnDef } from "@tanstack/react-table"
+import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover"
+import { Separator } from "@/app/components/ui/separator"
+//import { useRemoveCompanyMutation } from "@/app/api/companyApiSlice"
+import { toast } from "@/hooks/use-toast";
+import { UserResponse } from "@/types/auth"
+import { Badge } from "@/app/components/ui/badge"
+import { cn } from "@/lib/utils"
+import { useDisableUserMutation, useEnableUserMutation } from "@/app/api/userApiSlice"
+import { RootState, useAppSelector } from "@/app/store/store"
+
+const useColumns = () => {
+  const isMobile = useIsMobile();
+  const [disableUser] = useDisableUserMutation();
+  const [enableUser] = useEnableUserMutation();
+
+  const { user } = useAppSelector((state: RootState) => state.auth);
+
+  const columns: ColumnDef<UserResponse>[] = [
+    {
+      accessorKey: "picture_url",
+      header: "Imagem",
+      cell: ({ row }) => {
+
+        const usuario = row.original
+
+        return (
+          <div>
+            <img className={cn("h-12 p-1 border-2 m-1 rounded-full", usuario.enabled ? "border-green-400" : "border-red-400")} src={usuario.picture_url} alt={usuario.full_name} />
+          </div>
+        )
+      }
+    },
+    {
+      accessorKey: "full_name",
+      header: "Nome",
+    },
+    {
+      accessorKey: "email",
+      header: "Email",
+    },
+    {
+      accessorKey: "role",
+      header: "Cargo",
+    },
+    {
+      accessorKey: "department",
+      header: "Setor",
+    },
+    {
+      accessorKey: "enabled",
+      header: "Ativo",
+      cell: ({ row }) => {
+        const usuario = row.original;
+
+        return (
+          usuario.enabled
+            ? (<Badge>{usuario.enabled ? "Ativo" : "Desativado"}</Badge>)
+            : (<Badge className="bg-red-400 hover:bg-red-500 hover:text-white">{usuario.enabled ? "Ativo" : "Desativado"}</Badge>)
+        )
+      }
+    },
+    {
+      id: "actions",
+      header: "Editar",
+      cell: ({ row }) => {
+
+        const onDisable = async (usuario: UserResponse) => {
+          try {
+            await disableUser(usuario.id);
+          } catch (error) {
+            console.error(error);
+
+            if (error instanceof Error) {
+              toast({
+                title: "Falha ao desativar usuário",
+                description: `Não foi possível desativar o usuário`
+              });
+            }
+          }
+        }
+
+        const onEnable = async (usuario: UserResponse) => {
+          try {
+            await enableUser(usuario.id);
+          } catch (error) {
+            console.error(error);
+
+            if (error instanceof Error) {
+              toast({
+                title: "Falha ao ativar usuário",
+                description: `Não foi possível ativar o usuário`
+              });
+            }
+          }
+        }
+
+        const onEdit = (usuario: UserResponse) => {
+          //navigate(`/company/edit/${company.id}`);
+        }
+
+        const usuario = row.original
+
+        if (usuario.id == user?.id){
+          return (<></>)
+        }
+
+        return (
+          isMobile
+            ? (
+              <div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="h-8 w-8 p-0">
+                      <span className="sr-only">Open menu</span>
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent side="left" className="w-fit p-1" sticky="always" >
+
+                    <div className="flex flex-col">
+                      <Button variant={"ghost"} className="p-3" onClick={() => onEdit(usuario)}>
+                        <Settings /> Editar
+                      </Button>
+
+                      <Separator />
+
+                      {usuario.enabled
+                        ? (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant={"ghost"} className="p-3" onSelect={(e) => e.preventDefault()}>
+                                <ArrowRightLeftIcon /> Desativar
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Você tem certeza ?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  <div className="flex flex-col  gap-2">
+                                    <span>Deseja prosseguir com a desativação do usuário '<strong>{usuario.full_name}</strong>' ?</span>
+                                    <small>Obs.: As requisições realizadas em nome deste usuário <strong>não</strong> serão removidas.</small>
+                                  </div>
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => onDisable(usuario)} >Continuar</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )
+                        : (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant={"ghost"} className="p-3" onSelect={(e) => e.preventDefault()}>
+                                <ArrowRightLeftIcon /> Ativar
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Você tem certeza ?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  <div className="flex flex-col  gap-2">
+                                    <span>Deseja prosseguir com a ativação do usuário '<strong>{usuario.full_name}</strong>' ?</span>
+                                  </div>
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => onEnable(usuario)} >Continuar</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )
+                      }
+
+                    </div>
+
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )
+            : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" side="left" >
+
+                  <DropdownMenuItem onClick={() => onEdit(usuario)}>
+                    <Settings /> Editar
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  {usuario.enabled
+                    ? (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            <ArrowRightLeftIcon /> Desativar
+                          </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Você tem certeza ?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              <div className="flex flex-col  gap-2">
+                                <span>Deseja prosseguir com a desativação do usuário '<strong>{usuario.full_name}</strong>' ?</span>
+                                <small>Obs.: As requisições realizadas em nome deste usuário <strong>não</strong> serão removidas.</small>
+                              </div>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onDisable(usuario)} >Continuar</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )
+                    : (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            <ArrowRightLeftIcon /> Ativar
+                          </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Você tem certeza ?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              <div className="flex flex-col  gap-2">
+                                <span>Deseja prosseguir com a ativação do usuário '<strong>{usuario.full_name}</strong>' ?</span>
+                              </div>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onEnable(usuario)} >Continuar</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+
+
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )
+        )
+      }
+    }
+  ]
+
+  return isMobile
+    ? columns.filter((col) => !["enabled", "email"].includes(col.accessorKey))
+    : columns;
+}
+
+export default useColumns;

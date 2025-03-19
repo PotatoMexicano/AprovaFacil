@@ -8,6 +8,8 @@ import NewRequestPage from "../features/requests/new-request/Page";
 import ViewRequestsPage from "../features/requests/view-requests/Page";
 import LoginPage from "../features/login/Page";
 import ProtectedRoute from "../components/protected-route";
+import ViewUsersPage from "../features/user/view-user/Page";
+import NewUserPage from "../features/user/new-user/Page";
 
 export const router = createBrowserRouter([
   { path: 'login', element: <LoginPage /> },
@@ -33,6 +35,12 @@ export const router = createBrowserRouter([
               { path: 'register', element: <NewRequestPage /> },
             ]
           },
+          {
+            path: 'users', children: [
+              {path: '', element: <ViewUsersPage />},
+              { path: "register", element: <NewUserPage /> },
+            ]
+          }
         ]
       },
       { path: '*', element: <Navigate replace to={'/not-found'} /> }

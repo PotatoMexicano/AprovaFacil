@@ -1,20 +1,58 @@
 import { UserResponse } from "@/types/auth";
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { customBaseQuery } from "./base-api";
 
 export const userApi = createApi({
   reducerPath: "userApi",
-  baseQuery: fetchBaseQuery({ baseUrl: "https://localhost:7296/api/user" }),
-  tagTypes: ["Users"],
+  baseQuery: customBaseQuery(),
+  tagTypes: ["Users", "Enabled"],
   endpoints: (builder) => ({
     getUsers: builder.query<UserResponse[], void>({
-      query: () => '',
+      query: () => 'user',
       providesTags: ["Users"]
     }),
 
-    getUser: builder.query<UserResponse | undefined, number>({
-      query: (idUser) => `/${idUser}`
+    getEnabledUsers: builder.query<UserResponse[], void>({
+      query: () => 'user/enabled',
+      providesTags: ['Enabled']
     }),
+
+    getUser: builder.query<UserResponse | undefined, number>({
+      query: (idUser) => `user/${idUser}`
+    }),
+
+    disableUser: builder.mutation<boolean, number>({
+      query: (idUser) => ({
+        url: `user/${idUser}/disable`,
+        method: `POST`,
+      }),
+      invalidatesTags: ["Users", "Enabled"]
+    }),
+
+    enableUser: builder.mutation<boolean, number>({
+      query: (idUser) => ({
+        url: `user/${idUser}/enable`,
+        method: `POST`,
+      }),
+      invalidatesTags: ["Users", "Enabled"]
+    }),
+
+    registerUser: builder.mutation<UserResponse, Omit<UserResponse, "id" | "enabled" | "identity_roles">>({
+      query: (userData) => ({
+        url: `user/register`,
+        method: `POST`,
+        body: userData,
+      }),
+      invalidatesTags: ["Users", "Enabled"],
+    }),
+
   })
 });
 
-export const { useGetUsersQuery, useGetUserQuery } = userApi;
+export const {
+  useGetUsersQuery,
+  useGetUserQuery,
+  useGetEnabledUsersQuery,
+  useDisableUserMutation,
+  useEnableUserMutation,
+  useRegisterUserMutation } = userApi;

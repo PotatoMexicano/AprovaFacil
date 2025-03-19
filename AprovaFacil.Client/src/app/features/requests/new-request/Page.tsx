@@ -22,7 +22,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MultiSelectUserField } from "@/app/components/ui/multiple-select-field";
 import { useRegisterRequestMutation } from "@/app/api/requestApiSlice";
 import formSchema from "@/app/schemas/requestSchema";
-import { useGetUsersQuery } from "@/app/api/userApiSlice";
+import { useGetEnabledUsersQuery } from "@/app/api/userApiSlice";
 import { toast } from "sonner";
 
 const getInitials = (fullName: string) => {
@@ -45,7 +45,7 @@ const getInitials = (fullName: string) => {
 export default function NewRequestPage() {
 
   const { data: companies, isFetching: isCompaniesFetching } = useGetCompaniesQuery();
-  const { data: users, isFetching: isUsersFetching } = useGetUsersQuery();
+  const { data: users, isFetching: isUsersFetching } = useGetEnabledUsersQuery();
   const [registerRequest, {isSuccess: isSuccessRegisterRequest, error: errorRegisterRequest}] = useRegisterRequestMutation();
 
   const form = useForm({

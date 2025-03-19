@@ -1,11 +1,13 @@
 ﻿using AprovaFacil.Domain.DTOs;
 using AprovaFacil.Domain.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AprovaFacil.Server.Controllers;
 
 [Route("api/company")]
 [ApiController]
+[Authorize]
 public class CompanyController(CompanyInterfaces.ICompanyService companyService) : ControllerBase
 {
     [HttpGet("")]

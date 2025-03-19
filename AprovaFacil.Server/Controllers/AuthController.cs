@@ -1,6 +1,9 @@
 ﻿
+using AprovaFacil.Application.Services;
+using AprovaFacil.Domain.DTOs;
 using AprovaFacil.Infra.Data.Identity;
 using AprovaFacil.Server.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,11 +15,13 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly JwtService _jwtService;
 
-    public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+    public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, JwtService jwtService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _jwtService = jwtService;
     }
 
     [HttpPost("login")]
@@ -33,21 +38,21 @@ public class AuthController : ControllerBase
         {
             ApplicationUser? user = await _userManager.FindByEmailAsync(request.Email);
             IList<String> roles = await _userManager.GetRolesAsync(user);
-            return Ok(new
+
+            String token = _jwtService.GenerateJwtToken(user, roles);
+            UserDTO userDTO = new UserDTO
             {
-                Message = "Login bem-sucedido",
-                User = new
-                {
-                    user.Id,
-                    user.Email,
-                    user.FullName,
-                    user.Role,
-                    user.Department,
-                    user.PictureUrl,
-                    user.Enabled,
-                    IdentityRoles = roles
-                }
-            });
+                Department = user.Department,
+                Email = user.Email,
+                Enabled = user.Enabled,
+                FullName = user.FullName,
+                Id = user.Id,
+                PictureUrl = user.PictureUrl,
+                Role = user.Role,
+                IdentityRoles = [.. roles],
+            };
+
+            return Ok(new { Token = token, User = userDTO });
         }
 
         if (result.IsLockedOut)
@@ -66,6 +71,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("me")]
+    [Authorize]
     public async Task<IActionResult> CurrentUser()
     {
         if (User.Identity == null || !User.Identity.IsAuthenticated)

@@ -37,10 +37,10 @@ function AppHeader() {
 function App() {
   return (
     <div className="flex w-screen">
-      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-        <Toaster />
-        <BreadcrumbProvider>
-          <SidebarProvider className="flex m-auto w-full">
+      <Toaster />
+      <ThemeProvider>
+        <SidebarProvider className="flex m-auto w-full">
+          <BreadcrumbProvider>
             <AppSidebar />
             <SidebarInset>
               <AppHeader />
@@ -48,8 +48,8 @@ function App() {
                 <Outlet />
               </div>
             </SidebarInset>
-          </SidebarProvider>
-        </BreadcrumbProvider>
+          </BreadcrumbProvider>
+        </SidebarProvider>
       </ThemeProvider>
     </div>
   );

@@ -415,7 +415,7 @@ export default function NewCompanyPage() {
                 </div>
 
                 <div className="pt-5">
-                  <ButtonSuccess isLoading={isLoadingRegisterCompany} isSuccess={registerSuccess} defaultText="Cadastrar" loadingText="Cadastrando..." successText="Sucesso !" />
+                  <ButtonSuccess isLoading={isLoadingRegisterCompany} isSuccess={registerSuccess} defaultText="Cadastrar Empresa" loadingText="Cadastrando..." successText="Sucesso !" />
                 </div>
               </CardContent>
             </Card>
