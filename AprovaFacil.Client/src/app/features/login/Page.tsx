@@ -39,18 +39,16 @@ export default function LoginForm({ className, ...props }: React.ComponentProps<
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
+      toast.info(`Tentando login com: ${values.email}`); // Verifica os valores
       const response = await login({ email: values.email, password: values.password }).unwrap();
-
-      dispatch(setUser(response.user));
+    
+      dispatch(setUser(response));
       toast.success('Login bem-sucedido!');
       navigate('/');
-      
     } catch (error) {
-      console.error('Erro no login:', error);
-      // Extrair mensagem de erro do objeto de erro do RTK Query
       const errorMessage =
-        (error as Error).message || 'Erro ao fazer login. Verifique suas credenciais.';
-      toast.error(errorMessage);
+        error?.data?.message || error?.message || 'Erro ao fazer login. Verifique suas credenciais.';
+      toast.error(`Erro no login: ${JSON.stringify(errorMessage)}`);
     }
   }
 

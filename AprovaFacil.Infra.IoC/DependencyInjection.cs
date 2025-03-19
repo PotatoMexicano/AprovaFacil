@@ -5,11 +5,15 @@ using AprovaFacil.Domain.Models;
 using AprovaFacil.Infra.Data.Context;
 using AprovaFacil.Infra.Data.Identity;
 using AprovaFacil.Infra.Data.Repository;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace AprovaFacil.Infra.IoC;
 
@@ -17,6 +21,40 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+
+        SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<String>("Jwt:Key")));
+
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; // Usar JWT em vez de cookies
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(options =>
+        {
+            options.RequireHttpsMetadata = false;
+            options.SaveToken = true;
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = key,
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true
+            };
+        });
+
+        services.Configure<CookiePolicyOptions>(options =>
+        {
+            options.CheckConsentNeeded = context => true;  // Ou false dependendo da sua política de consentimento
+            options.MinimumSameSitePolicy = SameSiteMode.None; // Permite cookies entre diferentes subdomínios
+        });
+
+        services.ConfigureApplicationCookie(options =>
+        {
+            options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+        });
+
+        services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
         services.AddDbContext();
 
         services.AddServices();
@@ -27,6 +65,7 @@ public static class DependencyInjection
 
     internal static IServiceCollection AddServices(this IServiceCollection services)
     {
+        services.AddSingleton<JwtService>();
         services.AddScoped<Func<User, IApplicationUser>>(provider => user =>
         {
             return new ApplicationUser
@@ -62,22 +101,16 @@ public static class DependencyInjection
         services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase("InMemoryDb"));
 
         // Configurar Identity com AddIdentityCore
-        services.AddIdentityCore<ApplicationUser>(options =>
+        services.AddIdentity<ApplicationUser, IdentityRole<Int32>>(options =>
         {
             options.Password.RequireDigit = true;
             options.Password.RequiredLength = 6;
             options.Password.RequireNonAlphanumeric = false;
             options.Password.RequireUppercase = false;
             options.Password.RequireLowercase = false;
-        }).AddRoles<IdentityRole<Int32>>()
-        .AddEntityFrameworkStores<ApplicationDbContext>();
-
-        // Adicionar serviços adicionais manualmente (necessário com AddIdentityCore)
-        services.AddScoped<IUserStore<ApplicationUser>, UserStore<ApplicationUser, IdentityRole<Int32>, ApplicationDbContext, Int32>>();
-        services.AddScoped<IRoleStore<IdentityRole<Int32>>, RoleStore<IdentityRole<Int32>, ApplicationDbContext, Int32>>();
-        services.AddScoped<UserManager<ApplicationUser>>();
-        services.AddScoped<SignInManager<ApplicationUser>>(); // Para login/logout
-        services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, UserClaimsPrincipalFactory<ApplicationUser, IdentityRole<Int32>>>();
+        }).AddEntityFrameworkStores<ApplicationDbContext>()
+        .AddDefaultTokenProviders()
+        .AddSignInManager<SignInManager<ApplicationUser>>();
 
         // Registrar serviços da Application
         services.AddScoped<UserExtensions>();
@@ -158,7 +191,7 @@ public static class DependencyInjection
         }
 
         ApplicationUser[] users = new[]
-            {
+        {
                 new ApplicationUser
                 {
                     UserName = "requester@example.com",
@@ -168,6 +201,16 @@ public static class DependencyInjection
                     Department = "TI",
                     PictureUrl = "/avatars/female/86.png",
                     Enabled = true
+                },
+                new ApplicationUser
+                {
+                    UserName = "disabled@example.com",
+                    Email = "disabled@example.com",
+                    FullName = "Marcos Disabled",
+                    Role = Roles.Requester,
+                    Department = "TI",
+                    PictureUrl = "/avatars/female/86.png",
+                    Enabled = false
                 },
                 new ApplicationUser
                 {
@@ -219,7 +262,7 @@ public static class DependencyInjection
                 if (result.Succeeded)
                 {
                     // Associar o usuário à role correspondente
-                    String roleToAssign = roles[Array.IndexOf(users, user)];
+                    String roleToAssign = user.Role;
                     userManager.AddToRoleAsync(user, roleToAssign).Wait();
                 }
                 else

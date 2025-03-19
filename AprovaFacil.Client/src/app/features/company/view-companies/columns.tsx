@@ -28,6 +28,12 @@ const useColumns = () => {
     {
       accessorKey: "trade_name",
       header: "Nome",
+      cell: ({row}) => {
+        const company = row.original;
+        return(
+          <div className="flex h-12 p-1 items-center">{company.trade_name}</div>
+        )
+      }
     },
     {
       accessorKey: "postal_code",
@@ -75,6 +81,7 @@ const useColumns = () => {
     },
     {
       id: "actions",
+      header: "Editar",
       cell: ({ row }) => {
 
         const onDelete = async (company: Company) => {

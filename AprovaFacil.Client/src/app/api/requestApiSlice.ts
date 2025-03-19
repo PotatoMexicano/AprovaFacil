@@ -1,9 +1,10 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
 import { Request } from "../features/requests/view-requests/columns";
+import { customBaseQuery } from "./base-api";
 
 export const requestApi = createApi({
   reducerPath: "requestApi",
-  baseQuery: fetchBaseQuery({ baseUrl: "https://localhost:7296/api/request" }),
+  baseQuery: customBaseQuery(),
   tagTypes: ["Requests"],
   endpoints: (builder) => ({
     registerRequest: builder.mutation<Request, Request>({
@@ -22,7 +23,7 @@ export const requestApi = createApi({
         if (requestData.budget) formData.append("budget", requestData.budget);
 
         return {
-          url: `register`,
+          url: `request/register`,
           method: `POST`,
           body: formData,
           // Não definimos headers aqui, o navegador definirá automaticamente Content-Type como multipart/form-data

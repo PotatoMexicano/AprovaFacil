@@ -1,11 +1,12 @@
 ﻿using AprovaFacil.Domain.DTOs;
-using AprovaFacil.Server.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AprovaFacil.Server.Controllers;
 
 [Route("api/request")]
 [ApiController]
+[Authorize]
 public class RequestController : ControllerBase
 {
     [HttpPost("register")]

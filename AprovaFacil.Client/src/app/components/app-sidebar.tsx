@@ -25,11 +25,6 @@ import { NavUsers } from "./nav-users"
 import { useGetCurrentUserQuery } from "../api/authApiSlice"
 
 const data = {
-  user: {
-    name: "Jonh Doe",
-    email: "jonh@doe.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
       title: "Nova solicitação",
@@ -68,7 +63,7 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
-  const { data: authData, error: authError, isLoading: isAuthLoading } = useGetCurrentUserQuery();
+  const { data: authData } = useGetCurrentUserQuery();
 
   return (
     <Sidebar variant="inset" {...props}>
