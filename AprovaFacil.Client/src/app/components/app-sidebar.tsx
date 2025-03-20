@@ -22,7 +22,11 @@ import {
   SidebarMenuItem,
 } from "@/app/components/ui/sidebar"
 import { NavUsers } from "./nav-users"
-import { useGetCurrentUserQuery } from "../api/authApiSlice"
+import { useGetCurrentUserQuery, useLogoutMutation } from "../api/authApiSlice"
+import { toast } from "@/hooks/use-toast"
+import { useNavigate } from "react-router-dom"
+import { useDispatch } from "react-redux"
+import { clearUser } from "@/auth/authSlice"
 
 const data = {
   navMain: [
@@ -36,7 +40,7 @@ const data = {
       title: "Minhas solicitações",
       url: "/request/",
       icon: Boxes,
-     },
+    },
   ],
   navSecondary: [
     {
@@ -63,8 +67,38 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
-  const { data: authData } = useGetCurrentUserQuery();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
+  const { data: authData , error} = useGetCurrentUserQuery();
+  const [logout] = useLogoutMutation();
+
+  React.useEffect(() => {
+    if (error && 'status' in error && error.status === 401) {
+      logout()
+      .unwrap()
+      .then(() => {
+        
+        dispatch(clearUser());
+
+        toast({
+          title: "Sessão Expirada",
+          description: "Você foi desconectado. Faça login novamente.",
+          variant: "destructive",
+        });
+        navigate("/login", {replace: true}); // Use navigate instead of window.location.href
+      })
+      .catch((logoutError) => {
+        console.error("Erro ao fazer logout:", logoutError);
+        toast({
+          title: "Erro",
+          description: "Falha ao fazer logout. Tente novamente.",
+          variant: "destructive",
+        });
+      });
+    }
+  }, [error])
+  
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -72,7 +106,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <a href="/">
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <PackageSearch className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">

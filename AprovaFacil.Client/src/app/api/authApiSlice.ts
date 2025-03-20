@@ -17,7 +17,7 @@ export const authApi = createApi({
       query: () => ({
         url: "auth/logout",
         method: "POST"
-      })
+      }),
     }),
     getCurrentUser: builder.query<{ user: UserResponse }, void>({
       query: () => 'auth/me',

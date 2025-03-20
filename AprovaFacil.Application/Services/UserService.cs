@@ -82,6 +82,7 @@ public class UserService(UserInterfaces.IUserRepository repository, IHttpContext
 
     public async Task<UserDTO?> RegisterUser(UserRegisterDTO request, CancellationToken cancellation)
     {
+
         IApplicationUser? entity = await repository.RegisterUserAsync(request, cancellation);
 
         if (entity is null)
