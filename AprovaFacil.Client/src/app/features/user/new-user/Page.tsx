@@ -8,18 +8,19 @@ import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/app/components/ui/form"
-import { toast } from "@/hooks/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select"
 import ButtonSuccess from "@/app/components/ui/button-success"
 import userSchema from "@/app/schemas/userSchema"
 import { useRegisterUserMutation } from "@/app/api/userApiSlice"
 import { useNavigate } from "react-router-dom"
+import AvatarCarousel from "@/app/components/ui/avatar-carousel"
+import { toast } from "sonner"
 
 export default function NewUserPage() {
   const { setBreadcrumbs } = useBreadcrumb()
   const navigate = useNavigate()
 
-  const [registerUser, { isLoading, isSuccess, isError }] = useRegisterUserMutation()
+  const [registerUser, { isLoading, isSuccess, isError, error: errorRegisterUser }] = useRegisterUserMutation()
   const [registerSuccess, setRegisterSuccess] = useState<boolean | undefined>(undefined)
 
   const form = useForm<z.infer<typeof userSchema>>({
@@ -28,7 +29,7 @@ export default function NewUserPage() {
       full_name: "",
       role: "",
       department: "",
-      picture_url: "",
+      picture_url: '/avatars/female/82.png',
       email: "",
       password: "",
     },
@@ -40,6 +41,7 @@ export default function NewUserPage() {
     { value: "Director", label: "Diretor" },
     { value: "Analyst", label: "Analista" },
     { value: "Assistant", label: "Assistente" },
+    { value: "Requester", label: "Requisitante" },
   ]
 
   const departments = [
@@ -49,34 +51,18 @@ export default function NewUserPage() {
     { value: "Marketing", label: "Marketing" },
     { value: "Operations", label: "Operações" },
     { value: "Sales", label: "Vendas" },
+    { value: "Engineer", label: "Engenharia" },
   ]
 
   useEffect(() => {
     setRegisterSuccess(isSuccess)
-    if (isSuccess) {
-      toast({
-        title: "Usuário registrado",
-        description: "O usuário foi registrado com sucesso.",
-      })
-
-      // Redirect to users list after successful registration
-      setTimeout(() => {
-        navigate("/users")
-      }, 2000)
-    }
-    if (isError) {
-      toast({
-        title: "Falha ao registrar usuário",
-        description: "Não foi possível registrar o usuário.",
-      })
-    }
 
     const timer = setTimeout(() => {
       setRegisterSuccess(undefined)
     }, 3500)
 
     return () => clearTimeout(timer)
-  }, [isSuccess, isError, navigate])
+  }, [isSuccess, isError, navigate]);
 
   useEffect(() => {
     setBreadcrumbs(["Início", "Usuários", "Adicionar"])
@@ -84,15 +70,21 @@ export default function NewUserPage() {
 
   async function onSubmit(values: z.infer<typeof userSchema>) {
     try {
-      await registerUser(values).unwrap()
-    } catch (error) {
-      console.error(`Erro ao registrar usuário:`, error)
+      await registerUser(values).unwrap();
+      
+      setRegisterSuccess(isSuccess);
 
-      if (error instanceof Error) {
-        toast({
-          title: "Falha ao registrar usuário",
-          description: error.message,
-        })
+      toast.success("O usuário foi registrado com sucesso.");
+
+      // Redirect to users list after successful registration
+      setTimeout(() => {
+        navigate("/users")
+      }, 2000)
+
+    } catch (error) {
+      console.error(`Erro ao registrar usuário:`, errorRegisterUser);
+      if (errorRegisterUser) {
+        toast.error(`Falha ao registrar usuário`)
       }
     }
   }
@@ -130,7 +122,7 @@ export default function NewUserPage() {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input placeholder="joao.silva@exemplo.com" type="email" {...field} />
+                          <Input placeholder="joao.silva@exemplo.com" type="email" {...field} autoComplete="off" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -144,26 +136,13 @@ export default function NewUserPage() {
                       <FormItem>
                         <FormLabel>Senha</FormLabel>
                         <FormControl>
-                          <Input placeholder="******" type="password" {...field} />
+                          <Input placeholder="******" type="password" {...field} autoComplete="new-password" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="picture_url"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>URL da Imagem de Perfil</FormLabel>
-                        <FormControl>
-                          <Input placeholder="https://exemplo.com/imagem.jpg" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
 
                 <div className="space-y-4">
@@ -216,23 +195,22 @@ export default function NewUserPage() {
                       </FormItem>
                     )}
                   />
-
-                  {form.getValues("picture_url") && (
-                    <div className="mt-4">
-                      <p className="text-sm font-medium mb-2">Pré-visualização da imagem:</p>
-                      <div className="border rounded-lg p-2 flex justify-center">
-                        <img
-                          src={form.getValues("picture_url") || "/placeholder.svg?height=100&width=100"}
-                          alt="Pré-visualização"
-                          className="h-24 w-24 rounded-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = "/placeholder.svg?height=100&width=100"
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
                 </div>
+
+              </div>
+              <div className="justify-center w-full flex p-10">
+                <FormField
+                  control={form.control}
+                  name="picture_url"
+                  render={({ field }) => (
+                    <FormItem className="text-center">
+                      <FormControl>
+                        <AvatarCarousel field={field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <div className="pt-4">
