@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <SpaRoot>..\AprovaFacil.Client</SpaRoot>
-    <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
+    <SpaProxyLaunchCommand>npm run dev -- --host</SpaProxyLaunchCommand>
     <SpaProxyServerUrl>http://localhost:5173</SpaProxyServerUrl>
     <UserSecretsId>b3a19473-f0c7-4fbd-8f81-6ccfd5397687</UserSecretsId>
   </PropertyGroup>

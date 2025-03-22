@@ -31,6 +31,7 @@ public class Program
         builder.Services.AddControllers()
             .AddJsonOptions(options =>
             {
+                //options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
                 options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.SnakeCaseLower;
                 options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
             });
