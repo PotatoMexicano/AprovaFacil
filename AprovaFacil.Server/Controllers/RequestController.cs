@@ -1,16 +1,18 @@
 ﻿using AprovaFacil.Domain.DTOs;
+using AprovaFacil.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace AprovaFacil.Server.Controllers;
 
 [Route("api/request")]
 [ApiController]
 [Authorize]
-public class RequestController : ControllerBase
+public class RequestController(RequestInterfaces.IRequestService service) : ControllerBase
 {
     [HttpPost("register")]
-    public async Task<ActionResult> RegisterRequest([FromForm] DTOs.HttpRequest request, CancellationToken cancellation = default)
+    public async Task<ActionResult<RequestDTO>> RegisterRequest([FromForm] DTOs.HttpRequest request, CancellationToken cancellation = default)
     {
         if (request.Invoice != null)
         {
@@ -62,6 +64,8 @@ public class RequestController : ControllerBase
         Byte[]? invoiceBytes = null;
         Byte[]? budgetBytes = null;
 
+        cancellation.ThrowIfCancellationRequested();
+
         if (request.Invoice != null)
         {
             using (MemoryStream stream = new MemoryStream())
@@ -80,18 +84,30 @@ public class RequestController : ControllerBase
             }
         }
 
-        RequestDTO requestDTO = new RequestDTO
+        if (!Int32.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out Int32 idUserAuthenticated))
         {
-            ManagerId = request.ManagerId,
-            DirectorsIds = request.DirectorsIds,
-            CompanyId = request.CompanyId,
-            PaymentDate = request.PaymentDate,
-            Amount = request.Amount,
-            Note = request.Note,
-            Invoice = invoiceBytes,
-            Budget = budgetBytes
-        };
+            return BadRequest(new ProblemDetails
+            {
+                Detail = "Are you logged ?",
+                Status = StatusCodes.Status400BadRequest
+            });
+        }
 
-        return Ok(requestDTO);
+        RequestDTO result = await service.RegisterRequest(new RequestRegisterDTO
+        {
+            Budget = budgetBytes ?? [],
+            Invoice = invoiceBytes ?? [],
+            Amount = request.Amount,
+            CompanyId = request.CompanyId,
+            Note = request.Note,
+            RequesterId = idUserAuthenticated,
+            DirectorsIds = request.DirectorsIds,
+            ManagersId = request.ManagersId,
+            PaymentDate = request.PaymentDate,
+            InvoiceFileName = request.Invoice?.FileName,
+            BudgetFileName = request.Budget?.FileName
+        }, cancellation);
+
+        return Ok(result);
     }
 }
