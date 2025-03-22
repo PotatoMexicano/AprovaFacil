@@ -3,7 +3,7 @@ import { z } from "zod";
 export default z.object({
   id: z.string().optional().default('0'),
   companyId: z.number().min(1, { message: "Selecione a empresa" }),
-  paymentDate: z.date()
+  paymentDate: z.date({ message: "Data obrigatória"})
     .refine(date => !isNaN(date.getTime()), { message: "Data inválida" })
     .refine(date => date > new Date(), { message: "A data deve ser posterior a hoje" }),
   amount: z.number()
@@ -18,6 +18,8 @@ export default z.object({
     .refine((file) => !file || file.size <= 20 * 1024 * 1024, { message: "Nota fiscal precisa ser menor que 20MB" })
     .refine((file) => file.type === "application/pdf", { message: "Somente arquivos PDF são permitidos" })
     .optional(),
-  managerId: z.number().min(1),
+  managerId: z.number().min(1, {
+    message: "Selecione um gerente"
+  }),
   directorsIds: z.array(z.number().min(1)),
 });

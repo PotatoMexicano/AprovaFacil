@@ -37,10 +37,10 @@ export default function NewUserPage() {
 
   // Predefined roles and departments based on your application
   const roles = [
-    { value: "Manager", label: "Gerente" },
-    { value: "Director", label: "Diretor" },
-    { value: "Analyst", label: "Analista" },
     { value: "Assistant", label: "Assistente" },
+    { value: "Finance", label: "Analista Financeiro" },
+    { value: "Director", label: "Diretor" },
+    { value: "Manager", label: "Gerente" },
     { value: "Requester", label: "Requisitante" },
   ]
 
@@ -71,7 +71,7 @@ export default function NewUserPage() {
   async function onSubmit(values: z.infer<typeof userSchema>) {
     try {
       await registerUser(values).unwrap();
-      
+
       setRegisterSuccess(isSuccess);
 
       toast.success("O usuário foi registrado com sucesso.");
@@ -90,143 +90,144 @@ export default function NewUserPage() {
   }
 
   return (
-    <>
-      <Card className="col-span-12 flex flex-col shadow-none border-0">
-        <CardHeader>
-          <CardTitle>Cadastro de Usuário</CardTitle>
-          <CardDescription>Preencha os dados para cadastrar um novo usuário no sistema.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="full_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome Completo</FormLabel>
-                        <FormControl>
-                          <Input placeholder="João da Silva" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="joao.silva@exemplo.com" type="email" {...field} autoComplete="off" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Senha</FormLabel>
-                        <FormControl>
-                          <Input placeholder="******" type="password" {...field} autoComplete="new-password" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                </div>
-
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="role"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Cargo</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione um cargo" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {roles.map((role) => (
-                              <SelectItem key={role.value} value={role.value}>
-                                {role.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="department"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Departamento</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione um departamento" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {departments.map((dept) => (
-                              <SelectItem key={dept.value} value={dept.value}>
-                                {dept.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-              </div>
-              <div className="justify-center w-full flex p-10">
+    <Card className="col-span-12 flex flex-col shadow-none border-0">
+      <CardHeader>
+        <CardTitle>Cadastro de Usuário</CardTitle>
+        <CardDescription>Preencha os dados para cadastrar um novo usuário no sistema.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              <div className="flex flex-col space-y-2">
                 <FormField
                   control={form.control}
-                  name="picture_url"
+                  name="full_name"
                   render={({ field }) => (
-                    <FormItem className="text-center">
+                    <FormItem>
+                      <FormLabel>Nome Completo</FormLabel>
                       <FormControl>
-                        <AvatarCarousel field={field} />
+                        <Input placeholder="João da Silva" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="joao.silva@exemplo.com" type="email" {...field} autoComplete="off" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Senha</FormLabel>
+                      <FormControl>
+                        <Input placeholder="******" type="password" {...field} autoComplete="new-password" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+              </div>
+
+              <div className="flex flex-col space-y-2">
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cargo</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um cargo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {roles.map((role) => (
+                            <SelectItem key={role.value} value={role.value}>
+                              {role.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="department"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Departamento</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um departamento" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {departments.map((dept) => (
+                            <SelectItem key={dept.value} value={dept.value}>
+                              {dept.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
 
-              <div className="pt-4">
-                <ButtonSuccess
-                  isLoading={isLoading}
-                  isSuccess={registerSuccess}
-                  defaultText="Cadastrar Usuário"
-                  loadingText="Cadastrando..."
-                  successText="Usuário Cadastrado!"
-                />
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </>
+            </div>
+
+            <div className="flex flex-col space-y-2 items-center">
+              <FormField
+                control={form.control}
+                name="picture_url"
+                render={({ field }) => (
+                  <FormItem className="text-center">
+                    <FormControl>
+                      <AvatarCarousel field={field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="col-span-12 justify-start pt-4">
+              <ButtonSuccess
+                isLoading={isLoading}
+                isSuccess={registerSuccess}
+                defaultText="Cadastrar Usuário"
+                loadingText="Cadastrando..."
+                successText="Usuário Cadastrado!"
+              />
+            </div>
+        </form>
+      </Form>
+    </CardContent>
+    </Card >
   )
 }
 

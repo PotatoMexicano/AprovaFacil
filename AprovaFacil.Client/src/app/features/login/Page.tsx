@@ -28,7 +28,7 @@ export default function LoginForm({ className, ...props }: React.ComponentProps<
 
   const [login, { isLoading: isLoadingAuth }] = useLoginMutation();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-  
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -40,21 +40,22 @@ export default function LoginForm({ className, ...props }: React.ComponentProps<
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      toast.info(`Tentando login com: ${values.email}`); // Verifica os valores
       const response = await login({ email: values.email, password: values.password }).unwrap();
-    
+
       dispatch(setUser(response));
       toast.success('Login bem-sucedido!');
-      navigate('/');
+
+      
     } catch (error) {
       const errorMessage =
-        error?.data?.message || error?.message || 'Erro ao fazer login. Verifique suas credenciais.';
+      error?.data?.message || error?.message || 'Erro ao fazer login. Verifique suas credenciais.';
       toast.error(`Erro no login: ${JSON.stringify(errorMessage)}`);
     }
   }
-
+  
   if (isAuthenticated) {
     return null; // Ou uma mensagem como "Redirecionando..."
+    navigate('/', { replace: true});
   }
 
   return (
@@ -111,21 +112,21 @@ export default function LoginForm({ className, ...props }: React.ComponentProps<
                         />
                       </div>
                       <Button type="submit" className="w-full" disabled={isLoadingAuth}>
-                      {isLoadingAuth ? 'Entrando...' : 'Entrar'}
+                        {isLoadingAuth ? 'Entrando...' : 'Entrar'}
                       </Button>
                     </div>
                   </form>
                 </Form>
                 <div className="relative hidden bg-muted md:block">
                   <a href="https://storyset.com/nature" target="_blank" className="flex justify-center">
-                  <div className="relative text-center">
-                    <img
-                      src="/strelitzia plant-amico.svg"
-                      alt="Image"
-                      className="inset-0 h-full w-full object-cover -z-1"
-                    />
-                    <small className="p-1 text-gray-400 z-10 bottom-0">Nature illustrations by Storyset</small>
-                  </div>
+                    <div className="relative text-center">
+                      <img
+                        src="/strelitzia plant-amico.svg"
+                        alt="Image"
+                        className="inset-0 h-full w-full object-cover -z-1"
+                      />
+                      <small className="p-1 text-gray-400 z-10 bottom-0">Nature illustrations by Storyset</small>
+                    </div>
                   </a>
                 </div>
               </CardContent>

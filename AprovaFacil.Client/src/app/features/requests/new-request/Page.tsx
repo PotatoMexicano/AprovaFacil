@@ -12,7 +12,7 @@ import { ptBR } from "date-fns/locale"
 import { z } from "zod";
 import { useGetCompaniesQuery } from "@/app/api/companyApiSlice";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/app/components/ui/command";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/app/components/ui/separator";
 import CurrencyFormField from "@/app/components/ui/currency-form-field";
@@ -24,6 +24,8 @@ import { useRegisterRequestMutation } from "@/app/api/requestApiSlice";
 import formSchema from "@/app/schemas/requestSchema";
 import { useGetEnabledUsersQuery } from "@/app/api/userApiSlice";
 import { toast } from "sonner";
+import ButtonSuccess from "@/app/components/ui/button-success";
+import { useBreadcrumb } from "@/app/context/breadkcrumb-context";
 
 const getInitials = (fullName: string) => {
   if (!fullName) return "";
@@ -44,9 +46,26 @@ const getInitials = (fullName: string) => {
 
 export default function NewRequestPage() {
 
+  const { setBreadcrumbs } = useBreadcrumb()
+
   const { data: companies, isFetching: isCompaniesFetching } = useGetCompaniesQuery();
   const { data: users, isFetching: isUsersFetching } = useGetEnabledUsersQuery();
-  const [registerRequest, {isSuccess: isSuccessRegisterRequest, error: errorRegisterRequest}] = useRegisterRequestMutation();
+  const [registerRequest, { isSuccess: isSuccess, isError: isErrorRequest, isLoading: isLoadingRequest }] = useRegisterRequestMutation();
+  const [registerSuccess, setRegisterSuccess] = useState<boolean | undefined>(undefined)
+
+  useEffect(() => {
+    setRegisterSuccess(isSuccess)
+
+    const timer = setTimeout(() => {
+      setRegisterSuccess(undefined)
+    }, 3500)
+
+    return () => clearTimeout(timer);
+  }, [isSuccess, isErrorRequest]);
+
+  useEffect(() => {
+    setBreadcrumbs(["Início", "Requisição", "Adicionar"])
+  }, [setBreadcrumbs])
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -62,6 +81,8 @@ export default function NewRequestPage() {
     }
   });
 
+  const { reset } = form;
+
   const [openPopoverUser, setOpenPopoverUser] = useState(false);
   const [idPopoverUser, setIdPopoverUser] = useState<number | null>(null);
 
@@ -72,10 +93,13 @@ export default function NewRequestPage() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      console.log(values);
       await registerRequest(values).unwrap();
       toast.success('Requisição cadastrada !');
-      
+
+      reset();
+      setIdPopoverCompany(null);
+      setIdPopoverUser(null);
+
     } catch (error) {
       console.error(error)
 
@@ -134,16 +158,20 @@ export default function NewRequestPage() {
                   <div>
                     {!isMobile && (
                       <div className="flex w-full justify-start">
-                        <Button className="w-36" tabIndex={-1} type="submit" variant={"default"}>
-                          Cadastrar
-                        </Button>
+                        <ButtonSuccess
+                          isLoading={isLoadingRequest}
+                          isSuccess={registerSuccess}
+                          defaultText="Cadastrar Requisição"
+                          loadingText="Cadastrando..."
+                          successText="Requisição Cadastrada!"
+                        />
                       </div>
                     )}
                   </div>
 
                 </div>
 
-                <div className="p-0 px-10 justify-self-end flex flex-col col-span-12 md:col-span-4 gap-5 w-full">
+                <div className="p-0 md:px-10 justify-self-end flex flex-col col-span-12 md:col-span-4 gap-5 w-full">
 
                   <FormField
                     control={form.control}
@@ -176,7 +204,7 @@ export default function NewRequestPage() {
                                 {isUsersFetching && (<CommandEmpty>Carregando pessoas...</CommandEmpty>)}
                                 {!isUsersFetching && users && (<CommandEmpty>Nenhuma pessoa encontrada.</CommandEmpty>)}
                                 <CommandGroup>
-                                  {users?.filter(x => x.role === "Manager")?.map((user) => (
+                                  {users?.filter(x => x.role === "Gerente")?.map((user) => (
                                     <CommandItem
                                       tabIndex={3}
                                       key={user.id}
@@ -345,9 +373,13 @@ export default function NewRequestPage() {
 
                   {isMobile && (
                     <div className="flex w-full justify-start">
-                      <Button className="w-full" type="submit" variant={"default"}>
-                        Cadastrar
-                      </Button>
+                      <ButtonSuccess
+                        isLoading={isLoadingRequest}
+                        isSuccess={registerSuccess}
+                        defaultText="Cadastrar Requisição"
+                        loadingText="Cadastrando..."
+                        successText="Requisição Cadastrada!"
+                      />
                     </div>
                   )}
                 </div>

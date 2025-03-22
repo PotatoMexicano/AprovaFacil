@@ -12,9 +12,6 @@ export const customBaseQuery = () => {
         headers.set('Authorization', `Bearer ${token}`);
       }
 
-      // Adiciona outros cabeçalhos padrão, se necessário
-      headers.set('Content-Type', 'application/json');
-
       return headers;
     },
   });

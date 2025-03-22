@@ -37,15 +37,15 @@ export function AvatarCarousel({ field }) {
           slidesToScroll: 1,
           startIndex: 8,
         }}
-        className="w-full max-w-2xl"
+        className="w-full md:max-w-2xl max-w-52"
       >
         <CarouselContent>
           {allImages.map((imagePath, index) => (
-            <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/5">
+            <CarouselItem key={index} className="basis-1/2 md:basis-1/2 lg:basis-1/5">
               <div className="p-1">
                 <Card className='rounded-full'>
                   <CardContent
-                    className={`flex aspect-square items-center justify-center p-1 cursor-pointer ${
+                    className={`flex items-center justify-center p-1 cursor-pointer ${
                       field.value === imagePath ? 'border-2 border-green-500 rounded-full' : 'border border-gray-300 rounded-full'
                     }`}
                     onClick={() => handleImageSelect(imagePath)}

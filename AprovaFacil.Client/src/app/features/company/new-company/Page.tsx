@@ -17,10 +17,12 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import formSchema from "@/app/schemas/companySchema";
 import { useRegisterCompanyMutation } from "@/app/api/companyApiSlice";
 import ButtonSuccess from "@/app/components/ui/button-success";
+import { useNavigate } from "react-router-dom";
 
 export default function NewCompanyPage() {
 
   const isMobile = useIsMobile();
+  const navigate = useNavigate()
 
   const [registerCompany, { isLoading: isLoadingRegisterCompany, isSuccess: isSuccessRegisterCompany, isError: isErrorRegisterCompany }] = useRegisterCompanyMutation();
     const [registerSuccess, setRegisterSuccess] = useState<boolean | undefined>(undefined);
@@ -110,10 +112,11 @@ export default function NewCompanyPage() {
       
      const timer = setTimeout(() => {
       setRegisterSuccess(undefined);
+        navigate("/company")
      }, 3500);
   
      return () => clearTimeout(timer);
-    }, [isSuccessRegisterCompany, isErrorRegisterCompany]);
+    }, [isSuccessRegisterCompany, isErrorRegisterCompany, navigate]);
 
   useEffect(() => {
     if (isPostalCodeError) {
@@ -176,7 +179,7 @@ export default function NewCompanyPage() {
               </CardHeader>
               <CardContent>
 
-                <div className="grid grid-cols-1 md:grid-cols-2  gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col space-y-2">
                     <div>
                       <FormField

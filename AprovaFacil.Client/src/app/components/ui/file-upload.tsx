@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useEffect } from "react"
 
 import { FaFile, FaFileExcel, FaFilePdf, FaFileWord } from "react-icons/fa";
 
@@ -23,6 +23,17 @@ const FileUpload = forwardRef<HTMLInputElement, FileUploadProps>(
     const [fileName, setFileName] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
+
+    useEffect(() => {
+      if (value instanceof File) {
+        setFileName(value.name);
+      } else {
+        setFileName(null); // Limpa o fileName quando o value é null/undefined
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''; // Limpa o input nativo
+        }
+      }
+    }, [value]);
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0] || null; // Pega o primeiro arquivo ou null
