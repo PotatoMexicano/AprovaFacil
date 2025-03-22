@@ -1,12 +1,13 @@
 ﻿using AprovaFacil.Application.Extensions;
 using AprovaFacil.Application.Services;
+using AprovaFacil.Domain.Constants;
+using AprovaFacil.Domain.DTOs;
 using AprovaFacil.Domain.Interfaces;
 using AprovaFacil.Domain.Models;
 using AprovaFacil.Infra.Data.Context;
 using AprovaFacil.Infra.Data.Identity;
 using AprovaFacil.Infra.Data.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        services.InitializeFolders(configuration);
 
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
@@ -51,6 +53,7 @@ public static class DependencyInjection
         });
         services.AddScoped<CompanyInterfaces.ICompanyService, CompanyService>();
         services.AddScoped<UserInterfaces.IUserService, UserService>();
+        services.AddScoped<RequestInterfaces.IRequestService, RequestService>();
 
         return services;
     }
@@ -59,6 +62,7 @@ public static class DependencyInjection
     {
         services.AddScoped<CompanyInterfaces.ICompanyRepository, CompanyRepository>();
         services.AddScoped<UserInterfaces.IUserRepository, UserRepository>();
+        services.AddScoped<RequestInterfaces.IRequestRepository, RequestRepository>();
         return services;
     }
 
@@ -169,7 +173,7 @@ public static class DependencyInjection
             }
         }
 
-        String[] roles = new[] { Roles.Requester, Roles.Manager, Roles.Director, Roles.Finance, Roles.Secretary };
+        String[] roles = new[] { Roles.Requester, Roles.Manager, Roles.Director, Roles.Finance, Roles.Assistant };
 
         foreach (String? role in roles)
         {
@@ -205,7 +209,7 @@ public static class DependencyInjection
                 {
                     UserName = "manager@example.com",
                     Email = "manager@example.com",
-                    FullName = "Bruno Manager",
+                    FullName = "Bruno User",
                     Role = Roles.Manager,
                     Department = "Engenharia",
                     PictureUrl = "/avatars/male/47.png",
@@ -215,7 +219,7 @@ public static class DependencyInjection
                 {
                     UserName = "director@example.com",
                     Email = "director@example.com",
-                    FullName = "Clara Director",
+                    FullName = "Clara User",
                     Role = Roles.Director,
                     Department = "Administração",
                     PictureUrl = "/avatars/female/82.png",
@@ -235,8 +239,8 @@ public static class DependencyInjection
                 {
                     UserName = "secretary@example.com",
                     Email = "secretary@example.com",
-                    FullName = "Elisa Secretary",
-                    Role = Roles.Secretary,
+                    FullName = "Elisa Assistant",
+                    Role = Roles.Assistant,
                     Department = "RH",
                     PictureUrl = "/avatars/female/100.png",
                     Enabled = true
@@ -263,5 +267,27 @@ public static class DependencyInjection
         }
 
         context.SaveChanges();
+    }
+
+    private static void InitializeFolders(this IServiceCollection services, IConfiguration configuration)
+    {
+        String? invoicePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, configuration.GetValue<String>("Directory:Invoices"));
+        String? budgetPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, configuration.GetValue<String>("Directory:Budgets"));
+
+        if (!Directory.Exists(invoicePath))
+        {
+            Directory.CreateDirectory(invoicePath);
+        }
+
+        if (!Directory.Exists(budgetPath))
+        {
+            Directory.CreateDirectory(budgetPath);
+        }
+
+        services.AddSingleton<ServerDirectory>(x => new ServerDirectory
+        {
+            InvoicePath = invoicePath,
+            BudgetPath = budgetPath,
+        });
     }
 }
