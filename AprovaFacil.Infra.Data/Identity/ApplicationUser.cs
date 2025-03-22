@@ -10,4 +10,8 @@ public class ApplicationUser : IdentityUser<Int32>, IApplicationUser
     public String Department { get; set; }
     public String PictureUrl { get; set; }
     public Boolean Enabled { get; set; }
+
+    public List<Request> Requests { get; set; } = new();
+    public List<RequestManager> RequestManagers { get; set; } = new();
+    public List<RequestDirector> RequestDirectors { get; set; } = new();
 }

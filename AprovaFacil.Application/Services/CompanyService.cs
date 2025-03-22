@@ -36,7 +36,7 @@ public class CompanyService : CompanyInterfaces.ICompanyService
     public async Task<CompanyDTO[]> GetAllCompanies(CancellationToken cancellation)
     {
         Company[] companies = await _repository.GetAllCompaniesAsync(cancellation);
-        CompanyDTO[] dtos = companies.Select(CompanyExtension.ToDTO).ToArray();
+        CompanyDTO[] dtos = companies.Select(CompanyExtensions.ToDTO).ToArray();
         return dtos;
     }
 

@@ -119,6 +119,31 @@ public class UserRepository(UserManager<ApplicationUser> userManager) : UserInte
         return entity;
     }
 
+    public async Task<Dictionary<Int32, IApplicationUser>> GetUsersDictionary(IEnumerable<Int32> usersId, CancellationToken cancellation)
+    {
+        if (usersId == null)
+        {
+            return new Dictionary<Int32, IApplicationUser>();
+        }
+
+        Dictionary<Int32, IApplicationUser> users = await userManager.Users
+            .Select(x => new ApplicationUser
+            {
+                Id = x.Id,
+                FullName = x.FullName,
+                Email = x.Email,
+                Enabled = x.Enabled,
+                PictureUrl = x.PictureUrl,
+                UserName = x.UserName,
+                Department = x.Department,
+                Role = x.Role
+            })
+            .Where(u => usersId.Contains(u.Id))
+            .ToDictionaryAsync(p => p.Id, q => (IApplicationUser)q, cancellation);
+
+        return users;
+    }
+
     public async Task<IApplicationUser?> RegisterUserAsync(UserRegisterDTO request, CancellationToken cancellation)
     {
         ApplicationUser? existingUser = await userManager.FindByEmailAsync(request.Email);

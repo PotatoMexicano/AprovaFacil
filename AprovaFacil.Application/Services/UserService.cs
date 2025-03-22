@@ -58,16 +58,16 @@ public class UserService(UserInterfaces.IUserRepository repository, IHttpContext
     public async Task<UserDTO[]> GetAllUsers(CancellationToken cancellation)
     {
         IApplicationUser[] applicationUsersEntity = await repository.GetAllUsersAsync(cancellation);
-        User[] userEntities = applicationUsersEntity.Select(UserExtensions.ToDomainUser).ToArray();
-        UserDTO[] dtos = userEntities.Select(UserExtensions.ToDTO).ToArray();
+        User[] userEntities = [.. applicationUsersEntity.Select(UserExtensions.ToDomainUser)];
+        UserDTO[] dtos = [.. userEntities.Select(UserExtensions.ToDTO)];
         return dtos;
     }
 
     public async Task<UserDTO[]> GetAllusersEnabled(CancellationToken cancellation)
     {
         IApplicationUser[] applicationUsersEntity = await repository.GetAllUsersEnabledAsync(cancellation);
-        User[] userEntities = applicationUsersEntity.Select(UserExtensions.ToDomainUser).ToArray();
-        UserDTO[] dtos = userEntities.Select(UserExtensions.ToDTO).ToArray();
+        User[] userEntities = [.. applicationUsersEntity.Select(UserExtensions.ToDomainUser)];
+        UserDTO[] dtos = [.. userEntities.Select(UserExtensions.ToDTO)];
         return dtos;
     }
 

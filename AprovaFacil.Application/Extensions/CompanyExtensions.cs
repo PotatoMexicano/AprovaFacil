@@ -3,7 +3,7 @@ using AprovaFacil.Domain.Models;
 
 namespace AprovaFacil.Application.Extensions;
 
-public static class CompanyExtension
+public static class CompanyExtensions
 {
     public static CompanyDTO ToDTO(this Company company)
     {
