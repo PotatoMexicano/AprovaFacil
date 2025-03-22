@@ -19,6 +19,8 @@ public static class UserInterfaces
 
     public interface IUserRepository
     {
+        Task<Dictionary<Int32, IApplicationUser>> GetUsersDictionary(IEnumerable<Int32> usersId, CancellationToken cancellation);
+
         Task<IApplicationUser[]> GetAllUsersAsync(CancellationToken cancellation);
         Task<IApplicationUser[]> GetAllUsersEnabledAsync(CancellationToken cancellation);
         Task<IApplicationUser?> GetUserAsync(Int32 idUser, CancellationToken cancellation);

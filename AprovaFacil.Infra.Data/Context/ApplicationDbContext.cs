@@ -11,6 +11,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<Company> Companies { get; set; }
     public DbSet<User> Users { get; set; }
 
+    public DbSet<Request> Requests { get; set; }
+    public DbSet<RequestManager> RequestManagers { get; set; }
+    public DbSet<RequestDirector> RequestDirectors { get; set; }
+
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
     }
@@ -54,5 +58,46 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         {
             entity.HasKey(e => e.Id);
         });
+
+        builder.Entity<Request>()
+            .HasKey(r => r.UUID);
+
+        builder.Entity<Request>()
+            .HasOne(r => (ApplicationUser)r.Requester)
+            .WithMany(rs => rs.Requests)
+            .HasForeignKey(r => r.RequesterId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configuração da tabela RequestGerentes
+        builder.Entity<RequestManager>()
+            .HasKey(rg => new { rg.RequestUUID, rg.ManagerId });
+
+        builder.Entity<RequestManager>()
+            .HasOne(rg => rg.Request)
+            .WithMany(r => r.Managers)
+            .HasForeignKey(rg => rg.RequestUUID)
+            .OnDelete(DeleteBehavior.Cascade); // Cascade delete aqui
+
+        builder.Entity<RequestManager>()
+            .HasOne(rg => (ApplicationUser)rg.User)
+            .WithMany(u => u.RequestManagers)
+            .HasForeignKey(rg => rg.ManagerId)
+            .OnDelete(DeleteBehavior.Restrict); // Sem cascade para ApplicationUser
+
+        // Configuração da tabela RequestDiretores
+        builder.Entity<RequestDirector>()
+            .HasKey(rd => new { rd.RequestUUID, rd.DirectorId });
+
+        builder.Entity<RequestDirector>()
+            .HasOne(rd => rd.Request)
+            .WithMany(r => r.Directors)
+            .HasForeignKey(rd => rd.RequestUUID)
+            .OnDelete(DeleteBehavior.Cascade); // Cascade delete aqui
+
+        builder.Entity<RequestDirector>()
+            .HasOne(rd => (ApplicationUser)rd.User)
+            .WithMany(u => u.RequestDirectors)
+            .HasForeignKey(rd => rd.DirectorId)
+            .OnDelete(DeleteBehavior.Restrict); // Sem cascade para ApplicationUser
     }
 }
