@@ -9,10 +9,9 @@ export const requestApi = createApi({
   endpoints: (builder) => ({
     registerRequest: builder.mutation<Request, Request>({
       query: (requestData) => {
-        const formData = new FormData();
-
-        formData.append("managerId", requestData.managerId.toString());
+        const formData = new FormData();        
         formData.append("companyId", requestData.companyId.toString());
+        formData.append("managerId", requestData.managerId.toString());
         requestData.directorsIds.forEach((id, index) => {
           formData.append(`DirectorsIds[${index}]`, id.toString());
         });

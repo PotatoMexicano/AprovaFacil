@@ -33,6 +33,18 @@ export function MultiSelectUserField({
   const [openPopoverUser, setOpenPopoverUser] = useState(false)
   const [selectedIds, setSelectedIds] = useState<number[]>([])
 
+  const {formState: {isSubmitSuccessful}} = form;
+
+  useEffect(() => {
+    if (isSubmitSuccessful) {
+      // Após o sucesso e o reset, podemos zerar estados adicionais aqui
+      setOpenPopoverUser(false);
+      setSelectedIds([]);
+      // Opcional: Redefinir outros estados fora do formulário, se existirem
+      // Exemplo: setSomeExternalState(initialValue);
+    }
+  }, [isSubmitSuccessful]);
+
   // Sincroniza o estado local com o valor do formulário
   useEffect(() => {
     const currentValue = form.getValues("directorsIds") || []
@@ -51,7 +63,7 @@ export function MultiSelectUserField({
   }
 
   // Filtra apenas diretores
-  const diretores = users?.filter((x) => x.role === "Director") || []
+  const diretores = users?.filter((x) => x.role === "Diretor") || []
 
   // Obtém os nomes dos diretores selecionados
   const selectedDiretoresNames = diretores.filter((user) => selectedIds.includes(user.id)).map((user) => user.full_name)
