@@ -28,10 +28,8 @@ public class Program
 
         builder.Host.UseSerilog(Log.Logger);
 
-        builder.Services.AddControllers()
-            .AddJsonOptions(options =>
+        builder.Services.AddControllers().AddJsonOptions(options =>
             {
-                //options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
                 options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.SnakeCaseLower;
                 options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
             });
@@ -52,9 +50,6 @@ public class Program
         });
 
         builder.Services.AddInfrastructure(builder.Configuration);
-
-        builder.Services.AddAuthorization();
-        builder.Services.AddAuthentication();
 
         WebApplication app = builder.Build();
 

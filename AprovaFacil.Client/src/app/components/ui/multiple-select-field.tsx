@@ -63,7 +63,7 @@ export function MultiSelectUserField({
   }
 
   // Filtra apenas diretores
-  const diretores = users?.filter((x) => x.role === "Diretor") || []
+  const diretores = users?.filter((x) => x.role === "Director") || []
 
   // Obtém os nomes dos diretores selecionados
   const selectedDiretoresNames = diretores.filter((user) => selectedIds.includes(user.id)).map((user) => user.full_name)
@@ -145,7 +145,7 @@ export function MultiSelectUserField({
                         >
                           <p>{user.full_name}</p>
                           <small className="text-[14px] font-normal text-foreground/80">
-                            {user.role} | {user.department}
+                            {user.role_label} | {user.department_label}
                           </small>
                         </div>
                         <Check className={cn("ml-auto", selectedIds.includes(user.id) ? "opacity-100" : "opacity-0")} />

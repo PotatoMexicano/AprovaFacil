@@ -13,8 +13,16 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/app/components/ui/sidebar"
+import { authApi, useGetCurrentUserQuery } from "../api/authApiSlice";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { useEffect } from "react";
+import { QueryStatus } from "@reduxjs/toolkit/query/react";
+import { clearUser } from "@/auth/authSlice";
+import { toast } from "sonner";
 
 export default function Page() {
+  
   return (
     <SidebarProvider>
       <AppSidebar />

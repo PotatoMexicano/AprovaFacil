@@ -3,13 +3,13 @@ import { createSlice} from "@reduxjs/toolkit";
 
 // src/features/auth/authSlice.ts
 interface AuthState {
-  token: string | null,
+  //token: string | null,
   user: UserResponse | null;
   isAuthenticated: boolean;
 }
 
 const initialState: AuthState = {
-  token: null,
+  //token: null,
   user: null,
   isAuthenticated: false,
 };
@@ -20,18 +20,21 @@ const authSlice = createSlice({
   reducers: {
     setUser: (state, action) => {
       state.user = action.payload.user;
-      state.token = action.payload.token;
+      //state.token = action.payload.token;
       state.isAuthenticated = true;
     },
     clearUser: (state) => {
-      state.token = null;
+      //state.token = null;
       state.user = null;
       state.isAuthenticated = false;
     },
+    disableUser: (state) => {
+      state.isAuthenticated = false
+    }
   },
 });
 
-export const { setUser, clearUser } = authSlice.actions;
+export const { setUser, clearUser, disableUser } = authSlice.actions;
 export default authSlice.reducer;
 
 export const saveAuthSate = (state: AuthState) => {

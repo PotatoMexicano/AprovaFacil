@@ -22,11 +22,8 @@ import {
   SidebarMenuItem,
 } from "@/app/components/ui/sidebar"
 import { NavUsers } from "./nav-users"
-import { useGetCurrentUserQuery, useLogoutMutation } from "../api/authApiSlice"
-import { toast } from "@/hooks/use-toast"
-import { useNavigate } from "react-router-dom"
-import { useDispatch } from "react-redux"
-import { clearUser } from "@/auth/authSlice"
+import { useGetCurrentUserQuery } from "../api/authApiSlice"
+import { RootState, useAppSelector } from "../store/store"
 
 const data = {
   navMain: [
@@ -67,38 +64,12 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const { data: authData } = useGetCurrentUserQuery();
+  const { isAuthenticated } = useAppSelector((state: RootState) => state.auth);
 
-  const { data: authData , error} = useGetCurrentUserQuery();
-  const [logout] = useLogoutMutation();
-
-  React.useEffect(() => {
-    if (error && 'status' in error && error.status === 401) {
-      logout()
-      .unwrap()
-      .then(() => {
-        
-        dispatch(clearUser());
-
-        toast({
-          title: "Sessão Expirada",
-          description: "Você foi desconectado. Faça login novamente.",
-          variant: "destructive",
-        });
-        navigate("/login", {replace: true}); // Use navigate instead of window.location.href
-      })
-      .catch((logoutError) => {
-        console.error("Erro ao fazer logout:", logoutError);
-        toast({
-          title: "Erro",
-          description: "Falha ao fazer logout. Tente novamente.",
-          variant: "destructive",
-        });
-      });
-    }
-  }, [error])
-  
+  if (!isAuthenticated) {
+    return <div></div>
+  }
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>

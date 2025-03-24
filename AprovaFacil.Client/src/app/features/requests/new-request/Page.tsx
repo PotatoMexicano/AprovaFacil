@@ -204,7 +204,7 @@ export default function NewRequestPage() {
                                 {isUsersFetching && (<CommandEmpty>Carregando pessoas...</CommandEmpty>)}
                                 {!isUsersFetching && users && (<CommandEmpty>Nenhuma pessoa encontrada.</CommandEmpty>)}
                                 <CommandGroup>
-                                  {users?.filter(x => x.role === "Gerente")?.map((user) => (
+                                  {users?.filter(x => x.role === "Manager")?.map((user) => (
                                     <CommandItem
                                       tabIndex={3}
                                       key={user.id}
@@ -225,7 +225,7 @@ export default function NewRequestPage() {
                                           : "font-normal"
                                       )}>
                                         <p>{user.full_name}</p>
-                                        <small className="text-[14px] font-normal text-foreground/80">{user.role} | {user.department}</small>
+                                        <small className="text-[14px] font-normal text-foreground/80">{user.role_label} | {user.department_label}</small>
                                       </div>
                                       <Check
                                         className={cn(
