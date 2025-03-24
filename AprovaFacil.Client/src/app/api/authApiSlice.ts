@@ -19,10 +19,13 @@ export const authApi = createApi({
         method: "POST"
       }),
     }),
-    getCurrentUser: builder.query<{ user: UserResponse }, void>({
-      query: () => 'auth/me',
+    getCurrentUser: builder.query<UserResponse, void>({
+      query: () => ({
+        url: 'auth/me',
+        method: 'GET'
+      }),
     }),
   }),
 });
 
-export const { useLoginMutation, useLogoutMutation, useGetCurrentUserQuery } = authApi;
+export const { useLoginMutation, useLogoutMutation, useGetCurrentUserQuery, useLazyGetCurrentUserQuery } = authApi;

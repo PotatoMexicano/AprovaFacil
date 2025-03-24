@@ -7,7 +7,7 @@ using AprovaFacil.Domain.Models;
 using AprovaFacil.Infra.Data.Context;
 using AprovaFacil.Infra.Data.Identity;
 using AprovaFacil.Infra.Data.Repository;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -87,23 +87,46 @@ public static class DependencyInjection
 
         SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<String>("Jwt:Key")));
 
-        services.AddAuthentication(options =>
+        services.ConfigureApplicationCookie(o =>
         {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; // Usar JWT em vez de cookies
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        }).AddJwtBearer(options =>
-        {
-            options.RequireHttpsMetadata = false;
-            options.SaveToken = true;
-            options.TokenValidationParameters = new TokenValidationParameters
+            o.Events = new CookieAuthenticationEvents()
             {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = key,
-                ValidateIssuer = false,
-                ValidateAudience = false,
-                ValidateLifetime = true
+                OnRedirectToLogin = (ctx) =>
+                {
+                    if (ctx.Request.Path.StartsWithSegments("/api") && ctx.Response.StatusCode == 200)
+                    {
+                        ctx.Response.StatusCode = 401;
+                    }
+
+                    return Task.CompletedTask;
+                },
+                OnRedirectToAccessDenied = (ctx) =>
+                {
+                    if (ctx.Request.Path.StartsWithSegments("/api") && ctx.Response.StatusCode == 200)
+                    {
+                        ctx.Response.StatusCode = 403;
+                    }
+
+                    return Task.CompletedTask;
+                }
             };
         });
+
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
+            options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
+            options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+        }).AddCookie(options =>
+        {
+            options.Cookie.HttpOnly = true;
+            options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+            options.Cookie.SameSite = SameSiteMode.Lax;
+            options.ExpireTimeSpan = TimeSpan.FromHours(1);
+            options.LoginPath = "/api/auth/login";
+            options.SlidingExpiration = true;
+        });
+        services.AddAuthorization();
 
         // Registrar serviços da Application
         services.AddScoped<UserExtensions>();
@@ -191,7 +214,7 @@ public static class DependencyInjection
                     Email = "requester@example.com",
                     FullName = "Ana Requester",
                     Role = Roles.Requester,
-                    Department = "TI",
+                    Department = Departaments.IT,
                     PictureUrl = "/avatars/female/86.png",
                     Enabled = true
                 },
@@ -201,7 +224,7 @@ public static class DependencyInjection
                     Email = "disabled@example.com",
                     FullName = "Marcos Disabled",
                     Role = Roles.Requester,
-                    Department = "TI",
+                    Department = Departaments.IT,
                     PictureUrl = "/avatars/female/86.png",
                     Enabled = false
                 },
@@ -211,7 +234,7 @@ public static class DependencyInjection
                     Email = "manager@example.com",
                     FullName = "Bruno User",
                     Role = Roles.Manager,
-                    Department = "Engenharia",
+                    Department = Departaments.Engineer,
                     PictureUrl = "/avatars/male/47.png",
                     Enabled = true
                 },
@@ -221,7 +244,7 @@ public static class DependencyInjection
                     Email = "director@example.com",
                     FullName = "Clara User",
                     Role = Roles.Director,
-                    Department = "Administração",
+                    Department = Departaments.Sales,
                     PictureUrl = "/avatars/female/82.png",
                     Enabled = true
                 },
@@ -231,7 +254,7 @@ public static class DependencyInjection
                     Email = "finance@example.com",
                     FullName = "Diego Finance",
                     Role = Roles.Finance,
-                    Department = "Financeiro",
+                    Department = Departaments.Finance,
                     PictureUrl = "/avatars/male/19.png",
                     Enabled = true
                 },
@@ -241,7 +264,7 @@ public static class DependencyInjection
                     Email = "secretary@example.com",
                     FullName = "Elisa Assistant",
                     Role = Roles.Assistant,
-                    Department = "RH",
+                    Department = Departaments.HR,
                     PictureUrl = "/avatars/female/100.png",
                     Enabled = true
                 }

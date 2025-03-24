@@ -17,7 +17,7 @@ export const userApi = createApi({
       providesTags: ['Enabled']
     }),
 
-    getUser: builder.query<UserResponse | undefined, number>({
+    getUser: builder.query<UserResponse | undefined, string>({
       query: (idUser) => `user/${idUser}`
     }),
 

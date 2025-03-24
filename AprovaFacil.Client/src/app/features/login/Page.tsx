@@ -7,13 +7,11 @@ import formSchema from "@/app/schemas/authSchema";
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useLoginMutation } from "@/app/api/authApiSlice"
-import { useDispatch, useSelector } from "react-redux"
+import { authApi, useLazyGetCurrentUserQuery, useLoginMutation } from "@/app/api/authApiSlice"
+import { useDispatch } from "react-redux"
 import { setUser } from "@/auth/authSlice"
 import { toast, Toaster } from "sonner"
 import { useNavigate } from "react-router-dom"
-import { RootState } from "@/app/store/store"
-import { useEffect } from "react"
 import { ThemeProvider } from "@/app/components/theme-provider"
 
 export default function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
@@ -26,36 +24,32 @@ export default function LoginForm({ className, ...props }: React.ComponentProps<
     },
   });
 
-  const [login, { isLoading: isLoadingAuth }] = useLoginMutation();
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const [login, { isLoading: isLoadingAuth, isSuccess }] = useLoginMutation();
+  const [getUser] = useLazyGetCurrentUserQuery();
+
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/', { replace: true });
-    }
-  }, [isAuthenticated, navigate]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const response = await login({ email: values.email, password: values.password }).unwrap();
 
       dispatch(setUser(response));
-      toast.success('Login bem-sucedido!');
+      dispatch(authApi.util.resetApiState());
 
-      
+      const userData = await getUser().unwrap();
+
+      if (userData) {
+        // Usuário já está autenticado, redireciona para a página principal
+        navigate('/', { replace: false });
+      }
+
     } catch (error) {
       const errorMessage =
-      error?.data?.message || error?.message || 'Erro ao fazer login. Verifique suas credenciais.';
+        error?.data?.message || error?.message || 'Erro ao fazer login. Verifique suas credenciais.';
       toast.error(`Erro no login: ${JSON.stringify(errorMessage)}`);
     }
-  }
-  
-  if (isAuthenticated) {
-    return null; // Ou uma mensagem como "Redirecionando..."
-    navigate('/', { replace: true});
   }
 
   return (

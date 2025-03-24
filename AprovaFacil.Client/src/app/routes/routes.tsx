@@ -10,18 +10,17 @@ import LoginPage from "../features/login/Page";
 import ProtectedRoute from "../components/protected-route";
 import ViewUsersPage from "../features/user/view-user/Page";
 import NewUserPage from "../features/user/new-user/Page";
+import EditUserPage from "../features/user/edit-user/Page";
 
 export const router = createBrowserRouter([
   { path: 'login', element: <LoginPage /> },
   {
-    path: '',
-    element: <App />,
+    element: <ProtectedRoute />,
     children: [
       {
-        path: '',
-        element: <ProtectedRoute />,
+        element: <App />,
         children: [
-          { path: '', element: <Homepage /> },
+          { path: '/', element: <Homepage /> },
           {
             path: 'company', children: [
               { path: 'register', element: <NewCompanyPage /> },
@@ -37,8 +36,9 @@ export const router = createBrowserRouter([
           },
           {
             path: 'users', children: [
-              {path: '', element: <ViewUsersPage />},
+              { path: '', element: <ViewUsersPage /> },
               { path: "register", element: <NewUserPage /> },
+              { path: 'edit/:id', element: <EditUserPage /> },
             ]
           }
         ]

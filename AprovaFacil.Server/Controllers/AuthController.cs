@@ -38,6 +38,7 @@ public class AuthController : ControllerBase
         {
             ApplicationUser? user = await _userManager.FindByEmailAsync(request.Email);
             IList<String> roles = await _userManager.GetRolesAsync(user);
+            IList<System.Security.Claims.Claim> claims = await _userManager.GetClaimsAsync(user);
 
             String token = _jwtService.GenerateJwtToken(user, roles);
             UserDTO userDTO = new UserDTO
@@ -64,6 +65,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("logout")]
+    [Authorize]
     public async Task<IActionResult> Logout()
     {
         await _signInManager.SignOutAsync();

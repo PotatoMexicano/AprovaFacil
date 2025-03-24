@@ -40,9 +40,10 @@ public class UserExtensions
             Id = user.Id,
             Email = user.Email,
             FullName = user.FullName,
-            Role = user.Role switch
+            Role = user.Role,
+            RoleLabel = user.Role switch
             {
-                Roles.Requester => "Solicitante",
+                Roles.Requester => "Requisitante",
                 Roles.Manager => "Gerente",
                 Roles.Director => "Diretor",
                 Roles.Assistant => "Assistente",
@@ -50,6 +51,17 @@ public class UserExtensions
                 _ => "Desconhecido"
             },
             Department = user.Department,
+            DepartmentLabel = user.Department switch
+            {
+                Departaments.Engineer => "Engenharia",
+                Departaments.Sales => "Vendas",
+                Departaments.Operations => "Operações",
+                Departaments.Marketing => "Marketing",
+                Departaments.IT => "Tecnologia da Informação",
+                Departaments.HR => "Recursos Humanos",
+                Departaments.Finance => "Financeiro",
+                _ => "Desconhecido"
+            },
             PictureUrl = user.PictureUrl,
             Enabled = user.Enabled,
         };
