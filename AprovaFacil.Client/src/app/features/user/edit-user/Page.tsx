@@ -14,6 +14,7 @@ import { useGetUserQuery } from "@/app/api/userApiSlice"
 import { useNavigate, useParams } from "react-router-dom"
 import AvatarCarousel from "@/app/components/ui/avatar-carousel"
 import { toast } from "sonner"
+import { Badge } from "@/app/components/ui/badge"
 
 export default function EditUserPage() {
 
@@ -64,7 +65,6 @@ export default function EditUserPage() {
 
   useEffect(() => {
     if (isUserSuccess && user) {
-      console.log(user);
       reset({
         ...user,
         role: user.role,
@@ -97,8 +97,8 @@ export default function EditUserPage() {
   return (
     <Card className="col-span-12 flex flex-col shadow-none border-0">
       <CardHeader>
-        <CardTitle>Cadastro de Usuário</CardTitle>
-        <CardDescription>Preencha os dados para cadastrar um novo usuário no sistema.</CardDescription>
+      <CardTitle>Cadastro do usuário <Badge className="m-2" variant={"default"}>{form.getValues("full_name") || "... carregando"}</Badge></CardTitle>
+        <CardDescription>Preencha os dados para atualizar o usuário no sistema.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
