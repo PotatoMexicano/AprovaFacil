@@ -1,7 +1,15 @@
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/app/components/ui/carousel'; // Adjust the import based on your setup
+"use client"
+
+import { useEffect, useState } from 'react';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from '@/app/components/ui/carousel'; // Adjust the import based on your setup
 import { Card, CardContent } from './card';
+import { ChevronUp } from 'lucide-react';
 
 export function AvatarCarousel({ field }) {
+
+  const [api, setApi] = useState<CarouselApi>()
+  const [currentIndex, setCurrentIndex] = useState(0); // Começa no índice 8 conforme seu startIndex
+
   // Define the image paths based on the folder structure
   const femaleImages = [
     '/avatars/female/82.png',
@@ -22,21 +30,48 @@ export function AvatarCarousel({ field }) {
   // Combine the images into a single array (or keep them separate if you want two carousels)
   const allImages = [...femaleImages, ...maleImages];
 
+  const initialIndex = field.value && allImages.includes(field.value)
+    ? allImages.indexOf(field.value)
+    : 8; // Default para 8 se não houver valor ou não encontrado
+
+  useEffect(() => {
+    if (!api) return;
+
+    // Listener para quando o scroll mudar
+    const handleScroll = () => {
+      const current = api.selectedScrollSnap();
+      setCurrentIndex(current);
+      field.onChange(allImages[current]);
+      field.value = allImages[current];
+    };
+
+    api.on('select', handleScroll);
+    
+    // Define a imagem inicial baseada no field.value
+    api.scrollTo(initialIndex);
+
+    // Cleanup
+    return () => {
+      api.off('select', handleScroll);
+    };
+  }, [api, initialIndex]);
+
   // Handle image selection
-  const handleImageSelect = (imagePath: string) => {
+  const handleImageSelect = (imagePath: string, index: number) => {
     field.onChange(imagePath);
-    //console.log('Selected image:', imagePath); // You can replace this with your logic
+    api?.scrollTo(index);
   };
 
   return (
     <div>
       <Carousel
         opts={{
-          align: "start",
+          align: "center",
           loop: true,
           slidesToScroll: 1,
           startIndex: 8,
         }}
+        setApi={setApi}
         className="w-full md:max-w-2xl max-w-52"
       >
         <CarouselContent>
@@ -45,10 +80,9 @@ export function AvatarCarousel({ field }) {
               <div className="p-1">
                 <Card className='rounded-full'>
                   <CardContent
-                    className={`flex items-center justify-center p-1 cursor-pointer ${
-                      field.value === imagePath ? 'border-2 border-green-500 rounded-full' : 'border border-gray-300 rounded-full'
-                    }`}
-                    onClick={() => handleImageSelect(imagePath)}
+                    className={`flex items-center justify-center p-1 cursor-pointer ${field.value === imagePath ? 'border-2 border-green-500 rounded-full' : 'border border-gray-300 rounded-full'
+                      }`}
+                    onClick={() => handleImageSelect(imagePath, index)}
                   >
                     <img
                       src={imagePath}
@@ -65,6 +99,9 @@ export function AvatarCarousel({ field }) {
         <CarouselPrevious />
         <CarouselNext />
       </Carousel>
+      <div className='w-full flex justify-center'>
+          <ChevronUp />
+      </div>
     </div>
   );
 };
