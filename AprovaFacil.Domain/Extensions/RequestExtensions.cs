@@ -1,7 +1,8 @@
 ﻿using AprovaFacil.Domain.DTOs;
+using AprovaFacil.Domain.Filters;
 using AprovaFacil.Domain.Models;
 
-namespace AprovaFacil.Application.Extensions;
+namespace AprovaFacil.Domain.Extensions;
 
 public static class RequestExtensions
 {
@@ -51,5 +52,15 @@ public static class RequestExtensions
                 Enabled = x.User.Enabled,
             })],
         };
+    }
+
+    public static IQueryable<Request> Filter(ref IQueryable<Request> query, FilterRequest filter, Int32? applicationUserId)
+    {
+        if (filter.ApplicationUserId.HasValue)
+        {
+            query = query.Where(x => x.RequesterId == applicationUserId);
+        }
+
+        return query.AsQueryable();
     }
 }

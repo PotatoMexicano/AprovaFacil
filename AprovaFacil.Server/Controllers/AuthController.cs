@@ -2,7 +2,7 @@
 using AprovaFacil.Application.Services;
 using AprovaFacil.Domain.DTOs;
 using AprovaFacil.Infra.Data.Identity;
-using AprovaFacil.Server.DTOs;
+using AprovaFacil.Server.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -25,7 +25,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] LoginContract request)
     {
         if (!ModelState.IsValid)
         {

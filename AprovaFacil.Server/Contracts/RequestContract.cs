@@ -1,6 +1,6 @@
-﻿namespace AprovaFacil.Server.DTOs;
+﻿namespace AprovaFacil.Server.Contracts;
 
-public class HttpRequest
+public class HttpRegisterRequest
 {
     public required Int32[] ManagersId { get; set; } = [];
     public required Int32[] DirectorsIds { get; set; } = [];

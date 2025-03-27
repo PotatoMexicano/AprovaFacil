@@ -1,5 +1,7 @@
 ﻿using AprovaFacil.Domain.DTOs;
+using AprovaFacil.Domain.Filters;
 using AprovaFacil.Domain.Interfaces;
+using AprovaFacil.Server.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -11,8 +13,26 @@ namespace AprovaFacil.Server.Controllers;
 [Authorize]
 public class RequestController(RequestInterfaces.IRequestService service) : ControllerBase
 {
+    [HttpPost("myself")]
+    public async Task<IActionResult> ListRequest([FromBody] FilterRequest request, CancellationToken cancellation = default)
+    {
+        String? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId is null)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Detail = "Are you logged in ?"
+            });
+        }
+
+        RequestDTO[] result = await service.ListRequests(request, userId, cancellation);
+
+        return Ok(result);
+    }
+
     [HttpPost("register")]
-    public async Task<ActionResult<RequestDTO>> RegisterRequest([FromForm] DTOs.HttpRequest request, CancellationToken cancellation = default)
+    public async Task<ActionResult<RequestDTO>> RegisterRequest([FromForm] HttpRegisterRequest request, CancellationToken cancellation = default)
     {
         if (request.Invoice != null)
         {
@@ -110,4 +130,5 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
 
         return Ok(result);
     }
+
 }
