@@ -5,7 +5,7 @@ import { customBaseQuery } from "./base-api";
 export const userApi = createApi({
   reducerPath: "userApi",
   baseQuery: customBaseQuery(),
-  tagTypes: ["Users", "Enabled"],
+  tagTypes: ["Users"],
   endpoints: (builder) => ({
     getUsers: builder.query<UserResponse[], void>({
       query: () => 'user',
@@ -14,11 +14,12 @@ export const userApi = createApi({
 
     getEnabledUsers: builder.query<UserResponse[], void>({
       query: () => 'user/enabled',
-      providesTags: ['Enabled']
+      providesTags: ["Users"]
     }),
 
     getUser: builder.query<UserResponse | undefined, string>({
-      query: (idUser) => `user/${idUser}`
+      query: (idUser) => `user/${idUser}`,
+      providesTags: ["Users"]
     }),
 
     disableUser: builder.mutation<boolean, number>({
@@ -26,7 +27,7 @@ export const userApi = createApi({
         url: `user/${idUser}/disable`,
         method: `POST`,
       }),
-      invalidatesTags: ["Users", "Enabled"]
+      invalidatesTags: ["Users"]
     }),
 
     enableUser: builder.mutation<boolean, number>({
@@ -34,7 +35,7 @@ export const userApi = createApi({
         url: `user/${idUser}/enable`,
         method: `POST`,
       }),
-      invalidatesTags: ["Users", "Enabled"]
+      invalidatesTags: ["Users"]
     }),
 
     registerUser: builder.mutation<UserResponse, Omit<UserResponse, "id" | "enabled" | "identity_roles">>({
@@ -43,8 +44,17 @@ export const userApi = createApi({
         method: `POST`,
         body: userData,
       }),
-      invalidatesTags: ["Users", "Enabled"],
+      invalidatesTags: ["Users"],
     }),
+
+    updateUser: builder.mutation<UserResponse, Omit<UserResponse, "role_label" | "department_label" | "enabled" | "identity_roles">>({
+      query: (userData) => ({
+        url: 'user/update',
+        method: 'POST',
+        body: userData,
+      }),
+      invalidatesTags: ["Users"],
+    })
 
   })
 });
@@ -55,4 +65,5 @@ export const {
   useGetEnabledUsersQuery,
   useDisableUserMutation,
   useEnableUserMutation,
-  useRegisterUserMutation } = userApi;
+  useRegisterUserMutation,
+  useUpdateUserMutation } = userApi;

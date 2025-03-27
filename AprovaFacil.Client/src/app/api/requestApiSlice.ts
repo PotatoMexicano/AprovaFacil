@@ -1,17 +1,17 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
-import { Request } from "../features/requests/view-requests/columns";
 import { customBaseQuery } from "./base-api";
+import { RequestReponse } from "@/types/request";
 
 export const requestApi = createApi({
   reducerPath: "requestApi",
   baseQuery: customBaseQuery(),
   tagTypes: ["Requests"],
   endpoints: (builder) => ({
-    registerRequest: builder.mutation<Request, Request>({
+    registerRequest: builder.mutation({
       query: (requestData) => {
         const formData = new FormData();        
         formData.append("companyId", requestData.companyId.toString());
-        formData.append("managerId", requestData.managerId.toString());
+        formData.append("managersId", requestData.managerId.toString());
         requestData.directorsIds.forEach((id, index) => {
           formData.append(`DirectorsIds[${index}]`, id.toString());
         });
@@ -25,14 +25,22 @@ export const requestApi = createApi({
           url: `request/register`,
           method: `POST`,
           body: formData,
-          // Não definimos headers aqui, o navegador definirá automaticamente Content-Type como multipart/form-data
         };
       },
       invalidatesTags: ["Requests"]
+    }),
+
+    getMyRequests: builder.query<RequestReponse, void>({
+      query: () => ({
+        url: "request/myself",
+        method: 'POST',
+        body: {}
+      }),
+      providesTags: ["Requests"]
     }),
 
 
   })
 });
 
-export const { useRegisterRequestMutation } = requestApi;
+export const { useRegisterRequestMutation, useGetMyRequestsQuery } = requestApi;

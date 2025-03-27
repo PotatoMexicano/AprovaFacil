@@ -5,12 +5,12 @@ import ViewCompaniesPage from "../features/company/view-companies/Page";
 import NewCompanyPage from "../features/company/new-company/Page";
 import EditCompanyPage from "../features/company/edit-company/Page";
 import NewRequestPage from "../features/requests/new-request/Page";
-import ViewRequestsPage from "../features/requests/view-requests/Page";
 import LoginPage from "../features/login/Page";
 import ProtectedRoute from "../components/protected-route";
 import ViewUsersPage from "../features/user/view-user/Page";
 import NewUserPage from "../features/user/new-user/Page";
 import EditUserPage from "../features/user/edit-user/Page";
+import Example from "../features/requests/view-requests/Page";
 
 export const router = createBrowserRouter([
   { path: 'login', element: <LoginPage /> },
@@ -30,7 +30,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'request', children: [
-              { path: '', element: <ViewRequestsPage /> },
+              { path: '', element: <Example /> },
               { path: 'register', element: <NewRequestPage /> },
             ]
           },

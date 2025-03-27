@@ -1,13 +1,15 @@
 ﻿using AprovaFacil.Domain.DTOs;
+using AprovaFacil.Domain.Extensions;
 using AprovaFacil.Domain.Interfaces;
 using AprovaFacil.Domain.Models;
 using AprovaFacil.Infra.Data.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace AprovaFacil.Infra.Data.Repository;
 
-public class UserRepository(UserManager<ApplicationUser> userManager) : UserInterfaces.IUserRepository
+public class UserRepository(UserManager<ApplicationUser> userManager, ILogger<UserRepository> logger) : UserInterfaces.IUserRepository
 {
     public async Task<Boolean> DisableUserAsync(Int32 idUser, CancellationToken cancellation)
     {
@@ -78,6 +80,7 @@ public class UserRepository(UserManager<ApplicationUser> userManager) : UserInte
             })
             .OrderByDescending(u => u.Enabled)
             .ThenBy(u => u.FullName)
+            .AsNoTracking()
             .ToArrayAsync(cancellation);
         return entities;
     }
@@ -97,6 +100,7 @@ public class UserRepository(UserManager<ApplicationUser> userManager) : UserInte
             })
             .Where(u => u.Enabled)
             .OrderBy(u => u.FullName)
+            .AsNoTracking()
             .ToArrayAsync(cancellation);
         return entities;
     }
@@ -107,15 +111,17 @@ public class UserRepository(UserManager<ApplicationUser> userManager) : UserInte
             .Select(u => new ApplicationUser
             {
                 Id = u.Id,
+                UserName = u.UserName,
                 FullName = u.FullName,
                 Department = u.Department,
                 PictureUrl = u.PictureUrl,
                 Email = u.Email,
                 Enabled = u.Enabled,
                 Role = u.Role,
+                SecurityStamp = u.SecurityStamp,
             })
             .Where(x => x.Id == idUser)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellation);
         return entity;
     }
 
@@ -139,6 +145,7 @@ public class UserRepository(UserManager<ApplicationUser> userManager) : UserInte
                 Role = x.Role
             })
             .Where(u => usersId.Contains(u.Id))
+            .AsNoTracking()
             .ToDictionaryAsync(p => p.Id, q => (IApplicationUser)q, cancellation);
 
         return users;
@@ -169,7 +176,7 @@ public class UserRepository(UserManager<ApplicationUser> userManager) : UserInte
         if (result.Succeeded)
         {
             String roleToAssign = user.Role;
-            userManager.AddToRoleAsync(user, roleToAssign).Wait();
+            userManager.AddToRoleAsync(user, roleToAssign).Wait(cancellation);
         }
         else
         {
@@ -178,5 +185,39 @@ public class UserRepository(UserManager<ApplicationUser> userManager) : UserInte
         }
 
         return user;
+    }
+
+    public async Task<IApplicationUser?> UpdateUserAsync(UserUpdateDTO request, CancellationToken cancellation)
+    {
+        try
+        {
+            IApplicationUser? applicationUser = await userManager.FindByIdAsync(request.Id.ToString());
+
+            if (applicationUser is null)
+            {
+                return null;
+            }
+
+            UserExtensions.Update(ref applicationUser, request);
+
+            if (!String.IsNullOrEmpty(request.Password))
+            {
+                String token = await userManager.GeneratePasswordResetTokenAsync((ApplicationUser)applicationUser);
+                IdentityResult result = await userManager.ResetPasswordAsync((ApplicationUser)applicationUser, token, request.Password);
+                await userManager.UpdateAsync((ApplicationUser)applicationUser);
+                return applicationUser;
+            }
+            else
+            {
+                await userManager.UpdateAsync((ApplicationUser)applicationUser);
+                return applicationUser;
+            }
+
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Falha ao atualizar usuário.");
+            return null;
+        }
     }
 }

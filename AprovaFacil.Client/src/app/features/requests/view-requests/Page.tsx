@@ -1,129 +1,194 @@
-"use client"
+"use client";
 
-import { useEffect } from "react"
-import { AlertCircle } from "lucide-react"
-import { Badge } from "@/app/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card"
-import { useBreadcrumb } from "@/app/context/breadkcrumb-context"
-import { Skeleton } from "@/app/components/ui/skeleton"
-import { Alert, AlertDescription, AlertTitle } from "@/app/components/ui/alert"
-import { Requisicao } from "@/types/request"
-import useColumns from "./columns"
-import { useGetCompaniesQuery } from "@/app/api/companyApiSlice"
-import { DataTable } from "../../company/view-companies/data-table"
+import { ColumnDef, getCoreRowModel, RowExpanding, useReactTable, } from "@tanstack/react-table";
+import { Button } from "@/app/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/app/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { Skeleton } from "@/app/components/ui/skeleton";
+import { RequestReponse } from "@/types/request";
+import { useGetMyRequestsQuery } from "@/app/api/requestApiSlice";
+import { DataTable } from "../../requests/view-requests/data-table";
+import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar";
+import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/ui/tooltip";
 
-// Dados de exemplo
-const requisicoes: Requisicao[] = [
-  {
-    id: "REQ-001",
-    notaFiscal: {
-      nome: "NF-2023-001.pdf",
-      url: "#",
-    },
-    orcamento: {
-      nome: "ORC-2023-001.pdf",
-      url: "#",
-    },
-    validador: "João Silva",
-    empresa: "Tech Solutions Ltda",
-    dataPagamento: new Date(2023, 11, 15),
-    valor: 5000.0,
-    observacao: "Serviços de consultoria em TI",
-    status: "aprovado",
-  },
-  {
-    id: "REQ-002",
-    notaFiscal: {
-      nome: "NF-2023-002.pdf",
-      url: "#",
-    },
-    orcamento: {
-      nome: "ORC-2023-002.pdf",
-      url: "#",
-    },
-    validador: "Maria Oliveira",
-    empresa: "Construções Rápidas S.A.",
-    dataPagamento: new Date(2023, 11, 20),
-    valor: 12500.0,
-    observacao: "Materiais de construção para reforma",
-    status: "pendente",
-  },
-  {
-    id: "REQ-003",
-    notaFiscal: {
-      nome: "NF-2023-003.pdf",
-      url: "#",
-    },
-    orcamento: {
-      nome: "ORC-2023-003.pdf",
-      url: "#",
-    },
-    validador: "Carlos Mendes",
-    empresa: "Distribuidora Global",
-    dataPagamento: new Date(2023, 10, 30),
-    valor: 3200.0,
-    observacao: "Fornecimento de equipamentos de escritório",
-    status: "recusado",
-  },
-  {
-    id: "REQ-004",
-    notaFiscal: {
-      nome: "NF-2023-004.pdf",
-      url: "#",
-    },
-    orcamento: {
-      nome: "ORC-2023-004.pdf",
-      url: "#",
-    },
-    validador: "Ana Beatriz",
-    empresa: "Consultoria Financeira Ltda",
-    dataPagamento: new Date(2023, 9, 10),
-    valor: 7800.0,
-    observacao: "Serviços de auditoria financeira",
-    status: "expirado",
-  },
-  {
-    id: "REQ-005",
-    notaFiscal: {
-      nome: "NF-2023-005.pdf",
-      url: "#",
-    },
-    orcamento: {
-      nome: "ORC-2023-005.pdf",
-      url: "#",
-    },
-    validador: "Roberto Alves",
-    empresa: "Indústrias Unidas S.A.",
-    dataPagamento: new Date(2023, 11, 28),
-    valor: 15000.0,
-    observacao: "Manutenção de maquinário industrial",
-    status: "aprovado",
-  },
-]
+// Componente da tabela
+export default function Example() {
 
-// Adicionar estado para controlar a visualização de anexos
-export default function ViewRequestsPage() {
-  const { setBreadcrumbs } = useBreadcrumb();
+  const { data, isLoading, error } = useGetMyRequestsQuery();
 
-  useEffect(() => {
-    setBreadcrumbs(["Início", "Requisições"]); // Define os breadcrumbs da página atual
-  }, [setBreadcrumbs]);
+  const columns: ColumnDef<RequestReponse>[] = [
+    {
+      accessorKey: "requester",
+      header: "Solicitante",
+      cell: ({ row }) => {
+        return (
+          <div className="flex flex-col">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Avatar className={cn("size-12 p-1 border-2", row.original.requester.enabled
+                    ? "border-green-400"
+                    : "border-red-400"
+                  )}>
+                    <AvatarImage src={row.original.requester.picture_url} />
+                    <AvatarFallback>{row.original.requester.full_name}</AvatarFallback>
+                  </Avatar>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{row.original.requester.full_name}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "payment_date",
+      header: "Data de Pagamento",
+      cell: ({ row }) =>
+        row.original.payment_date
+          ? new Date(row.original.payment_date).toLocaleDateString("pt-BR")
+          : "-",
+    },
+    {
+      accessorKey: "create_at",
+      header: "Data de Criação",
+      cell: ({ row }) =>
+        new Date(row.original.create_at).toLocaleDateString("pt-BR"),
+    },
+    {
+      accessorKey: "approved_first_level_at",
+      header: "Aprovado Nível 1",
+      cell: ({ row }) =>
+        row.original.approved_first_level_at
+          ? new Date(row.original.approved_first_level_at).toLocaleDateString(
+            "pt-BR"
+          )
+          : "-",
+    },
+    {
+      accessorKey: "approved_second_level_at",
+      header: "Aprovado Nível 2",
+      cell: ({ row }) =>
+        row.original.approved_second_level_at
+          ? new Date(row.original.approved_second_level_at).toLocaleDateString(
+            "pt-BR"
+          )
+          : "-",
+    },
+    {
+      accessorKey: "received_at",
+      header: "Data de Recebimento",
+      cell: ({ row }) =>
+        row.original.received_at
+          ? new Date(row.original.received_at).toLocaleDateString("pt-BR")
+          : "-",
+    },
+    {
+      accessorKey: "amount",
+      header: "Valor",
+      cell: ({ row }) =>
+        row.original.amount.toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }),
+    },
+    {
+      accessorKey: "note",
+      header: "Nota",
+      cell: ({ row }) => row.original.note || "-",
+    },
+    {
+      accessorKey: "managers",
+      header: "Gerentes",
+      cell: ({ row }) => (
+        <div className="flex -space-x-1 overflow-hidden">
+          {row.original.managers.length > 0 ? (
+            row.original.managers.map((manager, index) => (
+              <TooltipProvider key={index}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Avatar
+                      className={cn(
+                        "size-12 p-1 border-2 rounded-full ring-2 ring-white bg-white",
+                        manager.enabled ? "border-green-400" : "border-red-400"
+                      )}
+                    >
+                      <AvatarImage src={manager.picture_url} />
+                      <AvatarFallback>{manager.full_name}</AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{manager.full_name}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ))
+          ) : (
+            "-"
+          )}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "directors",
+      header: "Diretores",
+      cell: ({ row }) => (
+        <div className="flex -space-x-4 overflow-hidden">
+          {row.original.directors.length > 0 ? (
+            row.original.directors.map((director, index) => (
+              <>
+                <TooltipProvider key={index}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Avatar
+                        className={cn(
+                          "size-12 p-1 border-2 rounded-full ring-2 ring-white bg-white",
+                          director.enabled ? "border-green-400" : "border-red-400"
+                        )}
+                      >
+                        <AvatarImage src={director.picture_url} />
+                        <AvatarFallback>{director.full_name}</AvatarFallback>
+                      </Avatar>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{director.full_name}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </>
+            ))
+          ) : (
+            "-"
+          )}
+        </div>
+      ),
+    },
+  ];
 
-  const { data: company, error: errorCompany, isError: isCompanyError, isLoading: isCompanyLoading } = useGetCompaniesQuery();
-  const columns = useColumns();
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
 
   return (
     <>
       <Card className="col-span-12 flex flex-col shadow-none border-0">
         <CardHeader>
           <CardTitle className="text-2xl w-full flex justify-between">
-            Empresas cadastradas
-            <Badge className="m-2" variant={"default"}> {isCompanyLoading ? "..." : company?.length} Empresas </Badge>
+            Minhas solicitações
+            <Button asChild>
+              <a href="/request/register">Nova solicitação</a>
+            </Button>
           </CardTitle>
-          <CardDescription>Empresas cadastradas para emissão de nota fiscal.</CardDescription>
+          <CardDescription>Minhas requisições cadastradas.</CardDescription>
         </CardHeader>
         <CardContent>
-          {isCompanyLoading
+          {isLoading
             ? (
               <div className="flex flex-col space-y-3 py-4">
                 <div className="space-y-2">
@@ -133,24 +198,26 @@ export default function ViewRequestsPage() {
               </div>
             )
             : (
-              !isCompanyError && company
+              !error && data
                 ? (
-                  <DataTable columns={columns} data={company} />
+                  <DataTable columns={columns} data={Array.isArray(data) ? data : []} />
                 )
                 : (
                   <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Error</AlertTitle>
                     <AlertDescription>
-                      {(errorCompany as Error).message}
+                      {error
+                        ? 'status' in error
+                          ? `Error ${error.status}: ${JSON.stringify(error.data)}`
+                          : error.message
+                        : "Unknown error"}
                     </AlertDescription>
                   </Alert>
                 )
             )}
         </CardContent>
       </Card>
-
     </>
-  )
+  );
 }
-

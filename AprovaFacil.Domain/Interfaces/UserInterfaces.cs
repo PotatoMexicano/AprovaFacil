@@ -12,9 +12,11 @@ public static class UserInterfaces
         Task<UserDTO?> GetUser(Int32 idUser, CancellationToken cancellation);
 
         Task<UserDTO?> RegisterUser(UserRegisterDTO request, CancellationToken cancellation);
+        Task<UserDTO?> UpdateUser(UserUpdateDTO request, CancellationToken cancellation);
 
         Task<Boolean> DisableUser(Int32 idUser, CancellationToken cancellation);
         Task<Boolean> EnableUser(Int32 idUser, CancellationToken cancellation);
+
     }
 
     public interface IUserRepository
@@ -26,8 +28,10 @@ public static class UserInterfaces
         Task<IApplicationUser?> GetUserAsync(Int32 idUser, CancellationToken cancellation);
 
         Task<IApplicationUser?> RegisterUserAsync(UserRegisterDTO request, CancellationToken cancellation);
+        Task<IApplicationUser?> UpdateUserAsync(UserUpdateDTO user, CancellationToken cancellation);
 
         Task<Boolean> DisableUserAsync(Int32 idUser, CancellationToken cancellation);
         Task<Boolean> EnableUserAsync(Int32 idUser, CancellationToken cancellation);
+
     }
 }

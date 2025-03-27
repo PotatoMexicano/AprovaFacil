@@ -88,5 +88,21 @@ public class UserController(UserInterfaces.IUserService service) : ControllerBas
 
         return Ok(result);
     }
+
+    [HttpPost("update")]
+    public async Task<IActionResult> UpdateUser([FromBody] UserUpdateDTO request, CancellationToken cancellation = default)
+    {
+        UserDTO? result = await service.UpdateUser(request, cancellation);
+
+        if (result is null)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Detail = "Falha ao atualizar usuário"
+            });
+        }
+
+        return Ok(result);
+    }
 }
 

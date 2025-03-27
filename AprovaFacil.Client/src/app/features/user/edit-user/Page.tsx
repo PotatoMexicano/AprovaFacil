@@ -9,22 +9,22 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/app/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select"
-import userSchema from "@/app/schemas/userSchema"
-import { useGetUserQuery } from "@/app/api/userApiSlice"
+import { userSchemaUpdate } from "@/app/schemas/userSchema"
+import { useGetUserQuery, useUpdateUserMutation } from "@/app/api/userApiSlice"
 import { useNavigate, useParams } from "react-router-dom"
 import AvatarCarousel from "@/app/components/ui/avatar-carousel"
 import { toast } from "sonner"
 import { Badge } from "@/app/components/ui/badge"
+import ButtonSuccess from "@/app/components/ui/button-success"
 
 export default function EditUserPage() {
 
   const { id } = useParams<{ id: string }>();
+  const { setBreadcrumbs } = useBreadcrumb();
+  const navigate = useNavigate();
 
-  const { setBreadcrumbs } = useBreadcrumb()
-  const navigate = useNavigate()
-
-  const { data: user, isSuccess: isUserSuccess } = useGetUserQuery(id || "");
-  const [registerSuccess, setRegisterSuccess] = useState<boolean | undefined>(undefined)
+  const [updateSuccess, setUpdateSuccess] = useState<boolean | undefined>(undefined)
+  const [updateUser, { isLoading, error }] = useUpdateUserMutation();
 
   // Predefined roles and departments based on your application
   const roles = [
@@ -45,13 +45,13 @@ export default function EditUserPage() {
     { value: "Engineer", label: "Engenharia" },
   ]
 
-  const form = useForm<z.infer<typeof userSchema>>({
-    resolver: zodResolver(userSchema),
+  const form = useForm<z.infer<typeof userSchemaUpdate>>({
+    resolver: zodResolver(userSchemaUpdate),
     defaultValues: {
       full_name: "",
       role: "",
       department: "",
-      picture_url: '/avatars/female/82.png',
+      picture_url: "",
       email: "",
       password: "",
     },
@@ -59,36 +59,47 @@ export default function EditUserPage() {
 
   const { reset } = form;
 
+  const { data: user, isSuccess: isUserSuccess } = useGetUserQuery(id || "");
+
   useEffect(() => {
     setBreadcrumbs(["Início", "Usuários", "Editar"])
   }, [setBreadcrumbs]);
 
   useEffect(() => {
     if (isUserSuccess && user) {
-      reset({
-        ...user,
-        role: user.role,
-        department: user.department
+      form.reset({
+        full_name: user.full_name || "",
+        role: user.role || "",
+        department: user.department || "",
+        picture_url: user.picture_url || "",
+        email: user.email || "",
+        password: "",
       });
+
+      setTimeout(() => {
+        form.setValue("role", user.role || "");
+        form.setValue("department", user.department || "");
+        console.log("Valores do formulário após reset:", form.getValues());
+      }, 0);
     }
-  }, [user, isUserSuccess, reset, form])
+  }, [user, isUserSuccess, form]);
 
-  async function onSubmit(values: z.infer<typeof userSchema>) {
+  async function onSubmit(values: z.infer<typeof userSchemaUpdate>) {
     try {
-      await registerUser(values).unwrap();
+      await updateUser({ ...values, id: Number(id) }).unwrap();
 
-      setRegisterSuccess(isSuccess);
+      setUpdateSuccess(isUserSuccess);
 
-      toast.success("O usuário foi registrado com sucesso.");
+      toast.success("O usuário foi atualizado com sucesso.");
 
       // Redirect to users list after successful registration
       setTimeout(() => {
         navigate("/users")
       }, 2000)
 
-    } catch (error) {
-      console.error(`Erro ao registrar usuário:`, errorRegisterUser);
-      if (errorRegisterUser) {
+    } catch {
+      console.error(`Erro ao registrar usuário:`, error);
+      if (error) {
         toast.error(`Falha ao registrar usuário`)
       }
     }
@@ -97,7 +108,7 @@ export default function EditUserPage() {
   return (
     <Card className="col-span-12 flex flex-col shadow-none border-0">
       <CardHeader>
-      <CardTitle>Cadastro do usuário <Badge className="m-2" variant={"default"}>{form.getValues("full_name") || "... carregando"}</Badge></CardTitle>
+        <CardTitle>Cadastro do usuário <Badge className="m-2" variant={"default"}>{user?.full_name || "... carregando"}</Badge></CardTitle>
         <CardDescription>Preencha os dados para atualizar o usuário no sistema.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -221,13 +232,13 @@ export default function EditUserPage() {
             </div>
 
             <div className="col-span-12 justify-start pt-4">
-              {/* <ButtonSuccess
+              <ButtonSuccess
                 isLoading={isLoading}
-                isSuccess={registerSuccess}
-                defaultText="Cadastrar Usuário"
-                loadingText="Cadastrando..."
-                successText="Usuário Cadastrado!"
-              /> */}
+                isSuccess={updateSuccess}
+                defaultText="Atualizar Usuário"
+                loadingText="Atualizando..."
+                successText="Usuário Atualizado!"
+              />
             </div>
           </form>
         </Form>

@@ -1,5 +1,4 @@
-﻿using AprovaFacil.Application.Extensions;
-using AprovaFacil.Application.Services;
+﻿using AprovaFacil.Application.Services;
 using AprovaFacil.Domain.Constants;
 using AprovaFacil.Domain.DTOs;
 using AprovaFacil.Domain.Interfaces;
@@ -119,6 +118,7 @@ public static class DependencyInjection
             options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
         }).AddCookie(options =>
         {
+            options.Cookie.Domain = "192.168.7.128";
             options.Cookie.HttpOnly = true;
             options.Cookie.SecurePolicy = CookieSecurePolicy.None;
             options.Cookie.SameSite = SameSiteMode.Lax;
@@ -127,13 +127,6 @@ public static class DependencyInjection
             options.SlidingExpiration = true;
         });
         services.AddAuthorization();
-
-        // Registrar serviços da Application
-        services.AddScoped<UserExtensions>();
-
-        // Registrar IApplicationUser como ApplicationUser
-        services.AddScoped<IApplicationUser>(provider =>
-            provider.GetService<ApplicationUser>() ?? new ApplicationUser());
 
         return services;
     }
@@ -208,15 +201,15 @@ public static class DependencyInjection
 
         ApplicationUser[] users = new[]
         {
-                new ApplicationUser
-                {
-                    UserName = "requester@example.com",
-                    Email = "requester@example.com",
-                    FullName = "Ana Requester",
-                    Role = Roles.Requester,
-                    Department = Departaments.IT,
-                    PictureUrl = "/avatars/female/86.png",
-                    Enabled = true
+            new ApplicationUser
+            {
+                UserName = "requester@example.com",
+                Email = "requester@example.com",
+                FullName = "Ana Requester",
+                Role = Roles.Requester,
+                Department = Departaments.IT,
+                PictureUrl = "/avatars/female/86.png",
+                Enabled = true
                 },
                 new ApplicationUser
                 {

@@ -1,5 +1,6 @@
-﻿using AprovaFacil.Application.Extensions;
-using AprovaFacil.Domain.DTOs;
+﻿using AprovaFacil.Domain.DTOs;
+using AprovaFacil.Domain.Extensions;
+using AprovaFacil.Domain.Filters;
 using AprovaFacil.Domain.Interfaces;
 using AprovaFacil.Domain.Models;
 using Serilog;
@@ -12,6 +13,20 @@ public class RequestService(
     ServerDirectory serverDirectory
 ) : RequestInterfaces.IRequestService
 {
+    public async Task<RequestDTO[]> ListRequests(FilterRequest request, String strApplicationUserId, CancellationToken cancellation = default)
+    {
+
+        if (Int32.TryParse(strApplicationUserId, out Int32 applicationUserId))
+        {
+            Request[] requests = await repository.ListRequestsAsync(request, applicationUserId, cancellation);
+            return [.. requests.Select(RequestExtensions.ToDTO)];
+        }
+        else
+        {
+            return Array.Empty<RequestDTO>();
+        }
+    }
+
     public async Task<RequestDTO> RegisterRequest(RequestRegisterDTO request, CancellationToken cancellation)
     {
         Int32[] usersId = [.. request.ManagersId, .. request.DirectorsIds, request.RequesterId];

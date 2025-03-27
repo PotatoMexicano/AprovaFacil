@@ -1,7 +1,7 @@
 ﻿using AprovaFacil.Domain.DTOs;
 using AprovaFacil.Domain.Models;
 
-namespace AprovaFacil.Application.Extensions;
+namespace AprovaFacil.Domain.Extensions;
 
 public static class CompanyExtensions
 {

@@ -26,3 +26,14 @@ public class UserRegisterDTO
     public required String Email { get; set; }
     public required String Password { get; set; }
 }
+
+public class UserUpdateDTO
+{
+    public required Int32 Id { get; set; }
+    public required String FullName { get; set; }
+    public required String Email { get; set; }
+    public String? Password { get; set; }
+    public required String Role { get; set; }
+    public required String Department { get; set; }
+    public required String PictureUrl { get; set; }
+}

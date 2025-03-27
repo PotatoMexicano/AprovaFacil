@@ -26,7 +26,7 @@ import { useState } from "react"
 import React from "react"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/app/components/ui/select"
 import { AnimatePresence, motion } from "framer-motion"
-import { Search, Send } from "lucide-react"
+import { Search } from "lucide-react"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -46,7 +46,6 @@ export function DataTable<TData, TValue>({
     pageIndex: 0, //initial page index
     pageSize: Number(selectedOption), //default page size
   });
-
 
   const table = useReactTable({
     data,
@@ -69,10 +68,10 @@ export function DataTable<TData, TValue>({
         <div className="relative w-96">
           <Input
             placeholder="Buscar nome..."
-            value={(table.getColumn("trade_name")?.getFilterValue() as string) ?? ""}
+            value={(table.getColumn("note")?.getFilterValue() as string) ?? ""}
             onChange={(event) => {
               setFilterValue(event.target.value)
-              table.getColumn("trade_name")?.setFilterValue(event.target.value)
+              table.getColumn("note")?.setFilterValue(event.target.value)
             }} />
 
           <div className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4">

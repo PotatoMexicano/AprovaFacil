@@ -1,5 +1,5 @@
-﻿using AprovaFacil.Application.Extensions;
-using AprovaFacil.Domain.DTOs;
+﻿using AprovaFacil.Domain.DTOs;
+using AprovaFacil.Domain.Extensions;
 using AprovaFacil.Domain.Interfaces;
 using AprovaFacil.Domain.Models;
 using Microsoft.AspNetCore.Http;
@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace AprovaFacil.Application.Services;
 
-public class UserService(UserInterfaces.IUserRepository repository, IHttpContextAccessor httpContextAccessor, Func<User, IApplicationUser> userFactory) : UserInterfaces.IUserService
+public class UserService(UserInterfaces.IUserRepository repository, IHttpContextAccessor httpContextAccessor) : UserInterfaces.IUserService
 {
     public async Task<Boolean> DisableUser(Int32 idUser, CancellationToken cancellation)
     {
@@ -58,26 +58,20 @@ public class UserService(UserInterfaces.IUserRepository repository, IHttpContext
     public async Task<UserDTO[]> GetAllUsers(CancellationToken cancellation)
     {
         IApplicationUser[] applicationUsersEntity = await repository.GetAllUsersAsync(cancellation);
-        User[] userEntities = [.. applicationUsersEntity.Select(UserExtensions.ToDomainUser)];
-        UserDTO[] dtos = [.. userEntities.Select(UserExtensions.ToDTO)];
-        return dtos;
+        return [.. applicationUsersEntity.Select(UserExtensions.ToDTO)];
     }
 
     public async Task<UserDTO[]> GetAllusersEnabled(CancellationToken cancellation)
     {
         IApplicationUser[] applicationUsersEntity = await repository.GetAllUsersEnabledAsync(cancellation);
-        User[] userEntities = [.. applicationUsersEntity.Select(UserExtensions.ToDomainUser)];
-        UserDTO[] dtos = [.. userEntities.Select(UserExtensions.ToDTO)];
-        return dtos;
+        return [.. applicationUsersEntity.Select(UserExtensions.ToDTO)];
     }
 
     public async Task<UserDTO?> GetUser(Int32 idUser, CancellationToken cancellation)
     {
         IApplicationUser? applicationUserEntity = await repository.GetUserAsync(idUser, cancellation);
         if (applicationUserEntity is null) return null;
-        User userEntity = UserExtensions.ToDomainUser(applicationUserEntity);
-        UserDTO dto = UserExtensions.ToDTO(userEntity);
-        return dto;
+        return applicationUserEntity.ToDTO();
     }
 
     public async Task<UserDTO?> RegisterUser(UserRegisterDTO request, CancellationToken cancellation)
@@ -90,6 +84,12 @@ public class UserService(UserInterfaces.IUserRepository repository, IHttpContext
             return null;
         }
 
-        return UserExtensions.ToDTO(UserExtensions.ToDomainUser(entity));
+        return entity.ToDTO();
+    }
+
+    public async Task<UserDTO?> UpdateUser(UserUpdateDTO request, CancellationToken cancellation)
+    {
+        IApplicationUser? applicationUser = await repository.UpdateUserAsync(request, cancellation);
+        return applicationUser?.ToDTO();
     }
 }
