@@ -16,11 +16,22 @@ public static class RequestExtensions
             BudgetName = request.BudgetName,
             PaymentDate = request.PaymentDate,
             CreateAt = request.CreateAt,
-            ApprovedFirstLevelAt = request.ApprovedFirstLevelAt,
-            ApprovedSecondLevelAt = request.ApprovedSecondLevelAt,
-            ReceivedAt = request.ReceivedAt,
+            ApprovedFirstLevel = request.ApprovedFirstLevel,
+            ApprovedSecondLevel = request.ApprovedSecondLevel,
+            FirstLevelAt = request.FirstLevelAt,
+            SecondLevelAt = request.SecondLevelAt,
+            ReceivedAt = request.FinishedAt,
             Amount = request.Amount,
             Note = request.Note,
+            Company = new CompanyDTO
+            {
+                Id = request.Company.Id,
+                LegalName = request.Company.LegalName,
+                TradeName = request.Company.TradeName,
+                CNPJ = request.Company.CNPJ,
+                Phone = request.Company.Phone,
+                Email = request.Company.Email,
+            },
             Requester = new UserDTO
             {
                 Department = request.Requester.Department,
@@ -56,7 +67,7 @@ public static class RequestExtensions
 
     public static IQueryable<Request> Filter(ref IQueryable<Request> query, FilterRequest filter, Int32? applicationUserId)
     {
-        if (filter.ApplicationUserId.HasValue)
+        if (applicationUserId.HasValue)
         {
             query = query.Where(x => x.RequesterId == applicationUserId);
         }

@@ -1,81 +1,69 @@
 "use client"
 
-import { ChevronRight, type LucideIcon } from "lucide-react"
+import { Boxes, PackageIcon, PackagePlus, type LucideIcon } from "lucide-react"
 
 import {
   Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
 } from "@/app/components/ui/collapsible"
 import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from "@/app/components/ui/sidebar"
-
 
 export interface subItems {
   title: string
+  url: string
+  icon: LucideIcon
+  isActive?: boolean
+  isAccent?: boolean
+  items?: {
+    title: string
     url: string
-    icon: LucideIcon
-    isActive?: boolean
-    isAccent?: boolean
-    items?: {
-      title: string
-      url: string
-    }[]
+  }[]
 }
 
-export function NavRequests({
-  items,
-}: {
-  items: subItems[]
-}) {
+export function NavRequests() {
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Requisições</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) => (
-          <Collapsible key={item.title} asChild defaultOpen={item.isActive}>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={item.title}>
-                <a href={item.url}>
-                  <item.icon />
-                  <span>{item.title}</span>
-                </a>
-              </SidebarMenuButton>
-              {item.items?.length ? (
-                <>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuAction className="data-[state=open]:rotate-90">
-                      <ChevronRight />
-                      <span className="sr-only">Toggle</span>
-                    </SidebarMenuAction>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {item.items?.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild>
-                            <a href={subItem.url}>
-                              <span>{subItem.title}</span>
-                            </a>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </>
-              ) : null}
-            </SidebarMenuItem>
-          </Collapsible>
-        ))}
+
+        <Collapsible asChild>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Nova solicitação">
+              <a href="/request/register">
+                <PackagePlus />
+                <span>Nova solicitação</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </Collapsible>
+
+        <Collapsible asChild>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Minhas solicitações">
+              <a href="/request/">
+                <Boxes />
+                <span>Minhas solicitações</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </Collapsible>
+
+        <Collapsible asChild>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Minhas solicitações">
+              <a href="/request/">
+                <PackageIcon />
+                <span>Solicitações pendentes</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </Collapsible>
+
       </SidebarMenu>
     </SidebarGroup>
   )

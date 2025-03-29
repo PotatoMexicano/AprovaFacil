@@ -36,20 +36,6 @@ public static class DependencyInjection
     internal static IServiceCollection AddServices(this IServiceCollection services)
     {
         services.AddSingleton<JwtService>();
-        services.AddScoped<Func<User, IApplicationUser>>(provider => user =>
-        {
-            return new ApplicationUser
-            {
-                Id = user.Id,
-                UserName = user.Email,
-                Email = user.Email,
-                FullName = user.FullName,
-                Role = user.Role,
-                Department = user.Department,
-                PictureUrl = user.PictureUrl,
-                Enabled = user.Enabled
-            };
-        });
         services.AddScoped<CompanyInterfaces.ICompanyService, CompanyService>();
         services.AddScoped<UserInterfaces.IUserService, UserService>();
         services.AddScoped<RequestInterfaces.IRequestService, RequestService>();
@@ -70,7 +56,7 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
 
         // Configurar DbContext
-        services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase("InMemoryDb"));
+        services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite("Data Source=E:\\Desenvolvimento\\CSharp\\AprovaFacil\\AprovaFacil.Server\\mydb.db"));
 
         // Configurar Identity com AddIdentityCore
         services.AddIdentity<ApplicationUser, IdentityRole<Int32>>(options =>
@@ -201,66 +187,12 @@ public static class DependencyInjection
 
         ApplicationUser[] users = new[]
         {
-            new ApplicationUser
-            {
-                UserName = "requester@example.com",
-                Email = "requester@example.com",
-                FullName = "Ana Requester",
-                Role = Roles.Requester,
-                Department = Departaments.IT,
-                PictureUrl = "/avatars/female/86.png",
-                Enabled = true
-                },
-                new ApplicationUser
-                {
-                    UserName = "disabled@example.com",
-                    Email = "disabled@example.com",
-                    FullName = "Marcos Disabled",
-                    Role = Roles.Requester,
-                    Department = Departaments.IT,
-                    PictureUrl = "/avatars/female/86.png",
-                    Enabled = false
-                },
-                new ApplicationUser
-                {
-                    UserName = "manager@example.com",
-                    Email = "manager@example.com",
-                    FullName = "Bruno User",
-                    Role = Roles.Manager,
-                    Department = Departaments.Engineer,
-                    PictureUrl = "/avatars/male/47.png",
-                    Enabled = true
-                },
-                new ApplicationUser
-                {
-                    UserName = "director@example.com",
-                    Email = "director@example.com",
-                    FullName = "Clara User",
-                    Role = Roles.Director,
-                    Department = Departaments.Sales,
-                    PictureUrl = "/avatars/female/82.png",
-                    Enabled = true
-                },
-                new ApplicationUser
-                {
-                    UserName = "finance@example.com",
-                    Email = "finance@example.com",
-                    FullName = "Diego Finance",
-                    Role = Roles.Finance,
-                    Department = Departaments.Finance,
-                    PictureUrl = "/avatars/male/19.png",
-                    Enabled = true
-                },
-                new ApplicationUser
-                {
-                    UserName = "secretary@example.com",
-                    Email = "secretary@example.com",
-                    FullName = "Elisa Assistant",
-                    Role = Roles.Assistant,
-                    Department = Departaments.HR,
-                    PictureUrl = "/avatars/female/100.png",
-                    Enabled = true
-                }
+            new ApplicationUser("ana@example.com", "Ana Luiza", Roles.Requester, Departaments.IT, Avatars.Female86),
+            new ApplicationUser("bruno@example.com", "Bruno Lima", Roles.Manager, Departaments.Engineer, Avatars.Male47),
+            new ApplicationUser("marcos@example.com", "Marcos Souza", Roles.Requester, Departaments.IT, Avatars.Male24, false),
+            new ApplicationUser("clara@example.com", "Clara dias", Roles.Director, Departaments.Sales, Avatars.Female82),
+            new ApplicationUser("diego@example.com", "Diego Felippe", Roles.Finance, Departaments.Finance, Avatars.Male19),
+            new ApplicationUser("elisa@example.com", "Elisa Lucca", Roles.Assistant, Departaments.HR, Avatars.Female100),
             };
 
         foreach (ApplicationUser user in users)
@@ -300,7 +232,7 @@ public static class DependencyInjection
             Directory.CreateDirectory(budgetPath);
         }
 
-        services.AddSingleton<ServerDirectory>(x => new ServerDirectory
+        services.AddSingleton(x => new ServerDirectory
         {
             InvoicePath = invoicePath,
             BudgetPath = budgetPath,

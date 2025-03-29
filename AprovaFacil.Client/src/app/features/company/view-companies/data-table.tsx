@@ -26,7 +26,7 @@ import { useState } from "react"
 import React from "react"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/app/components/ui/select"
 import { AnimatePresence, motion } from "framer-motion"
-import { Search, Send } from "lucide-react"
+import { Search } from "lucide-react"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -37,15 +37,36 @@ export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [filterValue, setFilterValue] = useState("");
-
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [globalFilter, setGlobalFilter] = useState("");
   const [selectedOption, setSelectedOption] = useState("10");
-
   const [pagination, setPagination] = useState({
     pageIndex: 0, //initial page index
     pageSize: Number(selectedOption), //default page size
   });
+
+  const globalFilterFn = (row, columnId, filterValue) => {
+    if (!filterValue) return true;
+
+    const value = filterValue.toLowerCase();
+    const trade_name = String(row.getValue("trade_name") || "").toLowerCase();
+    const state = String(row.getValue("state") || "").toLowerCase();
+    const city = String(row.getValue("city") || "").toLowerCase();
+    const neighborhood = String(row.getValue("neighborhood") || "").toLowerCase();
+    const street = String(row.getValue("street") || "").toLowerCase();
+    const phone = String(row.getValue("phone") || "").toLowerCase();
+    const email = String(row.getValue("email") || "").toLowerCase();
+
+    return (
+      trade_name.includes(value) ||
+      state.includes(value) ||
+      city.includes(value) ||
+      neighborhood.includes(value) ||
+      email.includes(value) ||
+      street.includes(value) ||
+      phone.includes(value)
+    );
+  };
 
 
   const table = useReactTable({
@@ -56,7 +77,10 @@ export function DataTable<TData, TValue>({
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onPaginationChange: setPagination,
+    globalFilterFn,
+    onGlobalFilterChange: setGlobalFilter,
     state: {
+      globalFilter,
       pagination,
       columnFilters,
     },
@@ -68,12 +92,19 @@ export function DataTable<TData, TValue>({
       <div className="flex items-center py-4 gap-4">
         <div className="relative w-96">
           <Input
-            placeholder="Buscar nome..."
-            value={(table.getColumn("trade_name")?.getFilterValue() as string) ?? ""}
-            onChange={(event) => {
-              setFilterValue(event.target.value)
-              table.getColumn("trade_name")?.setFilterValue(event.target.value)
-            }} />
+            placeholder="Filtrar por nome, email, cargo ou setor..."
+            value={globalFilter ?? ""}
+            onChange={(event) => setGlobalFilter(event.target.value)}
+            className="pr-8"
+          />
+          {globalFilter && (
+            <button
+              onClick={() => setGlobalFilter("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+          )}
 
           <div className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4">
             <AnimatePresence mode="popLayout">

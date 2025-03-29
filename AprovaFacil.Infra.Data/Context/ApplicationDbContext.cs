@@ -9,7 +9,6 @@ namespace AprovaFacil.Infra.Data.Context;
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Int32>, Int32>
 {
     public DbSet<Company> Companies { get; set; }
-    public DbSet<User> Users { get; set; }
 
     public DbSet<Request> Requests { get; set; }
     public DbSet<RequestManager> RequestManagers { get; set; }
@@ -61,6 +60,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
 
         builder.Entity<Request>()
             .HasKey(r => r.UUID);
+
+        builder.Entity<Request>()
+            .HasOne(r => r.Company)
+            .WithMany(rs => rs.Requests)
+            .HasForeignKey(r => r.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<Request>()
             .HasOne(r => (ApplicationUser)r.Requester)

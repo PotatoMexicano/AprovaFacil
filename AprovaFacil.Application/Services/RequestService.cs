@@ -19,7 +19,8 @@ public class RequestService(
         if (Int32.TryParse(strApplicationUserId, out Int32 applicationUserId))
         {
             Request[] requests = await repository.ListRequestsAsync(request, applicationUserId, cancellation);
-            return [.. requests.Select(RequestExtensions.ToDTO)];
+            RequestDTO[] response = [.. requests.Select(RequestExtensions.ToDTO)];
+            return response;
         }
         else
         {
@@ -37,6 +38,7 @@ public class RequestService(
         {
             InvoiceName = Guid.NewGuid(),
             BudgetName = Guid.NewGuid(),
+            CompanyId = request.CompanyId,
             Amount = request.Amount,
             UUID = request.UUID,
             PaymentDate = request.PaymentDate,

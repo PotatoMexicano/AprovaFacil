@@ -1,4 +1,4 @@
-export type Company = {
+export type CompanyResponse = {
   id: number;
   cnpj: string;
   trade_name: string;

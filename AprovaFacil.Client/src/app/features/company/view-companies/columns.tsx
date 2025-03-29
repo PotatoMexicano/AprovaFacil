@@ -17,17 +17,18 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/pop
 import { Separator } from "@/app/components/ui/separator"
 import { useRemoveCompanyMutation } from "@/app/api/companyApiSlice"
 import { toast } from "@/hooks/use-toast";
-import { Company } from "@/types/company"
+import { CompanyResponse } from "@/types/company"
 
 const useColumns = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [removeCompany] = useRemoveCompanyMutation();
 
-  const columns: ColumnDef<Company>[] = [
+  const columns: ColumnDef<CompanyResponse>[] = [
     {
       accessorKey: "trade_name",
       header: "Nome",
+      filterFn: "includesString",
       cell: ({row}) => {
         const company = row.original;
         return(
@@ -42,22 +43,27 @@ const useColumns = () => {
     {
       accessorKey: "state",
       header: "Estado",
+      filterFn: "includesString",
     },
     {
       accessorKey: "city",
       header: "Cidade",
+      filterFn: "includesString",
     },
     {
       accessorKey: "neighborhood",
       header: "Bairro",
+      filterFn: "includesString",
     },
     {
       accessorKey: "street",
       header: "Rua",
+      filterFn: "includesString",
     },
     {
       accessorKey: "phone",
       header: "Telefone",
+      filterFn: "includesString",
       cell: ({ row }) => {
         const telefone = row.getValue<string>("phone");
         return (
@@ -70,6 +76,7 @@ const useColumns = () => {
     {
       accessorKey: "email",
       header: "Email",
+      filterFn: "includesString",
       cell: ({ row }) => {
         const email = row.getValue<string>("email");
         return (
@@ -83,8 +90,7 @@ const useColumns = () => {
       id: "actions",
       header: "Editar",
       cell: ({ row }) => {
-
-        const onDelete = async (company: Company) => {
+        const onDelete = async (company: CompanyResponse) => {
           try {
             await removeCompany(company.id);
           } catch (error) {
@@ -99,7 +105,7 @@ const useColumns = () => {
           }
         }
 
-        const onEdit = (company: Company) => {
+        const onEdit = (company: CompanyResponse) => {
           navigate(`/company/edit/${company.id}`);
         }
 
