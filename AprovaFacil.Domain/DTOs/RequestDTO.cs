@@ -12,15 +12,37 @@ public class RequestDTO
     public DateTime? PaymentDate { get; set; }
     public DateTime CreateAt { get; set; }
 
-    public DateTime? ApprovedFirstLevelAt { get; set; }
-    public DateTime? ApprovedSecondLevelAt { get; set; }
+    public DateTime? FirstLevelAt { get; set; }
+    public Boolean ApprovedFirstLevel { get; set; }
+    public DateTime? SecondLevelAt { get; set; }
+    public Boolean ApprovedSecondLevel { get; set; }
 
     public DateTime? ReceivedAt { get; set; }
+
+    public Int32 Approved
+    {
+        get
+        {
+            if (FirstLevelAt.HasValue && SecondLevelAt.HasValue)
+            {
+                if (ApprovedFirstLevel && ApprovedSecondLevel)
+                {
+                    return 1;
+                }
+                else
+                {
+                    return -1;
+                }
+            }
+            return 0;
+        }
+    }
 
     public Int64 Amount { get; set; }
     public String? Note { get; set; }
 
-    public UserDTO Requester { get; set; }
+    public CompanyDTO Company { get; set; } = null!;
+    public UserDTO Requester { get; set; } = null!;
     public List<UserDTO> Managers { get; set; } = new();
     public List<UserDTO> Directors { get; set; } = new();
 }

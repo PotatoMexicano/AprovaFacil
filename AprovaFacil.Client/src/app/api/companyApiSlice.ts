@@ -1,5 +1,5 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
-import { Company } from "@/types/company";
+import { CompanyResponse } from "@/types/company";
 import { customBaseQuery } from "./base-api";
 
 export const companyApi = createApi({
@@ -7,16 +7,16 @@ export const companyApi = createApi({
   baseQuery: customBaseQuery(),
   tagTypes: ["Companies"],
   endpoints: (builder) => ({
-    getCompanies: builder.query<Company[], void>({
+    getCompanies: builder.query<CompanyResponse[], void>({
       query: () => 'company',
       providesTags: ["Companies"]
     }),
 
-    getCompany: builder.query<Company | undefined, string>({
+    getCompany: builder.query<CompanyResponse | undefined, string>({
       query: (id) => `company/${id}`
     }),
 
-    registerCompany: (builder.mutation<Company, Company>({
+    registerCompany: (builder.mutation<CompanyResponse, CompanyResponse>({
       query: (company) => ({
         url: `company/register`,
         method: `POST`,
@@ -25,7 +25,7 @@ export const companyApi = createApi({
       invalidatesTags: ["Companies"]
     })),
 
-    updateCompany: (builder.mutation<Company, Company>({
+    updateCompany: (builder.mutation<CompanyResponse, CompanyResponse>({
       query: (company) => ({
         url: `company/update`,
         method: `POST`,

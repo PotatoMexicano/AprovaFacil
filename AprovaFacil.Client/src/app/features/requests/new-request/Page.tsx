@@ -50,18 +50,18 @@ export default function NewRequestPage() {
 
   const { data: companies, isFetching: isCompaniesFetching } = useGetCompaniesQuery();
   const { data: users, isFetching: isUsersFetching } = useGetEnabledUsersQuery();
-  const [registerRequest, { isSuccess: isSuccess, isError: isErrorRequest, isLoading: isLoadingRequest }] = useRegisterRequestMutation();
+  const [registerRequest, { isSuccess, isError, isLoading, error }] = useRegisterRequestMutation();
   const [registerSuccess, setRegisterSuccess] = useState<boolean | undefined>(undefined)
 
   useEffect(() => {
-    setRegisterSuccess(isSuccess)
-
-    const timer = setTimeout(() => {
-      setRegisterSuccess(undefined)
-    }, 3500)
-
-    return () => clearTimeout(timer);
-  }, [isSuccess, isErrorRequest]);
+      setRegisterSuccess(isSuccess)
+  
+      const timer = setTimeout(() => {
+        setRegisterSuccess(undefined)
+      }, 3500)
+  
+      return () => clearTimeout(timer)
+    }, [isSuccess, isError]);
 
   useEffect(() => {
     setBreadcrumbs(["Início", "Requisição", "Adicionar"])
@@ -82,10 +82,8 @@ export default function NewRequestPage() {
   });
 
   const { reset } = form;
-
   const [openPopoverUser, setOpenPopoverUser] = useState(false);
   const [idPopoverUser, setIdPopoverUser] = useState<number | null>(null);
-
   const [openPopoverCompany, setOpenPopoverCompany] = useState(false);
   const [idPopoverCompany, setIdPopoverCompany] = useState<number | null>(null);
 
@@ -94,17 +92,19 @@ export default function NewRequestPage() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await registerRequest(values).unwrap();
+
+      setRegisterSuccess(isSuccess);
+
       toast.success('Requisição cadastrada !');
 
       reset();
       setIdPopoverCompany(null);
       setIdPopoverUser(null);
 
-    } catch (error) {
-      console.error(error)
-
-      if (error instanceof Error) {
-        toast.info(error.message)
+    } catch (err) {
+      console.error(`Erro ao registrar solicitação:`, error);
+      if (error) {
+        toast.error(`Falha ao registrar solicitação`)
       }
     }
   }
@@ -159,7 +159,7 @@ export default function NewRequestPage() {
                     {!isMobile && (
                       <div className="flex w-full justify-start">
                         <ButtonSuccess
-                          isLoading={isLoadingRequest}
+                          isLoading={isLoading}
                           isSuccess={registerSuccess}
                           defaultText="Cadastrar Requisição"
                           loadingText="Cadastrando..."
@@ -374,7 +374,7 @@ export default function NewRequestPage() {
                   {isMobile && (
                     <div className="flex w-full justify-start">
                       <ButtonSuccess
-                        isLoading={isLoadingRequest}
+                        isLoading={isLoading}
                         isSuccess={registerSuccess}
                         defaultText="Cadastrar Requisição"
                         loadingText="Cadastrando..."

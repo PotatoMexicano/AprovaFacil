@@ -1,4 +1,5 @@
 import { UserResponse } from "./auth";
+import { CompanyResponse } from "./company";
 
 export interface RequestReponse {
   uuid: string;
@@ -7,11 +8,15 @@ export interface RequestReponse {
   budget_name: string;
   payment_date: string;
   create_at: string;
-  approved_first_level_at: string;
-  approved_second_level_at: string;
+  first_level_at: string;
+  approved_first_level: boolean;
+  second_level_at: string;
+  approved_second_level: boolean;
+  approved: number;
   received_at: string;
   amount: number;
   note: string;
+  company: CompanyResponse;
   requester: UserResponse;
   managers: UserResponse[];
   directors: UserResponse[];

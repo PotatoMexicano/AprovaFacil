@@ -58,20 +58,23 @@ public class UserService(UserInterfaces.IUserRepository repository, IHttpContext
     public async Task<UserDTO[]> GetAllUsers(CancellationToken cancellation)
     {
         IApplicationUser[] applicationUsersEntity = await repository.GetAllUsersAsync(cancellation);
-        return [.. applicationUsersEntity.Select(UserExtensions.ToDTO)];
+        UserDTO[] response = [.. applicationUsersEntity.Select(UserExtensions.ToDTO)];
+        return response;
     }
 
     public async Task<UserDTO[]> GetAllusersEnabled(CancellationToken cancellation)
     {
         IApplicationUser[] applicationUsersEntity = await repository.GetAllUsersEnabledAsync(cancellation);
-        return [.. applicationUsersEntity.Select(UserExtensions.ToDTO)];
+        UserDTO[] response = [.. applicationUsersEntity.Select(UserExtensions.ToDTO)];
+        return response;
     }
 
     public async Task<UserDTO?> GetUser(Int32 idUser, CancellationToken cancellation)
     {
         IApplicationUser? applicationUserEntity = await repository.GetUserAsync(idUser, cancellation);
         if (applicationUserEntity is null) return null;
-        return applicationUserEntity.ToDTO();
+        UserDTO response = applicationUserEntity.ToDTO();
+        return response;
     }
 
     public async Task<UserDTO?> RegisterUser(UserRegisterDTO request, CancellationToken cancellation)

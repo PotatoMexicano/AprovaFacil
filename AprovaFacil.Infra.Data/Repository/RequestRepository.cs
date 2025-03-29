@@ -22,13 +22,27 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
             RequesterId = x.RequesterId,
             CreateAt = x.CreateAt,
             Amount = x.Amount,
-            ApprovedFirstLevelAt = x.ApprovedFirstLevelAt,
-            ApprovedSecondLevelAt = x.ApprovedSecondLevelAt,
+            FirstLevelAt = x.FirstLevelAt,
+            SecondLevelAt = x.SecondLevelAt,
             InvoiceName = x.InvoiceName,
             BudgetName = x.BudgetName,
             Note = x.Note,
             PaymentDate = x.PaymentDate,
-            ReceivedAt = x.ReceivedAt,
+            FinishedAt = x.FinishedAt,
+            ApprovedFirstLevel = x.ApprovedFirstLevel,
+            ApprovedSecondLevel = x.ApprovedSecondLevel,
+            CompanyId = x.CompanyId,
+            Company = new Company
+            {
+                Id = x.Company.Id,
+                LegalName = x.Company.LegalName,
+                TradeName = x.Company.TradeName,
+                Address = x.Company.Address,
+                CNPJ = x.Company.CNPJ,
+                Email = x.Company.Email,
+                Phone = x.Company.Phone,
+                Enabled = x.Company.Enabled,
+            },
             Requester = new ApplicationUser
             {
                 Email = x.Requester.Email,
@@ -114,6 +128,17 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
                 InvoiceName = x.InvoiceName,
                 BudgetName = x.BudgetName,
                 PaymentDate = x.PaymentDate,
+                Company = new Company
+                {
+                    Address = x.Company.Address,
+                    CNPJ = x.Company.CNPJ,
+                    Email = x.Company.Email,
+                    LegalName = x.Company.LegalName,
+                    Phone = x.Company.Phone,
+                    TradeName = x.Company.TradeName,
+                    Enabled = x.Company.Enabled,
+                    Id = x.Company.Id,
+                },
                 Requester = new ApplicationUser
                 {
                     FullName = x.Requester.FullName,
@@ -155,6 +180,8 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
                     },
                 }).ToList(),
             })
+            .AsNoTracking()
             .FirstOrDefaultAsync(r => r.UUID == request.UUID, cancellation);
+
     }
 }

@@ -38,14 +38,29 @@ export function DataTable<TData, TValue>({
   data,
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [filterValue, setFilterValue] = useState("");
-
+  const [globalFilter, setGlobalFilter] = useState("");
   const [selectedOption, setSelectedOption] = useState("10");
-
   const [pagination, setPagination] = useState({
     pageIndex: 0, //initial page index
     pageSize: Number(selectedOption), //default page size
   });
+
+  const globalFilterFn = (row, columnId, filterValue) => {
+    if (!filterValue) return true;
+
+    const value = filterValue.toLowerCase();
+    const nome = String(row.getValue("full_name") || "").toLowerCase();
+    const email = String(row.getValue("email") || "").toLowerCase();
+    const role_label = String(row.getValue("role_label") || "").toLowerCase();
+    const department_label = String(row.getValue("department_label") || "").toLowerCase();
+
+    return (
+      nome.includes(value) ||
+      email.includes(value) ||
+      role_label.includes(value) ||
+      department_label.includes(value)
+    );
+  };
 
   const table = useReactTable({
     data,
@@ -55,7 +70,10 @@ export function DataTable<TData, TValue>({
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onPaginationChange: setPagination,
+    globalFilterFn,
+    onGlobalFilterChange: setGlobalFilter,
     state: {
+      globalFilter,
       pagination,
       columnFilters,
     },
@@ -67,12 +85,19 @@ export function DataTable<TData, TValue>({
       <div className="flex items-center py-4 gap-4">
         <div className="relative w-96">
           <Input
-            placeholder="Buscar nome..."
-            value={(table.getColumn("full_name")?.getFilterValue() as string) ?? ""}
-            onChange={(event) => {
-              setFilterValue(event.target.value)
-              table.getColumn("full_name")?.setFilterValue(event.target.value)
-            }} />
+            placeholder="Filtrar por nome, email, cargo ou setor..."
+            value={globalFilter ?? ""}
+            onChange={(event) => setGlobalFilter(event.target.value)}
+            className="pr-8"
+          />
+          {globalFilter && (
+            <button
+              onClick={() => setGlobalFilter("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+          )}
 
           <div className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4">
             <AnimatePresence mode="popLayout">

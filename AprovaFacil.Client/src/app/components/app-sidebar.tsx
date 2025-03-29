@@ -5,7 +5,8 @@ import {
   PackagePlus,
   PackageSearch,
   Building2,
-  UsersIcon
+  UsersIcon,
+  PackageIcon
 } from "lucide-react"
 
 import { NavRequests } from "@/app/components/nav-requests"
@@ -26,19 +27,6 @@ import { useGetCurrentUserQuery } from "../api/authApiSlice"
 import { RootState, useAppSelector } from "../store/store"
 
 const data = {
-  navMain: [
-    {
-      title: "Nova solicitação",
-      url: "/request/register",
-      icon: PackagePlus,
-      isAccent: true,
-    },
-    {
-      title: "Minhas solicitações",
-      url: "/request/",
-      icon: Boxes,
-    },
-  ],
   navSecondary: [
     {
       title: "Ajuda",
@@ -90,7 +78,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavRequests items={data.navMain} />
+        <NavRequests />
         <NavCompanies projects={data.companies} />
         <NavUsers users={data.users} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />

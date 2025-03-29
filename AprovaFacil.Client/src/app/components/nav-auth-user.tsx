@@ -1,9 +1,11 @@
 "use client"
 
 import {
-  BadgeCheck,
   ChevronsUpDown,
+  Laptop,
   LogOut,
+  MoonIcon,
+  SunIcon,
 } from "lucide-react"
 
 import {
@@ -31,6 +33,7 @@ import { useLogoutMutation } from "../api/authApiSlice"
 import { useNavigate } from "react-router-dom"
 import { useAppDispatch } from "../store/store"
 import { clearUser } from "@/auth/authSlice"
+import { useTheme } from "./theme-provider"
 
 interface Props {
   user: UserResponse
@@ -42,6 +45,7 @@ export function NavAuthUser({ user }: Props) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isMobile } = useSidebar()
+  const { setTheme } = useTheme()
   
   const logout = async () => {
     await funcLogout().unwrap();
@@ -87,11 +91,10 @@ export function NavAuthUser({ user }: Props) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Minha conta
-              </DropdownMenuItem>
+            <DropdownMenuGroup className="flex flex-row justify-between">
+              <DropdownMenuItem className="w-full justify-center" onClick={() => setTheme("light")}><SunIcon /></DropdownMenuItem>
+              <DropdownMenuItem className="w-full justify-center" onClick={() => setTheme("dark")}><MoonIcon /></DropdownMenuItem>
+              <DropdownMenuItem className="w-full justify-center" onClick={() => setTheme("system")}><Laptop /></DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => {logout()}}>

@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/app/components/ui/form";
 import { useGetCepQuery } from "../../../api/cepApiSlice";
-import { toast } from "@/hooks/use-toast";
 import { useMaskito } from "@maskito/react"
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Button } from "@/app/components/ui/button";
@@ -18,14 +17,15 @@ import formSchema from "@/app/schemas/companySchema";
 import { useRegisterCompanyMutation } from "@/app/api/companyApiSlice";
 import ButtonSuccess from "@/app/components/ui/button-success";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function NewCompanyPage() {
 
   const isMobile = useIsMobile();
   const navigate = useNavigate()
 
-  const [registerCompany, { isLoading: isLoadingRegisterCompany, isSuccess: isSuccessRegisterCompany, isError: isErrorRegisterCompany }] = useRegisterCompanyMutation();
-    const [registerSuccess, setRegisterSuccess] = useState<boolean | undefined>(undefined);
+  const [registerCompany, { isLoading, isSuccess, isError, error }] = useRegisterCompanyMutation();
+  const [registerSuccess, setRegisterSuccess] = useState<boolean | undefined>(undefined);
 
   const maskedCnpjRef = useMaskito({
     options: {
@@ -96,27 +96,14 @@ export default function NewCompanyPage() {
   }
 
   useEffect(() => {
-      setRegisterSuccess(isSuccessRegisterCompany);
-      if (isSuccessRegisterCompany) {
-        toast({
-          title: "Empresa registrada",
-          description: "Os dados da empresa foram registrados com sucesso."
-        });
-      }
-      if (isErrorRegisterCompany) {
-        toast({
-          title: "Falha ao registrar empresa",
-          description: "Não foi possível registrar os dados da empresa."
-        })
-      }
-      
-     const timer = setTimeout(() => {
-      setRegisterSuccess(undefined);
-        navigate("/company")
-     }, 3500);
-  
-     return () => clearTimeout(timer);
-    }, [isSuccessRegisterCompany, isErrorRegisterCompany, navigate]);
+    setRegisterSuccess(isSuccess)
+
+    const timer = setTimeout(() => {
+      setRegisterSuccess(undefined)
+    }, 3500)
+
+    return () => clearTimeout(timer)
+  }, [isSuccess, isError, navigate]);
 
   useEffect(() => {
     if (isPostalCodeError) {
@@ -150,21 +137,24 @@ export default function NewCompanyPage() {
   }, [setBreadcrumbs]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-      try {
-        await registerCompany(values).unwrap();
-      } catch (error) {
-  
-        console.error(`Erro ao registrar empresa:`, error);
-  
-        if (error instanceof Error) {
-          toast({
-            title: 'Falha ao registrar empresa',
-            description: error.message,
-          })
-  
-        }
+    try {
+      await registerCompany(values).unwrap();
+
+      setRegisterSuccess(isSuccess);
+
+      toast.success("Empresa registrada com sucesso.");
+
+      setTimeout(() => {
+        navigate("/company")
+      }, 2000);
+
+    } catch (err) {
+      console.error(`Erro ao registrar empresa:`, error);
+      if (error) {
+        toast.error(`Falha ao registrar empresa`)
       }
     }
+  }
 
   return (
     <>
@@ -418,7 +408,12 @@ export default function NewCompanyPage() {
                 </div>
 
                 <div className="pt-5">
-                  <ButtonSuccess isLoading={isLoadingRegisterCompany} isSuccess={registerSuccess} defaultText="Cadastrar Empresa" loadingText="Cadastrando..." successText="Sucesso !" />
+                  <ButtonSuccess
+                    isLoading={isLoading}
+                    isSuccess={registerSuccess}
+                    defaultText="Cadastrar Empresa"
+                    loadingText="Cadastrando..."
+                    successText="Sucesso !" />
                 </div>
               </CardContent>
             </Card>

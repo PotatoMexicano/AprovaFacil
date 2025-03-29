@@ -163,18 +163,22 @@ const useColumns = () => {
     {
       accessorKey: "full_name",
       header: "Nome",
+      filterFn: "includesString"
     },
     {
       accessorKey: "email",
       header: "Email",
+      filterFn: "includesString"
     },
     {
       accessorKey: "role_label",
       header: "Cargo",
+      filterFn: "includesString"
     },
     {
       accessorKey: "department_label",
       header: "Setor",
+      filterFn: "includesString"
     },
     {
       accessorKey: "enabled",

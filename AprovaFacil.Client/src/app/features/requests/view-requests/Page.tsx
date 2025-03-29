@@ -1,6 +1,6 @@
 "use client";
 
-import { ColumnDef, getCoreRowModel, RowExpanding, useReactTable, } from "@tanstack/react-table";
+import { ColumnDef, getCoreRowModel, useReactTable, } from "@tanstack/react-table";
 import { Button } from "@/app/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/app/components/ui/alert";
@@ -12,11 +12,19 @@ import { DataTable } from "../../requests/view-requests/data-table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/ui/tooltip";
+import { Badge } from "@/app/components/ui/badge";
+import { useEffect } from "react";
+import { useBreadcrumb } from "@/app/context/breadkcrumb-context";
+import { Link } from "react-router-dom";
 
 // Componente da tabela
-export default function Example() {
-
+export default function ViewMyRequestsPage() {
   const { data, isLoading, error } = useGetMyRequestsQuery();
+  const { setBreadcrumbs } = useBreadcrumb();
+
+  useEffect(() => {
+    setBreadcrumbs(["Início", "Minhas solicitações"]); // Define os breadcrumbs da página atual
+  }, [setBreadcrumbs]);
 
   const columns: ColumnDef<RequestReponse>[] = [
     {
@@ -46,12 +54,27 @@ export default function Example() {
       },
     },
     {
-      accessorKey: "payment_date",
-      header: "Data de Pagamento",
-      cell: ({ row }) =>
-        row.original.payment_date
-          ? new Date(row.original.payment_date).toLocaleDateString("pt-BR")
-          : "-",
+      accessorKey: "company",
+      header: "Empresa",
+      filterFn: "includesString",
+      cell: ({ row }) => {
+        return <>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant={"outline"}>
+                  <Link to={`/company/edit/${row.original.company.id}`}>
+                    {row.original.company.trade_name}
+                  </Link>
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                {row.original.company.legal_name}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </>
+      }
     },
     {
       accessorKey: "create_at",
@@ -63,8 +86,8 @@ export default function Example() {
       accessorKey: "approved_first_level_at",
       header: "Aprovado Nível 1",
       cell: ({ row }) =>
-        row.original.approved_first_level_at
-          ? new Date(row.original.approved_first_level_at).toLocaleDateString(
+        row.original.first_level_at
+          ? new Date(row.original.first_level_at).toLocaleDateString(
             "pt-BR"
           )
           : "-",
@@ -73,8 +96,8 @@ export default function Example() {
       accessorKey: "approved_second_level_at",
       header: "Aprovado Nível 2",
       cell: ({ row }) =>
-        row.original.approved_second_level_at
-          ? new Date(row.original.approved_second_level_at).toLocaleDateString(
+        row.original.second_level_at
+          ? new Date(row.original.second_level_at).toLocaleDateString(
             "pt-BR"
           )
           : "-",
@@ -90,16 +113,30 @@ export default function Example() {
     {
       accessorKey: "amount",
       header: "Valor",
-      cell: ({ row }) =>
-        row.original.amount.toLocaleString("pt-BR", {
+      cell: ({ row }) => {
+        const currency = row.original.amount / 100;
+        return currency.toLocaleString("pt-BR", {
           style: "currency",
           currency: "BRL",
-        }),
+        })
+      },
     },
     {
-      accessorKey: "note",
-      header: "Nota",
-      cell: ({ row }) => row.original.note || "-",
+      accessorKey: "approved",
+      header: "Aprovado",
+      cell: ({ row }) => {
+        return <Badge variant={row.original.approved === 1
+          ? "success"
+          : row.original.approved === 0
+            ? "outline"
+            : "destructive"}>
+          {row.original.approved === 1
+            ? "Aprovado"
+            : row.original.approved === 0
+              ? "Pendente"
+              : "Recusado"}
+        </Badge>
+      }
     },
     {
       accessorKey: "managers",
@@ -111,12 +148,11 @@ export default function Example() {
               <TooltipProvider key={index}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Avatar
-                      className={cn(
-                        "size-12 p-1 border-2 rounded-full ring-2 ring-white bg-white",
-                        manager.enabled ? "border-green-400" : "border-red-400"
-                      )}
-                    >
+                    <Avatar className={cn("size-12 p-1 border-2",
+                      manager.enabled
+                        ? "border-green-400 bg-background"
+                        : "border-red-400 bg-background"
+                    )}>
                       <AvatarImage src={manager.picture_url} />
                       <AvatarFallback>{manager.full_name}</AvatarFallback>
                     </Avatar>
@@ -140,26 +176,23 @@ export default function Example() {
         <div className="flex -space-x-4 overflow-hidden">
           {row.original.directors.length > 0 ? (
             row.original.directors.map((director, index) => (
-              <>
-                <TooltipProvider key={index}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Avatar
-                        className={cn(
-                          "size-12 p-1 border-2 rounded-full ring-2 ring-white bg-white",
-                          director.enabled ? "border-green-400" : "border-red-400"
-                        )}
-                      >
-                        <AvatarImage src={director.picture_url} />
-                        <AvatarFallback>{director.full_name}</AvatarFallback>
-                      </Avatar>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{director.full_name}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </>
+              <TooltipProvider key={index}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Avatar className={cn("size-12 p-1 border-2",
+                      director.enabled
+                        ? "border-green-400 bg-background"
+                        : "border-red-400 bg-background"
+                    )}>
+                      <AvatarImage src={director.picture_url} />
+                      <AvatarFallback>{director.full_name}</AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{director.full_name}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             ))
           ) : (
             "-"
@@ -185,7 +218,7 @@ export default function Example() {
               <a href="/request/register">Nova solicitação</a>
             </Button>
           </CardTitle>
-          <CardDescription>Minhas requisições cadastradas.</CardDescription>
+          <CardDescription>Minhas solicitações cadastradas.</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading
