@@ -1,6 +1,7 @@
 ﻿
 using AprovaFacil.Application.Services;
 using AprovaFacil.Domain.DTOs;
+using AprovaFacil.Domain.Extensions;
 using AprovaFacil.Infra.Data.Identity;
 using AprovaFacil.Server.Contracts;
 using Microsoft.AspNetCore.Authorization;
@@ -41,17 +42,8 @@ public class AuthController : ControllerBase
             IList<System.Security.Claims.Claim> claims = await _userManager.GetClaimsAsync(user);
 
             String token = _jwtService.GenerateJwtToken(user, roles);
-            UserDTO userDTO = new UserDTO
-            {
-                Department = user.Department,
-                Email = user.Email,
-                Enabled = user.Enabled,
-                FullName = user.FullName,
-                Id = user.Id,
-                PictureUrl = user.PictureUrl,
-                Role = user.Role,
-                IdentityRoles = [.. roles],
-            };
+
+            UserDTO userDTO = user.ToDTO(roles);
 
             return Ok(new { Token = token, User = userDTO });
         }
