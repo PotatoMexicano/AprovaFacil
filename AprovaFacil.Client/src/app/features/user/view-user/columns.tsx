@@ -2,11 +2,6 @@
 
 import { ArrowRightLeftIcon, MoreHorizontal, Settings } from "lucide-react"
 import { Button } from "@/app/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/app/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/app/components/ui/alert-dialog"
 //import { useNavigate } from "react-router-dom"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -14,13 +9,13 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover"
 import { Separator } from "@/app/components/ui/separator"
 //import { useRemoveCompanyMutation } from "@/app/api/companyApiSlice"
-import { toast } from "@/hooks/use-toast";
 import { UserResponse } from "@/types/auth"
 import { Badge } from "@/app/components/ui/badge"
-import { cn } from "@/lib/utils"
+import { cn, useIsAdmin } from "@/lib/utils"
 import { useDisableUserMutation, useEnableUserMutation } from "@/app/api/userApiSlice"
 import { RootState, useAppSelector } from "@/app/store/store"
 import { useNavigate } from "react-router-dom"
+import { toast } from "sonner"
 
 interface Props {
   user: UserResponse,
@@ -32,34 +27,16 @@ const ActionMenu = ({ user, usuario }: Props) => {
   const [disableUser] = useDisableUserMutation();
   const [enableUser] = useEnableUserMutation();
 
-  const onDisable = async (usuario: UserResponse) => {
-    try {
-      await disableUser(usuario.id);
-    } catch (error) {
-      console.error(error);
-
-      if (error instanceof Error) {
-        toast({
-          title: "Falha ao desativar usuário",
-          description: `Não foi possível desativar o usuário`
-        });
-      }
-    }
+  const onDisable = (usuario: UserResponse) => {
+    disableUser(usuario.id).unwrap().catch(() => {
+      toast.error("Falha ao desativar usuário");
+    });
   }
 
-  const onEnable = async (usuario: UserResponse) => {
-    try {
-      await enableUser(usuario.id);
-    } catch (error) {
-      console.error(error);
-
-      if (error instanceof Error) {
-        toast({
-          title: "Falha ao ativar usuário",
-          description: `Não foi possível ativar o usuário`
-        });
-      }
-    }
+  const onEnable = (usuario: UserResponse) => {
+    enableUser(usuario.id).unwrap().catch(() => {
+      toast.error("Falha ao desativar usuário");
+    });
   }
 
   const onEdit = (usuario: UserResponse) => {
@@ -68,11 +45,11 @@ const ActionMenu = ({ user, usuario }: Props) => {
 
   if (usuario.id === user.id) {
     return <>
-    <div className="flex flex-col">
-      <Button variant={"ghost"} className="p-3 font-normal" onClick={() => onEdit(usuario)}>
-        <Settings /> Editar
-      </Button>
-    </div>
+      <div className="flex flex-col">
+        <Button variant={"ghost"} className="p-3 font-normal" onClick={() => onEdit(usuario)}>
+          <Settings /> Editar
+        </Button>
+      </div>
     </>
   }
 
@@ -138,11 +115,12 @@ const ActionMenu = ({ user, usuario }: Props) => {
       </div>
     );
   }
+
 }
 
 const useColumns = () => {
   const isMobile = useIsMobile();
-
+  const isAdmin = useIsAdmin();
   const { user } = useAppSelector((state: RootState) => state.auth);
 
   const columns: ColumnDef<UserResponse>[] = [
@@ -198,45 +176,28 @@ const useColumns = () => {
       header: "Editar",
       cell: ({ row }) => {
         const usuario = row.original
+        if (usuario.id !== user?.id && !isAdmin){
+          return <></>
+        }
 
         return (
-          isMobile
-            ? (
-              <div>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="h-8 w-8 p-0">
-                      <span className="sr-only bg-red-400">Open menu</span>
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent side="left" className="w-fit p-1" sticky="always" >
-                    
-                    {user &&
-                      <ActionMenu user={user} usuario={usuario} />
-                    }
+          <div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-8 w-8 p-0">
+                  <span className="sr-only bg-red-400">Open menu</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent side="left" className="w-fit p-1" sticky="always" >
 
-                  </PopoverContent>
-                </Popover>
-              </div>
-            )
-            : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" side="left">
+                {user &&
+                  <ActionMenu user={user} usuario={usuario} />
+                }
 
-                  {user &&
-                    <ActionMenu user={user} usuario={usuario} />
-                  }
-
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )
+              </PopoverContent>
+            </Popover>
+          </div>
         )
       }
     }

@@ -22,9 +22,7 @@ import {
   useSidebar,
 } from "@/app/components/ui/sidebar"
 
-export function NavCompanies({
-  projects,
-}: {
+export function NavCompanies({ projects }: {
   projects: {
     name: string
     url: string

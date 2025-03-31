@@ -37,9 +37,9 @@ export default function ViewCompaniesPage() {
         <CardHeader>
           <CardTitle className="text-2xl w-full flex justify-between">
             Empresas cadastradas
+
             <Button type="button" asChild><a href="/company/register">Adicionar empresa</a></Button>
-            
-            {/* <Badge className="m-2" variant={"default"}> {isCompanyLoading ? "..." : companies?.length} Empresas </Badge> */}
+
           </CardTitle>
           <CardDescription>Empresas cadastradas para emissão de nota fiscal.</CardDescription>
         </CardHeader>

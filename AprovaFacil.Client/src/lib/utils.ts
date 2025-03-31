@@ -1,3 +1,4 @@
+import { RootState, useAppSelector } from "@/app/store/store"
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -34,4 +35,9 @@ export const parseCurrency = (value: string): number => {
 
   const parsedValue = Number.parseFloat(numericString)
   return isNaN(parsedValue) ? 0 : parsedValue
+}
+
+export const useIsAdmin = (): boolean => {
+  const { user } = useAppSelector((state: RootState) => state.auth);
+  return user?.role === "Manager" || user?.role === "Director";
 }

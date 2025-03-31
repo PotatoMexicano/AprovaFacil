@@ -12,6 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/app/components/ui/sidebar"
+import { RootState, useAppSelector } from "../store/store"
 
 export interface subItems {
   title: string
@@ -26,6 +27,8 @@ export interface subItems {
 }
 
 export function NavRequests() {
+  const { user } = useAppSelector((state: RootState) => state.auth);
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Requisições</SidebarGroupLabel>
@@ -53,16 +56,20 @@ export function NavRequests() {
           </SidebarMenuItem>
         </Collapsible>
 
-        <Collapsible asChild>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Minhas solicitações">
-              <a href="/request/">
-                <PackageIcon />
-                <span>Solicitações pendentes</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </Collapsible>
+        {user && (user.role === "Manager" || user.role === "Director")
+        ? (
+          <Collapsible asChild>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Minhas solicitações">
+                <a href="/request/pending">
+                  <PackageIcon />
+                  <span>Solicitações pendentes</span>
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </Collapsible>
+        )
+      : null}
 
       </SidebarMenu>
     </SidebarGroup>
