@@ -45,7 +45,8 @@ public class Program
                 .WithOrigins("http://localhost:5173", "http://127.0.0.1:5173", "http://192.168.7.128:5173", "http://192.168.7.128:7296")
                 .AllowAnyMethod()
                 .AllowAnyHeader()
-                .AllowCredentials();
+                .AllowCredentials()
+                .WithExposedHeaders("Content-Disposition");
             });
         });
 
