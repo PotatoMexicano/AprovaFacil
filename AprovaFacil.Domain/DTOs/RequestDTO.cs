@@ -2,12 +2,14 @@
 
 public class RequestDTO
 {
-    public Guid UUID { get; set; }
+    public String UUID { get; set; } = null!;
 
     public Int32 RequesterId { get; set; }
 
-    public Guid InvoiceName { get; set; }
-    public Guid BudgetName { get; set; }
+    public String InvoiceName { get; set; } = null!;
+    public String BudgetName { get; set; } = null!;
+    public Boolean HasInvoice { get; set; }
+    public Boolean HasBudget { get; set; }
 
     public DateTime? PaymentDate { get; set; }
     public DateTime CreateAt { get; set; }
@@ -23,6 +25,16 @@ public class RequestDTO
     {
         get
         {
+            if (FirstLevelAt.HasValue && !ApprovedFirstLevel)
+            {
+                return -1;
+            }
+
+            if (SecondLevelAt.HasValue && !ApprovedSecondLevel)
+            {
+                return -1;
+            }
+
             if (FirstLevelAt.HasValue && SecondLevelAt.HasValue)
             {
                 if (ApprovedFirstLevel && ApprovedSecondLevel)

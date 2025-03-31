@@ -8,7 +8,9 @@ public class Request
     public Int32 RequesterId { get; set; }
 
     public Guid InvoiceName { get; set; }
+    public Boolean HasInvoice { get; set; }
     public Guid BudgetName { get; set; }
+    public Boolean HasBudget { get; set; }
 
     public DateTime? PaymentDate { get; set; }
     public DateTime CreateAt { get; set; }
@@ -18,7 +20,11 @@ public class Request
     public DateTime? SecondLevelAt { get; set; }
     public Boolean ApprovedSecondLevel { get; set; }
 
-    public DateTime? FinishedAt { get; set; }
+    public Int32 Level { get; set; }
+    public Int32 Status { get; set; }
+
+    public DateTime? FinishedAt
+    { get; set; }
 
     public Int64 Amount { get; set; }
     public String? Note { get; set; }
