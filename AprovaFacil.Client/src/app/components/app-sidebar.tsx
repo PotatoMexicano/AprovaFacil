@@ -1,12 +1,9 @@
 import * as React from "react"
 import {
-  Boxes,
   LifeBuoy,
-  PackagePlus,
   PackageSearch,
   Building2,
   UsersIcon,
-  PackageIcon
 } from "lucide-react"
 
 import { NavRequests } from "@/app/components/nav-requests"

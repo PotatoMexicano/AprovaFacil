@@ -10,12 +10,14 @@ import useColumns from "./columns";
 import { Outlet } from "react-router-dom";
 import { Button } from "@/app/components/ui/button";
 import { useGetUsersQuery } from "@/app/api/userApiSlice";
+import { useIsAdmin } from "@/lib/utils";
 
 export default function ViewUsersPage() {
   const { toast } = useToast();
   const { setBreadcrumbs } = useBreadcrumb();
+  const isAdmin = useIsAdmin();
 
-  const {data: users, error: errorUsers, isError: isErrorUsers, isLoading: isLoadingUsers} = useGetUsersQuery();
+  const { data: users, error: errorUsers, isError: isErrorUsers, isLoading: isLoadingUsers } = useGetUsersQuery();
   const columns = useColumns();
 
   useEffect(() => {
@@ -37,8 +39,10 @@ export default function ViewUsersPage() {
         <CardHeader>
           <CardTitle className="text-2xl w-full flex justify-between">
             Usuários cadastradas
-            <Button asChild><a href="/users/register">Adicionar usuário</a></Button>
-            
+
+            {isAdmin &&
+              <Button asChild><a href="/users/register">Adicionar usuário</a></Button>
+            }
           </CardTitle>
           <CardDescription>Usuários cadastrados no sistema.</CardDescription>
         </CardHeader>

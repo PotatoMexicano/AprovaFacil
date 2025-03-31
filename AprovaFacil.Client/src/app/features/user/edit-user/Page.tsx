@@ -79,7 +79,6 @@ export default function EditUserPage() {
       setTimeout(() => {
         form.setValue("role", user.role || "");
         form.setValue("department", user.department || "");
-        console.log("Valores do formulário após reset:", form.getValues());
       }, 0);
     }
   }, [user, isUserSuccess, form]);
@@ -98,9 +97,12 @@ export default function EditUserPage() {
       }, 2000)
 
     } catch {
+      setUpdateSuccess(false);
       console.error(`Erro ao registrar usuário:`, error);
-      if (error) {
-        toast.error(`Falha ao registrar usuário`)
+      if (error && "data" in error && "detail" in error.data) {
+        toast.error(String(error.data.detail));
+      } else {
+        toast.error("Erro ao atualizar usuário.");
       }
     }
   }

@@ -10,7 +10,10 @@ import ProtectedRoute from "../components/protected-route";
 import ViewUsersPage from "../features/user/view-user/Page";
 import NewUserPage from "../features/user/new-user/Page";
 import EditUserPage from "../features/user/edit-user/Page";
-import ViewMyRequestsPage from "../features/requests/view-requests/Page";
+import ViewMyRequestsPage from "../features/requests/view-my-requests/Page";
+import ViewPendingRequestsPage from "../features/requests/view-pending-requests/Page";
+import AdminRoute from "../components/admin-route";
+import ViewRequest from "../features/requests/view-request/Page";
 
 export const router = createBrowserRouter([
   { path: 'login', element: <LoginPage /> },
@@ -23,21 +26,33 @@ export const router = createBrowserRouter([
           { path: '/', element: <Homepage /> },
           {
             path: 'company', children: [
-              { path: 'register', element: <NewCompanyPage /> },
               { path: '', element: <ViewCompaniesPage /> },
+              { path: 'register', element: <NewCompanyPage /> },
               { path: 'edit/:id', element: <EditCompanyPage /> },
+              {
+                element: <AdminRoute />,
+                children: []
+              },
             ]
           },
           {
             path: 'request', children: [
               { path: '', element: <ViewMyRequestsPage /> },
               { path: 'register', element: <NewRequestPage /> },
+              { path: 'pending', element: <ViewPendingRequestsPage /> },
+              { path: ':id', element: <ViewRequest/>}
             ]
           },
           {
             path: 'users', children: [
               { path: '', element: <ViewUsersPage /> },
-              { path: "register", element: <NewUserPage /> },
+              {
+                element: <AdminRoute />,
+                children: [
+                  { path: "register", element: <NewUserPage /> },
+
+                ]
+              },
               { path: 'edit/:id', element: <EditUserPage /> },
             ]
           }

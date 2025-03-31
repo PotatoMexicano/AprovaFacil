@@ -116,7 +116,7 @@ export function DataTable<TData, TValue>({
 
         <div className="flex ml-auto">
           <Select
-            defaultValue="15"
+            defaultValue="5"
             value={selectedOption}
             onValueChange={(value) => {
               setSelectedOption(value);
@@ -179,7 +179,7 @@ export function DataTable<TData, TValue>({
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
+                  Nenhum resultado.
                 </TableCell>
               </TableRow>
             )}

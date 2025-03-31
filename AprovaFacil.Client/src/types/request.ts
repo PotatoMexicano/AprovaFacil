@@ -5,7 +5,9 @@ export interface RequestReponse {
   uuid: string;
   requester_id: number;
   invoice_name: string;
-  budget_name: string;
+  budget_name: string;  
+  has_invoice: boolean;
+  has_budget: boolean;
   payment_date: string;
   create_at: string;
   first_level_at: string;

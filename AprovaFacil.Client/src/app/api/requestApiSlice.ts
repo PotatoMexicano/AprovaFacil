@@ -9,7 +9,7 @@ export const requestApi = createApi({
   endpoints: (builder) => ({
     registerRequest: builder.mutation({
       query: (requestData) => {
-        const formData = new FormData();        
+        const formData = new FormData();
         formData.append("companyId", requestData.companyId.toString());
         formData.append("managersId", requestData.managerId.toString());
         requestData.directorsIds.forEach((id, index) => {
@@ -39,8 +39,58 @@ export const requestApi = createApi({
       providesTags: ["Requests"]
     }),
 
+    getPendingRequests: builder.query<RequestReponse[], void>({
+      query: () => ({
+        url: "request/pending",
+        method: "POST",
+        body: {}
+      }),
+      providesTags: ["Requests"]
+    }),
 
+    getFileRequest: builder.query<{ blob: Blob, fileName: string }, { fileType: string, requestId: string, fileId: string }>({
+      query: ({ fileType, requestId, fileId }) => ({
+        url: `request/file/${fileType}/${requestId}/${fileId}`,
+        method: "GET",
+        responseHandler: async (response) => {
+
+          if (!response.ok) {
+            throw new Error(`Erro na requisição: ${response.statusText}`);
+          }
+
+          // Extrai o header Content-Disposition
+          const contentDisposition = response.headers.get("content-disposition");
+          let fileName = "default_filename.pdf"; // Nome padrão caso não encontre
+
+          if (contentDisposition) {
+            let match = contentDisposition.match(/filename="(.+?)"/);
+            if (match && match[1]) {
+              fileName = match[1];
+            } else {
+              match = contentDisposition.match(/filename\*=UTF-8''(.+)/);
+              if (match && match[1]) {
+                fileName = decodeURIComponent(match[1]);
+              }
+            }
+
+            // Removendo possíveis aspas extras
+            fileName = fileName.replace(/['"]/g, "");
+          }
+
+          // Converte o corpo da resposta para Blob
+          const blob = await response.blob();
+
+          // Retorna um objeto com o Blob e o nome do arquivo
+          return { blob, fileName };
+        },
+      })
+    }),
   })
 });
 
-export const { useRegisterRequestMutation, useGetMyRequestsQuery } = requestApi;
+export const {
+  useRegisterRequestMutation,
+  useGetMyRequestsQuery,
+  useGetPendingRequestsQuery,
+  useLazyGetFileRequestQuery,
+} = requestApi;
