@@ -10,12 +10,14 @@ public static class RequestExtensions
     {
         return new RequestDTO
         {
-            UUID = request.UUID,
+            UUID = request.UUID.ToString("N"),
             RequesterId = request.RequesterId,
-            InvoiceName = request.InvoiceName,
-            BudgetName = request.BudgetName,
+            InvoiceName = request.InvoiceName.ToString("N"),
+            BudgetName = request.BudgetName.ToString("N"),
             PaymentDate = request.PaymentDate,
             CreateAt = request.CreateAt,
+            HasInvoice = request.HasInvoice,
+            HasBudget = request.HasBudget,
             ApprovedFirstLevel = request.ApprovedFirstLevel,
             ApprovedSecondLevel = request.ApprovedSecondLevel,
             FirstLevelAt = request.FirstLevelAt,
@@ -67,9 +69,14 @@ public static class RequestExtensions
 
     public static IQueryable<Request> Filter(ref IQueryable<Request> query, FilterRequest filter, Int32? applicationUserId)
     {
-        if (applicationUserId.HasValue)
+        if (applicationUserId.HasValue && applicationUserId.Value != 0)
         {
             query = query.Where(x => x.RequesterId == applicationUserId);
+        }
+
+        if (filter.Levels.Length > 0)
+        {
+            query = query.Where(x => filter.Levels.ToList().Contains(x.Level));
         }
 
         return query.AsQueryable();

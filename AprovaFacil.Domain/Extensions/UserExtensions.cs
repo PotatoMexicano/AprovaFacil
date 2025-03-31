@@ -6,7 +6,7 @@ namespace AprovaFacil.Domain.Extensions;
 
 public static class UserExtensions
 {
-    public static UserDTO ToDTO(this IApplicationUser appUser)
+    public static UserDTO ToDTO(this IApplicationUser appUser, IEnumerable<String>? roles = default)
     {
         return new UserDTO
         {
@@ -14,6 +14,7 @@ public static class UserExtensions
             Email = appUser.Email,
             FullName = appUser.FullName,
             Role = appUser.Role,
+            IdentityRoles = roles?.ToList() ?? [],
             RoleLabel = appUser.Role switch
             {
                 Roles.Requester => "Requisitante",

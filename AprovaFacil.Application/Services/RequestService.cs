@@ -1,4 +1,5 @@
-﻿using AprovaFacil.Domain.DTOs;
+﻿using AprovaFacil.Domain.Constants;
+using AprovaFacil.Domain.DTOs;
 using AprovaFacil.Domain.Extensions;
 using AprovaFacil.Domain.Filters;
 using AprovaFacil.Domain.Interfaces;
@@ -10,15 +11,22 @@ namespace AprovaFacil.Application.Services;
 public class RequestService(
     RequestInterfaces.IRequestRepository repository,
     UserInterfaces.IUserRepository userRepository,
-    ServerDirectory serverDirectory
-) : RequestInterfaces.IRequestService
+    ServerDirectory serverDirectory) : RequestInterfaces.IRequestService
 {
-    public async Task<RequestDTO[]> ListRequests(FilterRequest request, String strApplicationUserId, CancellationToken cancellation = default)
+    public async Task<RequestDTO[]> ListPendingRequests(FilterRequest filter, CancellationToken cancellation)
+    {
+        filter.Levels = [LevelRequest.Pending, LevelRequest.FirstLevel];
+        Request[] requests = await repository.ListPendingRequestsAsync(filter, cancellation: cancellation);
+        RequestDTO[] response = [.. requests.Select(RequestExtensions.ToDTO)];
+        return response;
+    }
+
+    public async Task<RequestDTO[]> ListRequests(FilterRequest filter, String strApplicationUserId, CancellationToken cancellation)
     {
 
         if (Int32.TryParse(strApplicationUserId, out Int32 applicationUserId))
         {
-            Request[] requests = await repository.ListRequestsAsync(request, applicationUserId, cancellation);
+            Request[] requests = await repository.ListRequestsAsync(filter, cancellation, applicationUserId);
             RequestDTO[] response = [.. requests.Select(RequestExtensions.ToDTO)];
             return response;
         }
@@ -28,11 +36,53 @@ public class RequestService(
         }
     }
 
+    public async Task<Byte[]> LoadFileRequest(String type, Guid requestGuid, Guid fileGuid, CancellationToken cancellation)
+    {
+        Request? request = await repository.ListRequestAsync(requestGuid, cancellation);
+
+        if (request is null)
+            return Array.Empty<Byte>();
+
+        if (type == "invoice" && fileGuid == request.InvoiceName)
+        {
+            String requestFilePath = Path.Combine(serverDirectory.InvoicePath, request.UUID.ToString("N"), request.InvoiceName.ToString("N") + ".pdf");
+
+            if (File.Exists(requestFilePath))
+            {
+                Byte[] fileStream = await LoadFile(requestFilePath, cancellation);
+                return fileStream;
+            }
+            else
+            {
+                return Array.Empty<Byte>();
+            }
+        }
+
+        if (type == "budget" && fileGuid == request.BudgetName)
+        {
+            String requestFilePath = Path.Combine(serverDirectory.BudgetPath, request.UUID.ToString("N"), request.BudgetName.ToString("N") + ".pdf");
+
+            if (File.Exists(requestFilePath))
+            {
+                Byte[] fileStream = await LoadFile(requestFilePath, cancellation);
+                return fileStream;
+            }
+            else
+            {
+                return Array.Empty<Byte>();
+            }
+        }
+
+        return Array.Empty<Byte>();
+    }
+
     public async Task<RequestDTO> RegisterRequest(RequestRegisterDTO request, CancellationToken cancellation)
     {
         Int32[] usersId = [.. request.ManagersId, .. request.DirectorsIds, request.RequesterId];
 
         Dictionary<Int32, IApplicationUser> users = await userRepository.GetUsersDictionary(usersId, cancellation);
+
+        Int32 level = request.DirectorsIds.Length > 0 ? LevelRequest.Pending : LevelRequest.FirstLevel;
 
         Request? newRequest = new Request
         {
@@ -45,6 +95,7 @@ public class RequestService(
             CreateAt = request.CreateAt,
             Note = request.Note,
             RequesterId = request.RequesterId,
+            Level = level,
         };
 
         foreach (Int32 manager in request.ManagersId)
@@ -69,6 +120,9 @@ public class RequestService(
             newRequest.Directors.Add(requestDirector);
         }
 
+        newRequest.HasInvoice = request.Invoice.Length > 0;
+        newRequest.HasBudget = request.Budget.Length > 0;
+
         newRequest = await repository.RegisterRequestAsync(newRequest, cancellation);
 
         if (newRequest is null)
@@ -83,7 +137,7 @@ public class RequestService(
 
         try
         {
-            String folderName = newRequestDTO.UUID.ToString("N");
+            String folderName = newRequestDTO.UUID;
             String pathForFile = Path.Combine(serverDirectory.InvoicePath, folderName);
 
             if (!Directory.Exists(pathForFile))
@@ -91,7 +145,7 @@ public class RequestService(
                 Directory.CreateDirectory(pathForFile);
             }
 
-            String filePath = Path.Combine(pathForFile, newRequestDTO.InvoiceName.ToString("N")) + ".pdf";
+            String filePath = Path.Combine(pathForFile, newRequestDTO.InvoiceName) + ".pdf";
 
             if (request.Invoice.Length > 0)
             {
@@ -105,7 +159,7 @@ public class RequestService(
 
         try
         {
-            String folderName = newRequestDTO.UUID.ToString("N");
+            String folderName = newRequestDTO.UUID;
             String pathForFile = Path.Combine(serverDirectory.BudgetPath, folderName);
 
             if (!Directory.Exists(pathForFile))
@@ -113,7 +167,7 @@ public class RequestService(
                 Directory.CreateDirectory(pathForFile);
             }
 
-            String filePath = Path.Combine(pathForFile, newRequestDTO.BudgetName.ToString("N")) + ".pdf";
+            String filePath = Path.Combine(pathForFile, newRequestDTO.BudgetName) + ".pdf";
 
             if (request.Budget.Length > 0)
             {
@@ -126,5 +180,14 @@ public class RequestService(
         }
 
         return newRequestDTO;
+    }
+
+    private async Task<Byte[]> LoadFile(String path, CancellationToken cancellation)
+    {
+        if (File.Exists(path))
+        {
+            return await File.ReadAllBytesAsync(path, cancellation);
+        }
+        return Array.Empty<Byte>();
     }
 }
