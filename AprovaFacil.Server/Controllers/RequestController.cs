@@ -1,4 +1,5 @@
-﻿using AprovaFacil.Domain.DTOs;
+﻿using AprovaFacil.Domain.Constants;
+using AprovaFacil.Domain.DTOs;
 using AprovaFacil.Domain.Filters;
 using AprovaFacil.Domain.Interfaces;
 using AprovaFacil.Server.Contracts;
@@ -29,6 +30,77 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
         RequestDTO[] result = await service.ListRequests(request, userId, cancellation);
 
         return Ok(result);
+    }
+
+    [HttpPost("pending")]
+    [Authorize(Roles = $"{Roles.Manager}, {Roles.Director}")]
+    public async Task<IActionResult> ListPendingRequst([FromBody] FilterRequest request, CancellationToken cancellation = default)
+    {
+        String? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId is null)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Detail = "Are you logged in ?"
+            });
+        }
+
+        RequestDTO[] result = await service.ListPendingRequests(request, cancellation);
+
+        return Ok(result);
+    }
+
+    [HttpGet("file/{type}/{uuidRequest}/{uuidFile}")]
+    public async Task<IActionResult> LoadFileRequest(String type, String uuidRequest, String uuidFile, CancellationToken cancellation = default)
+    {
+        if (
+            !String.Equals(type, "invoice", StringComparison.InvariantCultureIgnoreCase) &&
+            !String.Equals(type, "budget", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Detail = "type not recogned."
+            });
+        }
+
+        if (!Guid.TryParse(uuidRequest, out Guid guidRequest))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Detail = "RequestUUID is not valid."
+            });
+        }
+
+        if (!Guid.TryParse(uuidFile, out Guid guidFile))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Detail = "FileUUID is not valid."
+            });
+        }
+
+        cancellation.ThrowIfCancellationRequested();
+
+        Byte[] response = await service.LoadFileRequest(type, guidRequest, guidFile, cancellation);
+
+        if (response.Length > 0)
+        {
+
+            String fileName = guidFile + ".pdf";
+
+            Response.Headers["Content-type"] = "application/pdf";
+            Response.Headers["Content-Disposition"] = $"attachment; filename={fileName}";
+
+            return File(response, "application/pdf", fileName);
+
+        }
+
+        return NotFound(new ProblemDetails
+        {
+            Detail = "File not found."
+        });
+
     }
 
     [HttpPost("register")]
