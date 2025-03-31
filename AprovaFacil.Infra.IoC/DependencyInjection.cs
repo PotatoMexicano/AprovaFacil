@@ -112,6 +112,7 @@ public static class DependencyInjection
             options.LoginPath = "/api/auth/login";
             options.SlidingExpiration = true;
         });
+
         services.AddAuthorization();
 
         return services;
