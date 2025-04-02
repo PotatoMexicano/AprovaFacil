@@ -14,6 +14,7 @@ export interface UserResponse {
   picture_url: string;
   enabled: boolean;
   identity_roles: string[];
+  request_approved: number;
 }
 
 export interface LoginResponse {

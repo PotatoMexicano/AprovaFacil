@@ -30,6 +30,14 @@ export const requestApi = createApi({
       invalidatesTags: ["Requests"]
     }),
 
+    getRequest: builder.query<RequestReponse, string>({
+      query: (id) => ({
+        url: `request/${id}`,
+        method: "GET",
+      }),
+      providesTags: ["Requests"]
+    }),
+
     getMyRequests: builder.query<RequestReponse, void>({
       query: () => ({
         url: "request/myself",
@@ -93,4 +101,5 @@ export const {
   useGetMyRequestsQuery,
   useGetPendingRequestsQuery,
   useLazyGetFileRequestQuery,
+  useGetRequestQuery
 } = requestApi;

@@ -75,9 +75,7 @@ export function DataTable<TData extends RequestReponse>({ data, columnVisibility
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Avatar className={cn("size-12 p-1 border-2", row.original.requester.enabled
-                      ? "border-green-400"
-                      : "border-red-400"
+                    <Avatar className={cn("size-12 p-1 border-2 border-primary/20 bg-background"
                     )}>
                       <AvatarImage src={row.original.requester.picture_url} />
                       <AvatarFallback>{row.original.requester.full_name}</AvatarFallback>
@@ -248,9 +246,11 @@ export function DataTable<TData extends RequestReponse>({ data, columnVisibility
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Avatar className={cn("size-12 p-1 border-2",
-                        manager.enabled
-                          ? "border-green-400 bg-background"
-                          : "border-red-400 bg-background"
+                        manager.request_approved === 1
+                        ? "border-green-400 bg-background"
+                        : manager.request_approved === -1
+                        ? "border-red-500 bg-background"
+                        : "border-primary/20 bg-background"
                       )}>
                         <AvatarImage src={manager.picture_url} />
                         <AvatarFallback>{manager.full_name}</AvatarFallback>
@@ -279,9 +279,11 @@ export function DataTable<TData extends RequestReponse>({ data, columnVisibility
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Avatar className={cn("size-12 p-1 border-2",
-                        director.enabled
+                        director.request_approved === 1
                           ? "border-green-400 bg-background"
-                          : "border-red-400 bg-background"
+                          : director.request_approved === -1
+                          ? "border-red-500 bg-background"
+                          : "border-primary/20 bg-background"
                       )}>
                         <AvatarImage src={director.picture_url} />
                         <AvatarFallback>{director.full_name}</AvatarFallback>

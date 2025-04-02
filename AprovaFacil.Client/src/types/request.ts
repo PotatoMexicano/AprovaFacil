@@ -11,9 +11,9 @@ export interface RequestReponse {
   payment_date: string;
   create_at: string;
   first_level_at: string;
-  approved_first_level: boolean;
+  approved_first_level: number;
   second_level_at: string;
-  approved_second_level: boolean;
+  approved_second_level: number;
   approved: number;
   received_at: string;
   amount: number;
