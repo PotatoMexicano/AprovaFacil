@@ -18,8 +18,6 @@ public static class RequestExtensions
             CreateAt = request.CreateAt,
             HasInvoice = request.HasInvoice,
             HasBudget = request.HasBudget,
-            ApprovedFirstLevel = request.ApprovedFirstLevel,
-            ApprovedSecondLevel = request.ApprovedSecondLevel,
             FirstLevelAt = request.FirstLevelAt,
             SecondLevelAt = request.SecondLevelAt,
             ReceivedAt = request.FinishedAt,
@@ -53,6 +51,7 @@ public static class RequestExtensions
                 Role = x.User.Role,
                 PictureUrl = x.User.PictureUrl,
                 Enabled = x.User.Enabled,
+                RequestApproved = x.Approved,
             })],
             Directors = [.. request.Directors.Select(x => new UserDTO
             {
@@ -63,6 +62,7 @@ public static class RequestExtensions
                 Role = x.User.Role,
                 PictureUrl = x.User.PictureUrl,
                 Enabled = x.User.Enabled,
+                RequestApproved = x.Approved,
             })],
         };
     }

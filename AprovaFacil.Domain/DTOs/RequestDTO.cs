@@ -15,9 +15,61 @@ public class RequestDTO
     public DateTime CreateAt { get; set; }
 
     public DateTime? FirstLevelAt { get; set; }
-    public Boolean ApprovedFirstLevel { get; set; }
+    public Int32 ApprovedFirstLevel
+    {
+        get
+        {
+            if (!this.Managers.Any()) // Se não há gerentes, está pendente
+            {
+                return 0;
+            }
+
+            Boolean hasAccepted = this.Managers.Any(m => m.RequestApproved == 1);
+            Boolean hasDenied = this.Managers.Any(m => m.RequestApproved == -1);
+            Boolean allDenied = this.Managers.All(m => m.RequestApproved == -1);
+
+            if (hasAccepted) // Se pelo menos um aceitou, retorna aceito
+            {
+                return 1;
+            }
+            else if (allDenied) // Se todos recusaram, retorna recusado
+            {
+                return -1;
+            }
+            else // Se não há aceites nem todos recusaram, está pendente
+            {
+                return 0;
+            }
+        }
+    }
     public DateTime? SecondLevelAt { get; set; }
-    public Boolean ApprovedSecondLevel { get; set; }
+    public Int32 ApprovedSecondLevel
+    {
+        get
+        {
+            if (!this.Directors.Any()) // Se não há diretores, está pendente
+            {
+                return 0;
+            }
+
+            Boolean hasAccepted = this.Directors.Any(d => d.RequestApproved == 1);
+            Boolean hasDenied = this.Directors.Any(d => d.RequestApproved == -1);
+            Boolean allDenied = this.Directors.All(d => d.RequestApproved == -1);
+
+            if (hasAccepted) // Se pelo menos um aceitou, retorna aceito
+            {
+                return 1;
+            }
+            else if (allDenied) // Se todos recusaram, retorna recusado
+            {
+                return -1;
+            }
+            else // Se não há aceites nem todos recusaram, está pendente
+            {
+                return 0;
+            }
+        }
+    }
 
     public DateTime? ReceivedAt { get; set; }
 
@@ -25,27 +77,33 @@ public class RequestDTO
     {
         get
         {
-            if (FirstLevelAt.HasValue && !ApprovedFirstLevel)
+            Boolean hasDirectors = this.Directors != null && this.Directors.Any();
+
+            // Se foi recusado em qualquer nível, retorna recusado
+            if (this.ApprovedFirstLevel == -1 || this.ApprovedSecondLevel == -1)
             {
                 return -1;
             }
 
-            if (SecondLevelAt.HasValue && !ApprovedSecondLevel)
+            // Se foi aprovado no primeiro nível e não há diretores, retorna aprovado
+            if (this.ApprovedFirstLevel == 1 && !hasDirectors)
             {
-                return -1;
+                return 1;
             }
 
-            if (FirstLevelAt.HasValue && SecondLevelAt.HasValue)
+            // Se foi aprovado no primeiro nível e o segundo nível está pendente, retorna pendente
+            if (this.ApprovedFirstLevel == 1 && this.ApprovedSecondLevel == 0)
             {
-                if (ApprovedFirstLevel && ApprovedSecondLevel)
-                {
-                    return 1;
-                }
-                else
-                {
-                    return -1;
-                }
+                return 0;
             }
+
+            // Se foi aprovado nos dois níveis, retorna aprovado
+            if (this.ApprovedFirstLevel == 1 && this.ApprovedSecondLevel == 1)
+            {
+                return 1;
+            }
+
+            // Para todos os outros casos (ex.: primeiro nível pendente), retorna pendente
             return 0;
         }
     }
