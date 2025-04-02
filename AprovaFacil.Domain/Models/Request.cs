@@ -23,8 +23,7 @@ public class Request
     public Int32 Level { get; set; }
     public Int32 Status { get; set; }
 
-    public DateTime? FinishedAt
-    { get; set; }
+    public DateTime? FinishedAt { get; set; }
 
     public Int64 Amount { get; set; }
     public String? Note { get; set; }
@@ -40,6 +39,8 @@ public class RequestManager
     public Guid RequestUUID { get; set; }
     public Int32 ManagerId { get; set; }
 
+    public Int32 Approved { get; set; }
+
     public Request Request { get; set; } = null!;
     public IApplicationUser User { get; set; } = null!;
 }
@@ -48,6 +49,8 @@ public class RequestDirector
 {
     public Guid RequestUUID { get; set; }
     public Int32 DirectorId { get; set; }
+
+    public Int32 Approved { get; set; }
 
     public Request Request { get; set; } = null!;
     public IApplicationUser User { get; set; } = null!;

@@ -1,5 +1,4 @@
-﻿using AprovaFacil.Domain.Constants;
-using AprovaFacil.Domain.Extensions;
+﻿using AprovaFacil.Domain.Extensions;
 using AprovaFacil.Domain.Filters;
 using AprovaFacil.Domain.Interfaces;
 using AprovaFacil.Domain.Models;
@@ -19,7 +18,7 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
 
         Request[] results = await query
             .OrderBy(x => x.Level)
-            .Where(x => x.Status == StatusRequest.Pending)
+            .Where(r => r.Status == 0)
             .Select(x => new Request
             {
                 UUID = x.UUID,
@@ -66,6 +65,7 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
                 {
                     ManagerId = m.ManagerId,
                     RequestUUID = m.RequestUUID,
+                    Approved = m.Approved,
                     User = new ApplicationUser
                     {
                         Id = m.User.Id,
@@ -82,6 +82,7 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
                 {
                     DirectorId = d.DirectorId,
                     RequestUUID = d.RequestUUID,
+                    Approved = d.Approved,
                     User = new ApplicationUser
                     {
                         Id = d.User.Id,
@@ -151,6 +152,7 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
                 {
                     ManagerId = m.ManagerId,
                     RequestUUID = m.RequestUUID,
+                    Approved = m.Approved,
                     User = new ApplicationUser
                     {
                         Id = m.User.Id,
@@ -167,6 +169,7 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
                 {
                     DirectorId = d.DirectorId,
                     RequestUUID = d.RequestUUID,
+                    Approved = d.Approved,
                     User = new ApplicationUser
                     {
                         Id = d.User.Id,
@@ -238,6 +241,7 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
             {
                 ManagerId = m.ManagerId,
                 RequestUUID = m.RequestUUID,
+                Approved = m.Approved,
                 User = new ApplicationUser
                 {
                     Id = m.User.Id,
@@ -254,6 +258,7 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
             {
                 DirectorId = d.DirectorId,
                 RequestUUID = d.RequestUUID,
+                Approved = d.Approved,
                 User = new ApplicationUser
                 {
                     Id = d.User.Id,

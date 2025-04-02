@@ -21,6 +21,17 @@ public class RequestService(
         return response;
     }
 
+    public async Task<RequestDTO?> ListRequest(Guid requestGuid, CancellationToken cancellation)
+    {
+        Request? request = await repository.ListRequestAsync(requestGuid, cancellation: cancellation);
+        if (request is null)
+        {
+            return null;
+        }
+
+        return request.ToDTO();
+    }
+
     public async Task<RequestDTO[]> ListRequests(FilterRequest filter, String strApplicationUserId, CancellationToken cancellation)
     {
 

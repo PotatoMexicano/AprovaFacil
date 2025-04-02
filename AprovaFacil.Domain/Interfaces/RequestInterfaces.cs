@@ -10,6 +10,8 @@ public static class RequestInterfaces
     {
         Task<RequestDTO[]> ListPendingRequests(FilterRequest filter, CancellationToken cancellation);
         Task<RequestDTO[]> ListRequests(FilterRequest filter, String strApplicationUserId, CancellationToken cancellation);
+        Task<RequestDTO?> ListRequest(Guid requestGuid, CancellationToken cancellation);
+
         Task<RequestDTO> RegisterRequest(RequestRegisterDTO request, CancellationToken cancellation);
         Task<Byte[]> LoadFileRequest(String type, Guid requestGuid, Guid fileGuid, CancellationToken cancellation);
     }
@@ -19,6 +21,7 @@ public static class RequestInterfaces
         Task<Request?> ListRequestAsync(Guid request, CancellationToken cancellation);
         Task<Request[]> ListRequestsAsync(FilterRequest filter, CancellationToken cancellation, Int32? ApplicationUserId = default);
         Task<Request[]> ListPendingRequestsAsync(FilterRequest filter, CancellationToken cancellation, Int32? ApplicationUserId = default);
+
         Task<Request?> RegisterRequestAsync(Request request, CancellationToken cancellation);
     }
 }

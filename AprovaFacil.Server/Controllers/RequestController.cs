@@ -14,8 +14,32 @@ namespace AprovaFacil.Server.Controllers;
 [Authorize]
 public class RequestController(RequestInterfaces.IRequestService service) : ControllerBase
 {
+    [HttpGet("{uuidRequest}")]
+    public async Task<IActionResult> ListRequest(String uuidRequest, CancellationToken cancellation = default)
+    {
+        if (!Guid.TryParse(uuidRequest, out Guid requestGuid))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Detail = "UUID not valid."
+            });
+        }
+
+        RequestDTO? result = await service.ListRequest(requestGuid, cancellation);
+
+        if (result is null)
+        {
+            return NotFound(new ProblemDetails
+            {
+                Detail = "Request not found"
+            });
+        }
+
+        return Ok(result);
+    }
+
     [HttpPost("myself")]
-    public async Task<IActionResult> ListRequest([FromBody] FilterRequest request, CancellationToken cancellation = default)
+    public async Task<IActionResult> ListMyRequest([FromBody] FilterRequest request, CancellationToken cancellation = default)
     {
         String? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 

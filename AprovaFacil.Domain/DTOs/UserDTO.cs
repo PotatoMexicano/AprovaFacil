@@ -15,6 +15,8 @@ public class UserDTO
     public required String Email { get; set; }
     public Boolean Enabled { get; set; }
     public List<String> IdentityRoles { get; set; } = [];
+
+    public Int32 RequestApproved { get; set; }
 }
 
 public class UserRegisterDTO
