@@ -133,7 +133,7 @@ export default function NewCompanyPage() {
   }, [address, postalCodeSearch]);
 
   useEffect(() => {
-    setBreadcrumbs(["Início", "Empresas", "Adicionar"]); // Define os breadcrumbs da página atual
+    setBreadcrumbs(["Início", "Empresa", "Adicionar"]); // Define os breadcrumbs da página atual
   }, [setBreadcrumbs]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {

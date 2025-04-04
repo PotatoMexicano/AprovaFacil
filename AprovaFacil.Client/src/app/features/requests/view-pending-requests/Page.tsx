@@ -34,7 +34,7 @@ export default function ViewPendingRequestsPage() {
   });
 
   useEffect(() => {
-    setBreadcrumbs(["Início", "Solicitações pendentes"]); // Define os breadcrumbs da página atual
+    setBreadcrumbs(["Início", "Solicitação", "Pendentes"]); // Define os breadcrumbs da página atual
   }, [setBreadcrumbs]);
 
   useEffect(() => {

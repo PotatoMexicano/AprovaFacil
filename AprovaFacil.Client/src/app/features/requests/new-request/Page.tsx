@@ -64,7 +64,7 @@ export default function NewRequestPage() {
     }, [isSuccess, isError]);
 
   useEffect(() => {
-    setBreadcrumbs(["Início", "Requisição", "Adicionar"])
+    setBreadcrumbs(["Início", "Solicitação", "Adicionar"])
   }, [setBreadcrumbs])
 
   const form = useForm({
