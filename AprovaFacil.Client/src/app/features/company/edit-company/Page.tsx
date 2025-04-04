@@ -154,7 +154,7 @@ export default function EditCompanyPage() {
   }, [address, postalCodeSearch]);
 
   useEffect(() => {
-    setBreadcrumbs(["Início", "Empresas", "Editar"]); // Define os breadcrumbs da página atual
+    setBreadcrumbs(["Início", "Empresa", "Editar"]); // Define os breadcrumbs da página atual
   }, [setBreadcrumbs]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {

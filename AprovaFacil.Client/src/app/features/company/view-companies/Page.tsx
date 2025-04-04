@@ -28,7 +28,7 @@ export default function ViewCompaniesPage() {
   }, [errorCompany, isCompanyError, toast]);
 
   useEffect(() => {
-    setBreadcrumbs(["Início", "Empresas"]); // Define os breadcrumbs da página atual
+    setBreadcrumbs(["Início", "Empresa"]); // Define os breadcrumbs da página atual
   }, [setBreadcrumbs]);
 
   return (

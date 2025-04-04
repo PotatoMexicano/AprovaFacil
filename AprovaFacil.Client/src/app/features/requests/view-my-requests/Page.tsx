@@ -10,25 +10,27 @@ import { useBreadcrumb } from "@/app/context/breadkcrumb-context";
 import { DataTable } from "../_shared/data-table";
 import { useGetMyRequestsQuery } from "@/app/api/requestApiSlice";
 import { VisibilityState } from "@tanstack/react-table";
+import { RootState, useAppSelector } from "@/app/store/store";
 
 export default function ViewMyRequestsPage() {
   const { data, isLoading, error } = useGetMyRequestsQuery();
   const { setBreadcrumbs } = useBreadcrumb();
+  const { user } = useAppSelector((state: RootState) => state.auth);
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
-        "requester": true,
-        "approved_first_level": false,
-        "approved_second_level": false,
-        "note": false,
-        "received_at": false,
-        "approved": true,
-        "invoice_name": false,
-        "budget_name": false,
-        "actions": true,
-      });
-  
+    "requester": true,
+    "approved_first_level": false,
+    "approved_second_level": false,
+    "note": false,
+    "received_at": false,
+    "approved": true,
+    "invoice_name": false,
+    "budget_name": false,
+    "actions": true,
+  });
+
   useEffect(() => {
-    setBreadcrumbs(["Início", "Minhas solicitações"]); // Define os breadcrumbs da página atual
+    setBreadcrumbs(["Início", "Solicitação", user?.full_name || "Pessoal"]); // Define os breadcrumbs da página atual
   }, [setBreadcrumbs]);
 
   return (
