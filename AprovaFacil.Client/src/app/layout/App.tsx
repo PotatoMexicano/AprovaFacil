@@ -58,7 +58,7 @@ function AppHeader() {
 
 function App() {
   return (
-    <div className="flex w-screen">
+    <div className="flex">
       <Toaster />
       <ThemeProvider>
         <SidebarProvider className="flex m-auto w-full">
