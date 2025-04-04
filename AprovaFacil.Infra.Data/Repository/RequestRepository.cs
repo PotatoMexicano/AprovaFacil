@@ -135,7 +135,7 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
                     CNPJ = x.Company.CNPJ,
                     Email = x.Company.Email,
                     Phone = x.Company.Phone,
-                    Enabled = x.Company.Enabled,
+                    Enabled = x.Company.Enabled
                 },
                 Requester = new ApplicationUser
                 {
