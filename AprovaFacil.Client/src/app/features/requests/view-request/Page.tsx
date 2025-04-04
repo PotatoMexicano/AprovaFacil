@@ -1,14 +1,17 @@
-import { useGetRequestQuery } from "@/app/api/requestApiSlice";
+import { useGetRequestQuery, useLazyGetFileRequestQuery } from "@/app/api/requestApiSlice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
 import { useParams } from "react-router-dom";
 import {
   Building2,
   Calendar,
+  CheckIcon,
+  CircleCheck,
+  CircleCheckIcon,
+  CircleXIcon,
   Clock,
   DollarSign,
   FileText,
-  ShieldCheck,
   User,
   UserCog,
 } from 'lucide-react';
@@ -16,6 +19,9 @@ import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/ui/tooltip";
 import { UserResponse } from "@/types/auth";
+import { useEffect } from "react";
+import { Button } from "@/app/components/ui/button";
+import { useBreadcrumb } from "@/app/context/breadkcrumb-context";
 
 function UserCard({ user }: { user: UserResponse | undefined }) {
 
@@ -23,26 +29,44 @@ function UserCard({ user }: { user: UserResponse | undefined }) {
     return null;
 
   return (
-    <div className="flex items-center w-fit space-x-4 ">
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Avatar className={cn("size-12 p-1 border-2",
-              user.request_approved === 1
-                ? "border-green-400 bg-background"
-                : user.request_approved === -1
-                  ? "border-red-500 bg-background"
-                  : "border-primary/20 bg-background"
-            )}>
-              <AvatarImage src={user.picture_url} />
-              <AvatarFallback>{user.full_name}</AvatarFallback>
-            </Avatar>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{user.full_name}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+    <div className="flex items-center w-fit space-x-4">
+      <div className="relative group"> {/* Adiciona um contêiner relativo para posicionar o ícone */}
+        <Avatar
+          className={cn(
+            "size-12 p-1 border-2 transition-opacity duration-300 group-hover:opacity-0", // Transição para ocultar a imagem no hover
+            user.request_approved === 1
+              ? "border-green-400 bg-background"
+              : user.request_approved === -1
+              ? "border-red-500 bg-background"
+              : "border-primary/20 bg-background"
+          )}
+        >
+          <AvatarImage src={user.picture_url} />
+          <AvatarFallback>{user.full_name}</AvatarFallback>
+        </Avatar>
+
+        {/* Ícone de fundo que aparece no hover */}
+        <div
+          className={cn(
+            "absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300", // Transição para mostrar o ícone
+            user.request_approved === 1
+              ? "text-green-400"
+              : user.request_approved === -1
+              ? "text-red-500"
+              : "text-gray-400"
+          )}
+        >
+          {user.request_approved === 1 && (
+            <span className="text-2xl">✔</span> // Ícone de aprovado (check)
+          )}
+          {user.request_approved === -1 && (
+            <span className="text-2xl">✖</span> // Ícone de recusado (X)
+          )}
+          {user.request_approved === 0 && (
+            <span className="text-2xl">⏳</span> // Ícone de pendente (relógio)
+          )}
+        </div>
+      </div>
       <div>
         <p className="text-sm font-medium">{user.full_name}</p>
         <p className="text-sm text-muted-foreground">{user.role_label}</p>
@@ -54,8 +78,41 @@ function UserCard({ user }: { user: UserResponse | undefined }) {
 
 export default function ViewRequest() {
   const { id } = useParams<{ id: string }>();
+  const { data } = useGetRequestQuery(id as string);
+  const { setBreadcrumbs } = useBreadcrumb();
 
-  const { data, isLoading, isFetching, isError, error } = useGetRequestQuery(id as string);
+  useEffect(() => {
+      setBreadcrumbs(["Início", "Solicitação", "Detalhes"]);
+    }, [setBreadcrumbs])
+
+  const [download, { data: fileData, error: fileError, isFetching: fileFetching }] = useLazyGetFileRequestQuery();
+
+  const handleDownload = (fileType: string, requestId: string, fileId: string) => {
+    download({
+      fileId: fileId,
+      fileType: fileType,
+      requestId: requestId
+    });
+  };
+
+  useEffect(() => {
+    if (fileData && !fileFetching && !fileError) {
+      const { blob, fileName } = fileData; // Desestrutura o resultado transformado
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    }
+
+    if (!fileFetching && fileError) {
+      toast.error("Falha ao obter arquido PDF");
+      console.error(fileError);
+    }
+  }, [fileData, fileFetching, fileError]);
 
   return (
     <div className="flex bg-background py-8">
@@ -83,14 +140,48 @@ export default function ViewRequest() {
                 <FileText className="h-5 w-5 text-muted-foreground" />
               </div>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Nota Fiscal</span>
-                <Badge variant={data?.has_invoice ? "success" : "destructive"}>{data?.has_invoice ? "Sim" : "Não"}</Badge>
+                {data && data.has_invoice
+                  ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Button type="button" variant={"outline"} size={"sm"} onClick={() => handleDownload("invoice", data?.uuid, data?.invoice_name)}>
+                            Baixar
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Baixar Nota Fiscal
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )
+                  : (
+                    <Badge variant={"destructive"} className="flex gap-1"><CircleXIcon size={16} /> Não</Badge>
+                  )}
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Orçamento</span>
-                <Badge variant={data?.has_budget ? "success" : "destructive"}>{data?.has_budget ? "Sim" : "Não"}</Badge>
+                {data && data.has_budget
+                  ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Button type="button" variant={"outline"} size={"sm"} onClick={() => handleDownload("budget", data?.uuid, data?.budget_name)}>
+                            Baixar
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Baixar Orçamento
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )
+                  : (
+                    <Badge variant={"destructive"} className="flex gap-1"><CircleXIcon size={16} /> Não</Badge>
+                  )}
               </div>
             </CardContent>
           </Card>
@@ -103,15 +194,23 @@ export default function ViewRequest() {
                 <Clock className="h-5 w-5 text-muted-foreground" />
               </div>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-3">
+              {data?.approved !== 0 && (
+                <div className={`p-3 mb-4 text-center rounded-lg ${data?.approved === 1 ? 'bg-green-100' : 'bg-red-100'}`}>
+                  <p className={`text-lg font-semibold ${data?.approved === 1 ? 'text-green-800' : 'text-red-800'}`}>
+                    {data?.approved === 1 ? 'Aprovado' : 'Recusado'}
+                  </p>
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Gerentes</span>
-                {data?.approved === 1
+                {data?.approved_first_level === 1
                   ? (
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
-                          <Badge variant={"success"}>Sim</Badge>
+                          <Badge variant={"success"} className="flex gap-1"><CircleCheckIcon size={16} /> Aprovado</Badge>
                         </TooltipTrigger>
                         <TooltipContent>
                           {new Date(data?.first_level_at).toLocaleDateString("pt-BR")}
@@ -119,29 +218,34 @@ export default function ViewRequest() {
                       </Tooltip>
                     </TooltipProvider>
                   )
-                  : data?.approved === -1
-                    ? <Badge variant={"destructive"}>Não</Badge>
+                  : data?.approved_first_level === -1
+                    ? <Badge variant={"destructive"} className="flex gap-1"><CircleXIcon size={16} /> Recusado</Badge>
                     : <Badge variant={"outline"}>Pendente</Badge>
                 }
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Diretores</span>
-                {data?.approved_second_level
-                  ? (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <Badge variant={"success"}>Sim</Badge>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {new Date(data?.second_level_at).toLocaleDateString("pt-BR")}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )
-                  : <Badge variant={"destructive"}>Não</Badge>
-                }
-              </div>
+
+              {data && data?.directors.length > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Diretores</span>
+                  {data?.approved_second_level === 1
+                    ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Badge variant={"success"} className="flex gap-1"><CircleCheckIcon size={16} /> Aprovado</Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {new Date(data?.second_level_at).toLocaleDateString("pt-BR")}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )
+                    : data?.approved_second_level === -1
+                      ? <Badge variant={"destructive"} className="flex gap-1"><CircleXIcon size={16} /> Recusado</Badge>
+                      : <Badge variant={"secondary"}>Pendente</Badge>
+                  }
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -153,15 +257,31 @@ export default function ViewRequest() {
                 <Calendar className="h-5 w-5 text-muted-foreground" />
               </div>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Created</span>
+                <span className="text-sm text-muted-foreground">Aberto</span>
                 <span className="text-sm font-medium">{data?.create_at ? formatDate(data.create_at) : ""}</span>
               </div>
+
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Received</span>
-                <span className="text-sm font-medium">{data?.received_at ? formatDate(data.received_at) : ""}</span>
+                <span className="text-sm text-muted-foreground">Gerente</span>
+                <span className="text-sm font-medium">{data?.first_level_at ? formatDate(data.first_level_at) : ""}</span>
               </div>
+
+              {data && data.directors.length > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Diretor</span>
+                  <span className="text-sm font-medium">{data?.second_level_at ? formatDate(data.second_level_at) : ""}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Faturado</span>
+                {data && data.approved === 1 && (
+                  <span className="text-sm font-medium">{data?.received_at ? formatDate(data.received_at) : ""}</span>
+                )}
+              </div>
+
             </CardContent>
           </Card>
         </div>
@@ -227,7 +347,7 @@ export default function ViewRequest() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Gerentes</CardTitle>
+                <CardTitle className="text-lg">Gerente(s)</CardTitle>
                 <UserCog className="h-5 w-5 text-muted-foreground" />
               </div>
             </CardHeader>
@@ -239,26 +359,28 @@ export default function ViewRequest() {
           </Card>
 
           {/* Directors Card */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Gerentes</CardTitle>
-                <UserCog className="h-5 w-5 text-muted-foreground" />
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {data?.managers.map(manager => (
-                <UserCard key={manager.id} user={manager} />
-              ))}
-            </CardContent>
-          </Card>
+          {data && data?.directors.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Diretor(s)</CardTitle>
+                  <UserCog className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {data?.directors.map(director => (
+                  <UserCard key={director.id} user={director} />
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Notes */}
         {data?.note && (
           <Card className="mt-6">
             <CardHeader>
-              <CardTitle>Notes</CardTitle>
+              <CardTitle>Notas</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">{data?.note}</p>
