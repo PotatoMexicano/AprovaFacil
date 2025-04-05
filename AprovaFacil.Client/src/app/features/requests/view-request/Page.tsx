@@ -1,12 +1,12 @@
-import { useGetRequestQuery, useLazyGetFileRequestQuery } from "@/app/api/requestApiSlice";
+import { useApproveRequestMutation, useGetRequestQuery, useLazyGetFileRequestQuery, useRejectRequestMutation } from "@/app/api/requestApiSlice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
+  AlertCircle,
   Building2,
   Calendar,
-  CheckIcon,
-  CircleCheck,
+  CheckCircle,
   CircleCheckIcon,
   CircleXIcon,
   Clock,
@@ -14,6 +14,7 @@ import {
   FileText,
   User,
   UserCog,
+  XCircle,
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar";
@@ -22,6 +23,9 @@ import { UserResponse } from "@/types/auth";
 import { useEffect } from "react";
 import { Button } from "@/app/components/ui/button";
 import { useBreadcrumb } from "@/app/context/breadkcrumb-context";
+import { RootState, useAppSelector } from "@/app/store/store";
+import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/app/components/ui/alert";
 
 function UserCard({ user }: { user: UserResponse | undefined }) {
 
@@ -37,8 +41,8 @@ function UserCard({ user }: { user: UserResponse | undefined }) {
             user.request_approved === 1
               ? "border-green-400 bg-background"
               : user.request_approved === -1
-              ? "border-red-500 bg-background"
-              : "border-primary/20 bg-background"
+                ? "border-red-500 bg-background"
+                : "border-primary/20 bg-background"
           )}
         >
           <AvatarImage src={user.picture_url} />
@@ -52,8 +56,8 @@ function UserCard({ user }: { user: UserResponse | undefined }) {
             user.request_approved === 1
               ? "text-green-400"
               : user.request_approved === -1
-              ? "text-red-500"
-              : "text-gray-400"
+                ? "text-red-500"
+                : "text-gray-400"
           )}
         >
           {user.request_approved === 1 && (
@@ -78,12 +82,19 @@ function UserCard({ user }: { user: UserResponse | undefined }) {
 
 export default function ViewRequest() {
   const { id } = useParams<{ id: string }>();
-  const { data } = useGetRequestQuery(id as string);
+  const { data, isLoading, isError, error, refetch } = useGetRequestQuery(id as string);
+  const { user } = useAppSelector((state: RootState) => state.auth);
   const { setBreadcrumbs } = useBreadcrumb();
+  const navigate = useNavigate();
+
+  const toastId = "unauthorized-error";
+
+  const [approveRequest] = useApproveRequestMutation();
+  const [rejectRequest] = useRejectRequestMutation();
 
   useEffect(() => {
-      setBreadcrumbs(["Início", "Solicitação", "Detalhes"]);
-    }, [setBreadcrumbs])
+    setBreadcrumbs(["Início", "Solicitação", "Detalhes"]);
+  }, [setBreadcrumbs])
 
   const [download, { data: fileData, error: fileError, isFetching: fileFetching }] = useLazyGetFileRequestQuery();
 
@@ -113,6 +124,61 @@ export default function ViewRequest() {
       console.error(fileError);
     }
   }, [fileData, fileFetching, fileError]);
+
+  const handleReject = async () => {
+    try {
+      await rejectRequest(id as string).unwrap();
+      refetch();
+    }
+    catch (err) {
+      toast.error("Falha ao rejeitar solicitação.");
+      console.error(err)
+    }
+  };
+  const handleApprove = async () => {
+    try {
+      await approveRequest(id as string).unwrap();
+      refetch();
+    }
+    catch (err) {
+      toast.error("Falha ao aprovar solicitação.");
+      console.error(err)
+    }
+  };
+
+  const managerInRequest = data?.managers.find((manager) => manager.id === user?.id);
+  const isManager = user?.role === "Manager" && managerInRequest !== undefined;
+
+  const directorInRequest = data?.directors.find((director) => director.id === user?.id);
+  const isDirector = user?.role === "Director" && directorInRequest !== undefined;
+
+  useEffect(() => {
+    if (error && !isLoading && error?.data?.status === 401) {
+      const timer = setTimeout(() => {
+        navigate("/request", { replace: true });
+        return;
+      }, 3500);
+      toast.error("Sinto muito. Vamos te redirecionar...", {
+        id: toastId
+      });
+      return () => clearTimeout(timer);
+    }
+  }, [isError, error, isLoading, navigate]);
+  
+  if (isError && error) {
+    return <>
+      <Alert variant={"destructive"}>
+        <AlertCircle className="w-4 h-4" />
+        <AlertTitle>{error.data.title}</AlertTitle>
+        <AlertDescription>{error.data.detail}</AlertDescription>
+      </Alert>
+    </>
+  }
+  
+
+  if (isLoading) {
+    return <div>Carregando...</div>
+  }
 
   return (
     <div className="flex bg-background py-8">
@@ -220,7 +286,7 @@ export default function ViewRequest() {
                   )
                   : data?.approved_first_level === -1
                     ? <Badge variant={"destructive"} className="flex gap-1"><CircleXIcon size={16} /> Recusado</Badge>
-                    : <Badge variant={"outline"}>Pendente</Badge>
+                    : <Badge variant={"secondary"}>Pendente</Badge>
                 }
               </div>
 
@@ -246,6 +312,44 @@ export default function ViewRequest() {
                   }
                 </div>
               )}
+
+              {isManager && managerInRequest && (data?.approved_first_level === 0 || data?.approved_first_level === -1) && (
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={handleReject}
+                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-red-600 border border-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    Recusar
+                  </button>
+                  <button
+                    onClick={handleApprove}
+                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-green-600 border border-green-600 hover:bg-green-50 transition-colors"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    Aprovar
+                  </button>
+                </div>
+              )}
+
+              {isDirector && directorInRequest && (data?.approved_second_level === 0 || data?.approved_second_level === -1) && (
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={handleReject}
+                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-red-600 border border-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    Recusar
+                  </button>
+                  <button
+                    onClick={handleApprove}
+                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-green-600 border border-green-600 hover:bg-green-50 transition-colors"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    Aprovar
+                  </button>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -260,18 +364,18 @@ export default function ViewRequest() {
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Aberto</span>
-                <span className="text-sm font-medium">{data?.create_at ? formatDate(data.create_at) : ""}</span>
+                <span className="text-sm font-normal">{data?.create_at ? formatDate(data.create_at) : ""}</span>
               </div>
 
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Gerente</span>
-                <span className="text-sm font-medium">{data?.first_level_at ? formatDate(data.first_level_at) : ""}</span>
+                <span className="text-sm font-normal">{data?.first_level_at ? formatDate(data.first_level_at) : ""}</span>
               </div>
 
               {data && data.directors.length > 0 && (
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Diretor</span>
-                  <span className="text-sm font-medium">{data?.second_level_at ? formatDate(data.second_level_at) : ""}</span>
+                  <span className="text-sm font-normal">{data?.second_level_at ? formatDate(data.second_level_at) : ""}</span>
                 </div>
               )}
 

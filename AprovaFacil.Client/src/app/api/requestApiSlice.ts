@@ -30,6 +30,28 @@ export const requestApi = createApi({
       invalidatesTags: ["Requests"]
     }),
 
+    approveRequest: builder.mutation({
+      query: (id) => {
+        return {
+          url: `request/${id}/approve`,
+          method: 'POST',
+          priority: 'high'
+        }
+      },
+      invalidatesTags: ["Requests"]
+    }),
+
+    rejectRequest: builder.mutation({
+      query: (id) => {
+        return {
+          url: `request/${id}/reject`,
+          method: 'POST',
+          priority: 'high'
+        }
+      },
+      invalidatesTags: ["Requests"]
+    }),
+
     getRequest: builder.query<RequestReponse, string>({
       query: (id) => ({
         url: `request/${id}`,
@@ -101,5 +123,7 @@ export const {
   useGetMyRequestsQuery,
   useGetPendingRequestsQuery,
   useLazyGetFileRequestQuery,
-  useGetRequestQuery
+  useGetRequestQuery,
+  useApproveRequestMutation,
+  useRejectRequestMutation
 } = requestApi;
