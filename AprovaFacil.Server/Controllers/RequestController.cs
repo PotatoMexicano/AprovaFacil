@@ -17,6 +17,11 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
     [HttpGet("{uuidRequest}")]
     public async Task<IActionResult> ListRequest(String uuidRequest, CancellationToken cancellation = default)
     {
+        String? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        String? role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        Boolean isAdmin = Roles.IsAdmin(role);
+
         if (!Guid.TryParse(uuidRequest, out Guid requestGuid))
         {
             return BadRequest(new ProblemDetails
@@ -32,6 +37,18 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
             return NotFound(new ProblemDetails
             {
                 Detail = "Request not found"
+            });
+        }
+
+        Boolean isOwner = String.Equals(result.RequesterId.ToString(), userId, StringComparison.InvariantCultureIgnoreCase);
+
+        if (!isAdmin && !isOwner)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Title = "You cannot access this request.",
+                Detail = "You don't have permission to see this request.",
+                Status = StatusCodes.Status401Unauthorized,
             });
         }
 
@@ -227,4 +244,19 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
         return Ok(result);
     }
 
+    [HttpPost("{uuidRequest}/approve")]
+    public async Task<IActionResult> ApproveRequest(String uuidRequest, CancellationToken cancellation = default)
+    {
+        // Receber o id da solicitação, id do usuario.
+        // Verificar se a solicitação existe e se está pendente para o grupo aceitar.
+        // Verificar se o usuário está na lista de relacionados.
+
+        return Ok();
+    }
+
+    [HttpPost("{uuidRequest}/reject")]
+    public async Task<IActionResult> RejectRequest(String uuidRequest, CancellationToken cancellation = default)
+    {
+        return Ok();
+    }
 }

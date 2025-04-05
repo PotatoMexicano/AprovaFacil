@@ -101,7 +101,7 @@ public class UserController(UserInterfaces.IUserService service) : ControllerBas
         String? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         Boolean isAdmin = Roles.IsAdmin(role);
-        Boolean isSame = String.Equals(request.Id.ToString(), userId, StringComparison.OrdinalIgnoreCase); ;
+        Boolean isSame = String.Equals(request.Id.ToString(), userId, StringComparison.OrdinalIgnoreCase);
 
         if (!isAdmin && !isSame)
         {
