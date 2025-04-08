@@ -14,6 +14,14 @@ namespace AprovaFacil.Server.Controllers;
 [Authorize]
 public class RequestController(RequestInterfaces.IRequestService service) : ControllerBase
 {
+    [HttpGet]
+    [Authorize(Roles = $"{Roles.Manager}, {Roles.Director}")]
+    public async Task<IActionResult> ListAllRequests(CancellationToken cancellation = default)
+    {
+        RequestDTO[] requests = await service.ListAll(cancellation);
+        return Ok(requests);
+    }
+
     [HttpGet("{uuidRequest}")]
     public async Task<IActionResult> ListRequest(String uuidRequest, CancellationToken cancellation = default)
     {
@@ -78,6 +86,16 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
     public async Task<IActionResult> ListPendingRequst([FromBody] FilterRequest request, CancellationToken cancellation = default)
     {
         String? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        String? userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (userRole == Roles.Director)
+        {
+            request.UserRole = Roles.Director;
+        }
+        else if (userRole == Roles.Manager)
+        {
+            request.UserRole = Roles.Manager;
+        }
 
         if (userId is null)
         {
@@ -248,8 +266,25 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
     public async Task<IActionResult> ApproveRequest(String uuidRequest, CancellationToken cancellation = default)
     {
         // Receber o id da solicitação, id do usuario.
-        // Verificar se a solicitação existe e se está pendente para o grupo aceitar.
-        // Verificar se o usuário está na lista de relacionados.
+        String? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId is null)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Detail = "Are you logged in ?"
+            });
+        }
+
+        if (!Guid.TryParse(uuidRequest, out Guid requestGuid))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Detail = "UUID not valid."
+            });
+        }
+
+        await service.ApproveRequest(requestGuid, userId, cancellation);
 
         return Ok();
     }
@@ -257,6 +292,27 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
     [HttpPost("{uuidRequest}/reject")]
     public async Task<IActionResult> RejectRequest(String uuidRequest, CancellationToken cancellation = default)
     {
+        // Receber o id da solicitação, id do usuario.
+        String? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId is null)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Detail = "Are you logged in ?"
+            });
+        }
+
+        if (!Guid.TryParse(uuidRequest, out Guid requestGuid))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Detail = "UUID not valid."
+            });
+        }
+
+        await service.RejectRequest(requestGuid, userId, cancellation);
+
         return Ok();
     }
 }

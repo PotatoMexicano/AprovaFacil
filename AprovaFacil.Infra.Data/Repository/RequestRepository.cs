@@ -1,15 +1,98 @@
-﻿using AprovaFacil.Domain.Extensions;
+﻿using AprovaFacil.Domain.Constants;
+using AprovaFacil.Domain.Extensions;
 using AprovaFacil.Domain.Filters;
 using AprovaFacil.Domain.Interfaces;
 using AprovaFacil.Domain.Models;
 using AprovaFacil.Infra.Data.Context;
 using AprovaFacil.Infra.Data.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace AprovaFacil.Infra.Data.Repository;
 
-public class RequestRepository(ApplicationDbContext context) : RequestInterfaces.IRequestRepository
+public class RequestRepository(ApplicationDbContext context, UserManager<ApplicationUser> userManager) : RequestInterfaces.IRequestRepository
 {
+    public async Task<Boolean> ApproveRequestAsync(Guid requestGuid, Int32 applicationUserId, CancellationToken cancellation)
+    {
+        Request? request = await context.Requests
+            .Include(x => x.Managers)
+            .Include(x => x.Directors)
+            .FirstOrDefaultAsync(x => x.UUID == requestGuid, cancellation);
+
+        if (request is null) return false;
+
+        Boolean updated = false;
+
+        RequestManager? manager = request.Managers.FirstOrDefault(m => m.ManagerId == applicationUserId);
+        if (manager is not null && manager.Approved == 0)
+        {
+            manager.Approved = 1;
+            request.FirstLevelAt = DateTime.UtcNow;
+            request.ApprovedFirstLevel = true;
+            request.Level = LevelRequest.FirstLevel;
+            updated = true;
+        }
+
+        RequestDirector? director = request.Directors.FirstOrDefault(d => d.DirectorId == applicationUserId);
+        if (director is not null && director.Approved == 0)
+        {
+            director.Approved = 1;
+            request.SecondLevelAt = DateTime.UtcNow;
+            request.ApprovedSecondLevel = true;
+            request.Level = LevelRequest.SecondLevel;
+            updated = true;
+        }
+
+        if (!updated) return false;
+
+        await context.SaveChangesAsync(cancellation);
+        return true;
+    }
+
+    public async Task<Boolean> RejectRequestAsync(Guid requestGuid, Int32 applicationUserId, CancellationToken cancellation)
+    {
+        Request? request = await context.Requests
+            .Include(x => x.Managers)
+            .Include(x => x.Directors)
+            .FirstOrDefaultAsync(x => x.UUID == requestGuid, cancellation);
+
+        if (request is null) return false;
+
+        Boolean updated = false;
+
+        // Se já está recusada, retorna
+        if (request.Status == StatusRequest.Reject) return false;
+
+        RequestManager? manager = request.Managers.FirstOrDefault(m => m.ManagerId == applicationUserId);
+        if (manager is not null && manager.Approved == 0)
+        {
+            manager.Approved = -1;
+            request.Status = StatusRequest.Reject;
+            request.FirstLevelAt = DateTime.UtcNow;
+            updated = true;
+        }
+
+        // Verifica se é director
+        RequestDirector? director = request.Directors.FirstOrDefault(d => d.DirectorId == applicationUserId);
+        if (director is not null && director.Approved == 0)
+        {
+            director.Approved = -1;
+            updated = true;
+
+            // Se TODOS os diretores recusaram, então recusa o request
+            if (request.Directors.All(d => d.Approved == -1))
+            {
+                request.Status = StatusRequest.Reject;
+                request.SecondLevelAt = DateTime.UtcNow;
+            }
+        }
+
+        if (!updated) return false;
+
+        await context.SaveChangesAsync(cancellation);
+        return true;
+    }
+
     public async Task<Request[]> ListPendingRequestsAsync(FilterRequest filter, CancellationToken cancellation, Int32? applicationUserId = default)
     {
         IQueryable<Request> query = context.Requests.AsQueryable();
@@ -369,5 +452,90 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
             .AsNoTracking()
             .FirstOrDefaultAsync(r => r.UUID == request.UUID, cancellation);
 
+    }
+
+    public async Task<Request[]> ListAllAsync(CancellationToken cancellation)
+    {
+        Request[] result = await context.Requests
+            .Select(x => new Request
+            {
+                UUID = x.UUID,
+                RequesterId = x.RequesterId,
+                CreateAt = x.CreateAt,
+                Amount = x.Amount,
+                FirstLevelAt = x.FirstLevelAt,
+                SecondLevelAt = x.SecondLevelAt,
+                InvoiceName = x.InvoiceName,
+                HasBudget = x.HasBudget,
+                HasInvoice = x.HasInvoice,
+                Level = x.Level,
+                Status = x.Status,
+                BudgetName = x.BudgetName,
+                Note = x.Note,
+                PaymentDate = x.PaymentDate,
+                FinishedAt = x.FinishedAt,
+                ApprovedFirstLevel = x.ApprovedFirstLevel,
+                ApprovedSecondLevel = x.ApprovedSecondLevel,
+                CompanyId = x.CompanyId,
+                Company = new Company
+                {
+                    Id = x.Company.Id,
+                    LegalName = x.Company.LegalName,
+                    TradeName = x.Company.TradeName,
+                    Address = x.Company.Address,
+                    CNPJ = x.Company.CNPJ,
+                    Email = x.Company.Email,
+                    Phone = x.Company.Phone,
+                    Enabled = x.Company.Enabled
+                },
+                Requester = new ApplicationUser
+                {
+                    Email = x.Requester.Email,
+                    Department = x.Requester.Department,
+                    Role = x.Requester.Role,
+                    FullName = x.Requester.FullName,
+                    Id = x.Requester.Id,
+                    Enabled = x.Requester.Enabled,
+                    UserName = x.Requester.UserName,
+                    PictureUrl = x.Requester.PictureUrl,
+                },
+                Managers = x.Managers.Select(m => new RequestManager
+                {
+                    ManagerId = m.ManagerId,
+                    RequestUUID = m.RequestUUID,
+                    Approved = m.Approved,
+                    User = new ApplicationUser
+                    {
+                        Id = m.User.Id,
+                        FullName = m.User.FullName,
+                        UserName = m.User.UserName,
+                        Email = m.User.Email,
+                        Department = m.User.Department,
+                        Role = m.User.Role,
+                        PictureUrl = m.User.PictureUrl,
+                        Enabled = m.User.Enabled,
+                    }
+                }).ToList(),
+                Directors = x.Directors.Select(d => new RequestDirector
+                {
+                    DirectorId = d.DirectorId,
+                    RequestUUID = d.RequestUUID,
+                    Approved = d.Approved,
+                    User = new ApplicationUser
+                    {
+                        Id = d.User.Id,
+                        FullName = d.User.FullName,
+                        UserName = d.User.UserName,
+                        Email = d.User.Email,
+                        Department = d.User.Department,
+                        Role = d.User.Role,
+                        PictureUrl = d.User.PictureUrl,
+                        Enabled = d.User.Enabled,
+                    }
+                }).ToList(),
+            }).AsNoTracking()
+        .ToArrayAsync(cancellation);
+
+        return result;
     }
 }
