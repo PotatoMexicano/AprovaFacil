@@ -21,7 +21,7 @@ export const authApi = createApi({
     }),
     getCurrentUser: builder.query<UserResponse, void>({
       query: () => ({
-        url: 'auth/me',
+        url: `auth/me`,
         method: 'GET'
       }),
     }),

@@ -1,15 +1,12 @@
 import { UserResponse } from "@/types/auth";
 import { createSlice} from "@reduxjs/toolkit";
 
-// src/features/auth/authSlice.ts
 interface AuthState {
-  //token: string | null,
   user: UserResponse | null;
   isAuthenticated: boolean;
 }
 
 const initialState: AuthState = {
-  //token: null,
   user: null,
   isAuthenticated: false,
 };
@@ -20,11 +17,9 @@ const authSlice = createSlice({
   reducers: {
     setUser: (state, action) => {
       state.user = action.payload.user;
-      //state.token = action.payload.token;
       state.isAuthenticated = true;
     },
     clearUser: (state) => {
-      //state.token = null;
       state.user = null;
       state.isAuthenticated = false;
     },
