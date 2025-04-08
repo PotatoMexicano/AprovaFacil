@@ -13,9 +13,27 @@ public class RequestService(
     UserInterfaces.IUserRepository userRepository,
     ServerDirectory serverDirectory) : RequestInterfaces.IRequestService
 {
+    public async Task ApproveRequest(Guid requestGuid, String strApplicationUserId, CancellationToken cancellation)
+    {
+        Boolean result = await repository.ApproveRequestAsync(requestGuid, Int32.Parse(strApplicationUserId), cancellation);
+    }
+
+    public async Task RejectRequest(Guid requestGuid, String strApplicationUserId, CancellationToken cancellation)
+    {
+        Boolean result = await repository.RejectRequestAsync(requestGuid, Int32.Parse(strApplicationUserId), cancellation);
+    }
+
     public async Task<RequestDTO[]> ListPendingRequests(FilterRequest filter, CancellationToken cancellation)
     {
-        filter.Levels = [LevelRequest.Pending, LevelRequest.FirstLevel];
+        if (filter.UserRole == Roles.Manager)
+        {
+            filter.Levels = [LevelRequest.Pending];
+        }
+        else
+        {
+            filter.Levels = [LevelRequest.FirstLevel];
+        }
+
         Request[] requests = await repository.ListPendingRequestsAsync(filter, cancellation: cancellation);
         RequestDTO[] response = [.. requests.Select(RequestExtensions.ToDTO)];
         return response;
@@ -24,17 +42,11 @@ public class RequestService(
     public async Task<RequestDTO?> ListRequest(Guid requestGuid, CancellationToken cancellation)
     {
         Request? request = await repository.ListRequestAsync(requestGuid, cancellation: cancellation);
-        if (request is null)
-        {
-            return null;
-        }
-
-        return request.ToDTO();
+        return request?.ToDTO();
     }
 
     public async Task<RequestDTO[]> ListRequests(FilterRequest filter, String strApplicationUserId, CancellationToken cancellation)
     {
-
         if (Int32.TryParse(strApplicationUserId, out Int32 applicationUserId))
         {
             Request[] requests = await repository.ListRequestsAsync(filter, cancellation, applicationUserId);
@@ -200,5 +212,11 @@ public class RequestService(
             return await File.ReadAllBytesAsync(path, cancellation);
         }
         return Array.Empty<Byte>();
+    }
+
+    public async Task<RequestDTO[]> ListAll(CancellationToken cancellation)
+    {
+        Request[] requests = await repository.ListAllAsync(cancellation);
+        return [.. requests.Select(x => x.ToDTO())];
     }
 }
