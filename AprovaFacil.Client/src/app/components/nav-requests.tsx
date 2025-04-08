@@ -1,6 +1,6 @@
 "use client"
 
-import { Boxes, PackageIcon, PackagePlus, type LucideIcon } from "lucide-react"
+import { Boxes, GalleryVerticalEndIcon, PackageIcon, PackagePlus, type LucideIcon } from "lucide-react"
 
 import {
   Collapsible,
@@ -57,19 +57,34 @@ export function NavRequests() {
         </Collapsible>
 
         {user && (user.role === "Manager" || user.role === "Director")
-        ? (
-          <Collapsible asChild>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Minhas solicitações">
-                <a href="/request/pending">
-                  <PackageIcon />
-                  <span>Solicitações pendentes</span>
-                </a>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </Collapsible>
-        )
-      : null}
+          ? (
+            <Collapsible asChild>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Solicitações pendentes">
+                  <a href="/request/pending">
+                    <PackageIcon />
+                    <span>Solicitações pendentes</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </Collapsible>
+          )
+          : null}
+
+        {user && (user.role === "Manager" || user.role === "Director")
+          ? (
+            <Collapsible asChild>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Todas as solicitações">
+                  <a href="/request/all">
+                    <GalleryVerticalEndIcon />
+                    <span>Histórico de solicitações</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </Collapsible>
+          )
+          : null}
 
       </SidebarMenu>
     </SidebarGroup>

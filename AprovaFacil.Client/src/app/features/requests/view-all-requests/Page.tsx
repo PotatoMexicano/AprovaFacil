@@ -4,68 +4,43 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app
 import { Alert, AlertDescription, AlertTitle } from "@/app/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Skeleton } from "@/app/components/ui/skeleton";
-import { useGetPendingRequestsQuery } from "@/app/api/requestApiSlice";
 import { useEffect, useState } from "react";
 import { useBreadcrumb } from "@/app/context/breadkcrumb-context";
 import { DataTable } from "../_shared/data-table";
+import { useAllRequestsQuery, useGetMyRequestsQuery } from "@/app/api/requestApiSlice";
 import { VisibilityState } from "@tanstack/react-table";
 import { RootState, useAppSelector } from "@/app/store/store";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { useIsAdmin } from "@/lib/utils";
 
-// Componente da tabela
-export default function ViewPendingRequestsPage() {
-  const navigate = useNavigate();
-  const isAdmin = useIsAdmin();
-  const { user } = useAppSelector((state: RootState) => state.auth);
-  const toastId = "unauthorized-error";
-  const { data, isLoading, error } = useGetPendingRequestsQuery();
+export default function ViewAllRequestsPage() {
+  const { data, isLoading, error } = useAllRequestsQuery();
   const { setBreadcrumbs } = useBreadcrumb();
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     "requester": true,
     "approved_first_level": false,
+    "approved_first_level_at": false,
     "approved_second_level": false,
+    "approved_second_level_at": false,
     "note": false,
     "received_at": false,
     "approved": true,
-    "invoice_name": true,
-    "budget_name": true
+    "invoice_name": false,
+    "budget_name": false,
+    "actions": true,
   });
 
   useEffect(() => {
-    setBreadcrumbs(["Início", "Solicitação", "Pendentes"]); // Define os breadcrumbs da página atual
+    setBreadcrumbs(["Início", "Solicitação", "Histórico"]); // Define os breadcrumbs da página atual
   }, [setBreadcrumbs]);
-
-  useEffect(() => {
-    if (!isAdmin) {
-      toast.error("Você não possui permissão para acessar esse recurso.", {
-        id: toastId,
-        duration: 3000,
-      });
-      console.error("Você não possui permissão para acessar esse recurso . #2")
-
-      const timer = setTimeout(() => {
-        navigate("/", { replace: true });
-      }, 3000);
-  
-      return () => clearTimeout(timer);
-    }
-  }, [isAdmin, navigate]);
-
-  if (!user || !user.role) {
-    return <div>Carregando...</div>; // Show a loading state while checking
-  }
 
   return (
     <>
       <Card className="col-span-12 flex flex-col shadow-none border-0">
         <CardHeader>
           <CardTitle className="text-2xl w-full flex justify-between">
-            Solicitação pendentes
+            Histórico de solicitações
           </CardTitle>
-          <CardDescription>Solicitações pendentes para avaliação.</CardDescription>
+          <CardDescription>Histórico das solicitações registradas.</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading

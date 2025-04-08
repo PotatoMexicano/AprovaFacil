@@ -30,6 +30,16 @@ export const requestApi = createApi({
       invalidatesTags: ["Requests"]
     }),
 
+    allRequests: builder.query<RequestReponse[], void>({
+      query: () => {
+        return {
+          url: "request",
+          method: "GET",
+        }
+      },
+      providesTags: ["Requests"]
+    }),
+
     approveRequest: builder.mutation({
       query: (id) => {
         return {
@@ -125,5 +135,6 @@ export const {
   useLazyGetFileRequestQuery,
   useGetRequestQuery,
   useApproveRequestMutation,
-  useRejectRequestMutation
+  useRejectRequestMutation,
+  useAllRequestsQuery
 } = requestApi;

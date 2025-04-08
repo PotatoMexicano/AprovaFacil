@@ -14,6 +14,7 @@ import ViewMyRequestsPage from "../features/requests/view-my-requests/Page";
 import ViewPendingRequestsPage from "../features/requests/view-pending-requests/Page";
 import AdminRoute from "../components/admin-route";
 import ViewRequest from "../features/requests/view-request/Page";
+import ViewAllRequestsPage from "../features/requests/view-all-requests/Page";
 
 export const router = createBrowserRouter([
   { path: 'login', element: <LoginPage /> },
@@ -39,8 +40,14 @@ export const router = createBrowserRouter([
             path: 'request', children: [
               { path: '', element: <ViewMyRequestsPage /> },
               { path: 'register', element: <NewRequestPage /> },
-              { path: 'pending', element: <ViewPendingRequestsPage /> },
-              { path: ':id', element: <ViewRequest/>}
+              { path: ':id', element: <ViewRequest/>},
+              {
+                element: <AdminRoute />,
+                children: [
+                  { path: 'pending', element: <ViewPendingRequestsPage /> },
+                  { path: 'all', element: <ViewAllRequestsPage /> },
+                ]
+              },
             ]
           },
           {

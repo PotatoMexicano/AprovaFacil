@@ -83,7 +83,7 @@ function UserCard({ user }: { user: UserResponse | undefined }) {
 export default function ViewRequest() {
   const { id } = useParams<{ id: string }>();
   const { data, isLoading, isError, error, refetch } = useGetRequestQuery(id as string);
-  const { user } = useAppSelector((state: RootState) => state.auth);
+  const { user, isAuthenticated } = useAppSelector((state: RootState) => state.auth);
   const { setBreadcrumbs } = useBreadcrumb();
   const navigate = useNavigate();
 
@@ -153,17 +153,20 @@ export default function ViewRequest() {
   const isDirector = user?.role === "Director" && directorInRequest !== undefined;
 
   useEffect(() => {
-    if (error && !isLoading && error?.data?.status === 401) {
+    if (error && !isLoading && isAuthenticated && error?.data?.status === 401) {
       const timer = setTimeout(() => {
         navigate("/request", { replace: true });
-        return;
       }, 3500);
       toast.error("Sinto muito. Vamos te redirecionar...", {
         id: toastId
       });
       return () => clearTimeout(timer);
     }
-  }, [isError, error, isLoading, navigate]);
+  }, [isError, error, isLoading, navigate, isAuthenticated]);
+  
+  if (isLoading) {
+    return <div>Carregando...</div>
+  }
   
   if (isError && error) {
     return <>
@@ -174,11 +177,7 @@ export default function ViewRequest() {
       </Alert>
     </>
   }
-  
 
-  if (isLoading) {
-    return <div>Carregando...</div>
-  }
 
   return (
     <div className="flex bg-background py-8">
@@ -313,7 +312,7 @@ export default function ViewRequest() {
                 </div>
               )}
 
-              {isManager && managerInRequest && (data?.approved_first_level === 0 || data?.approved_first_level === -1) && (
+              {isManager && managerInRequest && managerInRequest.request_approved === 0 && (
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={handleReject}
@@ -332,7 +331,7 @@ export default function ViewRequest() {
                 </div>
               )}
 
-              {isDirector && directorInRequest && (data?.approved_second_level === 0 || data?.approved_second_level === -1) && (
+              {isDirector && directorInRequest && directorInRequest.request_approved === 0 && (
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={handleReject}
