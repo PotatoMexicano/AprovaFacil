@@ -89,6 +89,9 @@ public class AuthController : ControllerBase
 
         IList<String> roles = await _userManager.GetRolesAsync(user);
 
+        Response.Headers.CacheControl = "no-store, no-cache, must-revalidade, max-age=0";
+        Response.Headers.Pragma = "no-cache";
+
         return Ok(new
         {
             user.Id,
