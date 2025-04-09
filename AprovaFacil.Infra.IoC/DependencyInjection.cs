@@ -14,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using static AprovaFacil.Domain.Interfaces.NotificationInterfaces;
 
 namespace AprovaFacil.Infra.IoC;
 
@@ -39,6 +40,7 @@ public static class DependencyInjection
         services.AddScoped<CompanyInterfaces.ICompanyService, CompanyService>();
         services.AddScoped<UserInterfaces.IUserService, UserService>();
         services.AddScoped<RequestInterfaces.IRequestService, RequestService>();
+        services.AddScoped<INotificationService, NotificationService>();
 
         return services;
     }

@@ -4,7 +4,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/
 import { AppSidebar } from '../components/app-sidebar';
 import { Separator } from '../components/ui/separator';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '../components/ui/breadcrumb';
-import { BreadcrumbProvider, useBreadcrumb } from '@/app/context/breadkcrumb-context';
+import { BreadcrumbProvider, useBreadcrumb } from '@/app/context/breadcrumb-context';
 import React, { useEffect } from 'react';
 import { toast, Toaster } from 'sonner';
 import { useDispatch } from 'react-redux';

@@ -1,3 +1,4 @@
+using AprovaFacil.Application.SignalR;
 using AprovaFacil.Infra.IoC;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Serilog;
@@ -52,6 +53,8 @@ public class Program
 
         builder.Services.AddInfrastructure(builder.Configuration);
 
+        builder.Services.AddSignalR();
+
         WebApplication app = builder.Build();
 
         app.UseDefaultFiles();
@@ -73,6 +76,8 @@ public class Program
         app.UseAuthorization();
 
         app.MapControllers();
+
+        app.MapHub<NotificationHub>("/notification");
 
         app.Run();
     }

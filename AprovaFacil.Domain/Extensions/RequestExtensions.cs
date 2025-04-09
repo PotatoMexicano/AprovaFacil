@@ -45,16 +45,33 @@ public static class RequestExtensions
         };
     }
 
+    public static NotificationRequestDTO ToNotificationDTO(this RequestDTO request)
+    {
+        return new NotificationRequestDTO
+        {
+            RequestUUID = request.UUID,
+            RequesterID = request.RequesterId,
+            ManagerIds = [.. request.Managers.Select(x => x.Id)],
+            DirectorIds = [.. request.Directors.Select(x => x.Id)],
+        };
+
+    }
+
     public static IQueryable<Request> Filter(ref IQueryable<Request> query, FilterRequest filter, Int32? applicationUserId)
     {
+        if (filter.Quantity.HasValue)
+        {
+            query = query.OrderByDescending(x => x.CreateAt).Take(filter.Quantity.Value);
+        }
+
         if (applicationUserId.HasValue && applicationUserId.Value != 0)
         {
-            query = query.Where(x => x.RequesterId == applicationUserId);
+            query = query.Where(x => x.RequesterId == applicationUserId).OrderBy(x => x.Level);
         }
 
         if (filter.Levels.Length > 0)
         {
-            query = query.Where(x => filter.Levels.ToList().Contains(x.Level));
+            query = query.Where(x => filter.Levels.ToList().Contains(x.Level)).OrderBy(x => x.Level);
         }
 
         return query.AsQueryable();

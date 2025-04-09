@@ -22,7 +22,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/
 import { UserResponse } from "@/types/auth";
 import { useEffect } from "react";
 import { Button } from "@/app/components/ui/button";
-import { useBreadcrumb } from "@/app/context/breadkcrumb-context";
+import { useBreadcrumb } from "@/app/context/breadcrumb-context";
 import { RootState, useAppSelector } from "@/app/store/store";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/app/components/ui/alert";

@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card"
 import { Input } from "@/app/components/ui/input"
-import { useBreadcrumb } from "@/app/context/breadkcrumb-context"
+import { useBreadcrumb } from "@/app/context/breadcrumb-context"
 import { useEffect, useState } from "react"
 import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"

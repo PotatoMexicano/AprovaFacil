@@ -1,11 +1,11 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { customBaseQuery } from "./base-api";
-import { RequestReponse } from "@/types/request";
+import { RequestReponse, RequestStatsResponse } from "@/types/request";
 
 export const requestApi = createApi({
   reducerPath: "requestApi",
   baseQuery: customBaseQuery(),
-  tagTypes: ["Requests"],
+  tagTypes: ["Requests", "Stats"],
   endpoints: (builder) => ({
     registerRequest: builder.mutation({
       query: (requestData) => {
@@ -70,13 +70,23 @@ export const requestApi = createApi({
       providesTags: ["Requests"]
     }),
 
-    getMyRequests: builder.query<RequestReponse, void>({
-      query: () => ({
+    getMyRequests: builder.query<RequestReponse[], number>({
+      query: (quantity?: number) => ({
         url: "request/myself",
         method: 'POST',
-        body: {}
+        body: {
+          quantity: quantity
+        }
       }),
       providesTags: ["Requests"]
+    }),
+
+    getMyStats: builder.query<RequestStatsResponse, void>({
+      query: () => ({
+        url: "request/myself/stats",
+        method: 'GET',
+      }),
+      providesTags: ["Stats"]
     }),
 
     getPendingRequests: builder.query<RequestReponse[], void>({
@@ -136,5 +146,6 @@ export const {
   useGetRequestQuery,
   useApproveRequestMutation,
   useRejectRequestMutation,
-  useAllRequestsQuery
+  useAllRequestsQuery,
+  useGetMyStatsQuery
 } = requestApi;
