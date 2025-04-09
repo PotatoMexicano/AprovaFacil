@@ -1,5 +1,6 @@
 ﻿using AprovaFacil.Domain.Constants;
 using AprovaFacil.Domain.DTOs;
+using AprovaFacil.Domain.Extensions;
 using AprovaFacil.Domain.Filters;
 using AprovaFacil.Domain.Interfaces;
 using AprovaFacil.Server.Contracts;
@@ -12,7 +13,7 @@ namespace AprovaFacil.Server.Controllers;
 [Route("api/request")]
 [ApiController]
 [Authorize]
-public class RequestController(RequestInterfaces.IRequestService service) : ControllerBase
+public class RequestController(RequestInterfaces.IRequestService service, NotificationInterfaces.INotificationService notificationService) : ControllerBase
 {
     [HttpGet]
     [Authorize(Roles = $"{Roles.Manager}, {Roles.Director}")]
@@ -77,6 +78,25 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
         }
 
         RequestDTO[] result = await service.ListRequests(request, userId, cancellation);
+
+        return Ok(result);
+    }
+
+    [HttpGet("myself/stats")]
+    [Authorize]
+    public async Task<IActionResult> MyStats(CancellationToken cancellation = default)
+    {
+        String? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId is null)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Detail = "Are you logged in ?"
+            });
+        }
+
+        Object result = await service.MyStats(userId, cancellation);
 
         return Ok(result);
     }
@@ -259,6 +279,9 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
             BudgetFileName = request.Budget?.FileName
         }, cancellation);
 
+        NotificationRequestDTO notification = result.ToNotificationDTO();
+        await notificationService.NotifyRegisterAsync(notification, cancellation);
+
         return Ok(result);
     }
 
@@ -286,6 +309,8 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
 
         await service.ApproveRequest(requestGuid, userId, cancellation);
 
+        await notificationService.NotifyBroadcast(cancellation);
+
         return Ok();
     }
 
@@ -312,6 +337,8 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
         }
 
         await service.RejectRequest(requestGuid, userId, cancellation);
+
+        await notificationService.NotifyBroadcast(cancellation);
 
         return Ok();
     }

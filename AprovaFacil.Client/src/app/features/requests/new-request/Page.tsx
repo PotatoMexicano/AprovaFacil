@@ -25,7 +25,7 @@ import formSchema from "@/app/schemas/requestSchema";
 import { useGetEnabledUsersQuery } from "@/app/api/userApiSlice";
 import { toast } from "sonner";
 import ButtonSuccess from "@/app/components/ui/button-success";
-import { useBreadcrumb } from "@/app/context/breadkcrumb-context";
+import { useBreadcrumb } from "@/app/context/breadcrumb-context";
 
 const getInitials = (fullName: string) => {
   if (!fullName) return "";
@@ -97,7 +97,16 @@ export default function NewRequestPage() {
 
       toast.success('Requisição cadastrada !');
 
-      reset();
+      reset({
+        companyId: undefined,
+        paymentDate: undefined,
+        amount: 0,
+        note: "",
+        invoice: undefined,
+        budget: undefined,
+        managerId: 0,
+        directorsIds: [],
+      });
       setIdPopoverCompany(null);
       setIdPopoverUser(null);
 

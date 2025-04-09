@@ -219,4 +219,17 @@ public class RequestService(
         Request[] requests = await repository.ListAllAsync(cancellation);
         return [.. requests.Select(x => x.ToDTO())];
     }
+
+    public async Task<Object> MyStats(String strApplicationUserId, CancellationToken cancellation)
+    {
+        if (Int32.TryParse(strApplicationUserId, out Int32 applicationUserId))
+        {
+            Object response = await repository.MyStatsAsync(applicationUserId, cancellation);
+            return response;
+        }
+        else
+        {
+            return new { };
+        }
+    }
 }

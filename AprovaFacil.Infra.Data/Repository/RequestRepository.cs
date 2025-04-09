@@ -5,12 +5,11 @@ using AprovaFacil.Domain.Interfaces;
 using AprovaFacil.Domain.Models;
 using AprovaFacil.Infra.Data.Context;
 using AprovaFacil.Infra.Data.Identity;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace AprovaFacil.Infra.Data.Repository;
 
-public class RequestRepository(ApplicationDbContext context, UserManager<ApplicationUser> userManager) : RequestInterfaces.IRequestRepository
+public class RequestRepository(ApplicationDbContext context) : RequestInterfaces.IRequestRepository
 {
     public async Task<Boolean> ApproveRequestAsync(Guid requestGuid, Int32 applicationUserId, CancellationToken cancellation)
     {
@@ -26,7 +25,7 @@ public class RequestRepository(ApplicationDbContext context, UserManager<Applica
         RequestManager? manager = request.Managers.FirstOrDefault(m => m.ManagerId == applicationUserId);
         if (manager is not null && manager.Approved == 0)
         {
-            manager.Approved = 1;
+            manager.Approved = StatusRequest.Approved;
             request.FirstLevelAt = DateTime.UtcNow;
             request.ApprovedFirstLevel = true;
             request.Level = LevelRequest.FirstLevel;
@@ -36,10 +35,11 @@ public class RequestRepository(ApplicationDbContext context, UserManager<Applica
         RequestDirector? director = request.Directors.FirstOrDefault(d => d.DirectorId == applicationUserId);
         if (director is not null && director.Approved == 0)
         {
-            director.Approved = 1;
+            director.Approved = StatusRequest.Approved;
             request.SecondLevelAt = DateTime.UtcNow;
             request.ApprovedSecondLevel = true;
             request.Level = LevelRequest.SecondLevel;
+            request.Status = StatusRequest.Approved;
             updated = true;
         }
 
@@ -66,7 +66,7 @@ public class RequestRepository(ApplicationDbContext context, UserManager<Applica
         RequestManager? manager = request.Managers.FirstOrDefault(m => m.ManagerId == applicationUserId);
         if (manager is not null && manager.Approved == 0)
         {
-            manager.Approved = -1;
+            manager.Approved = StatusRequest.Reject;
             request.Status = StatusRequest.Reject;
             request.FirstLevelAt = DateTime.UtcNow;
             updated = true;
@@ -76,7 +76,7 @@ public class RequestRepository(ApplicationDbContext context, UserManager<Applica
         RequestDirector? director = request.Directors.FirstOrDefault(d => d.DirectorId == applicationUserId);
         if (director is not null && director.Approved == 0)
         {
-            director.Approved = -1;
+            director.Approved = StatusRequest.Reject;
             updated = true;
 
             // Se TODOS os diretores recusaram, então recusa o request
@@ -278,7 +278,7 @@ public class RequestRepository(ApplicationDbContext context, UserManager<Applica
 
         RequestExtensions.Filter(ref query, filter, applicationUserId);
 
-        Request[] results = await query.OrderBy(x => x.Level).Select(x => new Request
+        Request[] results = await query.Select(x => new Request
         {
             UUID = x.UUID,
             RequesterId = x.RequesterId,
@@ -537,5 +537,26 @@ public class RequestRepository(ApplicationDbContext context, UserManager<Applica
         .ToArrayAsync(cancellation);
 
         return result;
+    }
+
+    public async Task<Object> MyStatsAsync(Int32 applicationUserId, CancellationToken cancellation)
+    {
+        Int64 amount = await context.Requests.Where(x => x.RequesterId == applicationUserId && x.ApprovedFirstLevel == true && x.ApprovedSecondLevel == true).SumAsync(x => x.Amount, cancellation);
+        Int32 totalRequest = await context.Requests.Where(x => x.RequesterId == applicationUserId).CountAsync(cancellation);
+        Int32 totalRequestPending = await context.Requests.Where(x => x.RequesterId == applicationUserId && x.Status == 0).CountAsync(cancellation);
+
+        var stats = new
+        {
+            TotalRequests = totalRequest,
+            TotalRequestPending = totalRequestPending,
+            TotalRequestApproved = 0,
+            TotalRequestRejected = 0,
+            TotalRequestsLastMonth = 0,
+            TotalRequestsCurrentMonth = 0,
+            TotalAmountRequestsApproved = amount
+        };
+
+        return stats;
+
     }
 }

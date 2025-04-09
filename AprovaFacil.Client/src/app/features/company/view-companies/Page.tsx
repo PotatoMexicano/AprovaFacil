@@ -1,4 +1,4 @@
-import { useBreadcrumb } from "@/app/context/breadkcrumb-context"
+import { useBreadcrumb } from "@/app/context/breadcrumb-context"
 import { useEffect } from "react";
 import { DataTable } from "./data-table";
 import { Skeleton } from "@/app/components/ui/skeleton";

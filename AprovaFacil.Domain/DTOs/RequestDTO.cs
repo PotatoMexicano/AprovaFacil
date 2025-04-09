@@ -107,6 +107,19 @@ public class RequestDTO
             return 0;
         }
     }
+    public String ApprovedLabel
+    {
+        get
+        {
+            return Approved switch
+            {
+                0 => "Pendente",
+                1 => "Aprovado",
+                -1 => "Rejeitado",
+                _ => "Desconhecido",
+            };
+        }
+    }
 
     public Int64 Amount { get; set; }
     public String? Note { get; set; }
