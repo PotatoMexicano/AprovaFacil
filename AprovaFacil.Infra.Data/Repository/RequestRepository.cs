@@ -29,6 +29,14 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
             request.FirstLevelAt = DateTime.UtcNow;
             request.ApprovedFirstLevel = true;
             request.Level = LevelRequest.FirstLevel;
+
+            if (request.Directors.Count == 0)
+            {
+                request.Status = StatusRequest.Approved;
+                request.SecondLevelAt = DateTime.UtcNow;
+                request.ApprovedSecondLevel = true;
+                request.Level = LevelRequest.SecondLevel;
+            }
             updated = true;
         }
 
@@ -544,19 +552,61 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
         Int64 amount = await context.Requests.Where(x => x.RequesterId == applicationUserId && x.ApprovedFirstLevel == true && x.ApprovedSecondLevel == true).SumAsync(x => x.Amount, cancellation);
         Int32 totalRequest = await context.Requests.Where(x => x.RequesterId == applicationUserId).CountAsync(cancellation);
         Int32 totalRequestPending = await context.Requests.Where(x => x.RequesterId == applicationUserId && x.Status == 0).CountAsync(cancellation);
+        Int32 totalRequestRejected = await context.Requests.Where(x => x.RequesterId == applicationUserId && x.Status == -1).CountAsync(cancellation);
+        Int32 totalRequestApproved = await context.Requests.Where(x => x.RequesterId == applicationUserId && x.Status == 1).CountAsync(cancellation);
+
+        DateTime now = DateTime.UtcNow;
+        DateTime firstMonth = new DateTime(now.Year, now.Month, 1).AddMonths(-11);
+
+        // Agrupando por Mês e Status
+        var groupedData = await context.Requests
+            .Where(r => r.RequesterId == applicationUserId && r.CreateAt >= firstMonth)
+            .GroupBy(r => new { r.CreateAt.Year, r.CreateAt.Month, r.Status })
+            .Select(g => new
+            {
+                g.Key.Year,
+                g.Key.Month,
+                Status = g.Key.Status, // -1, 0, 1
+                Count = g.Count()
+            })
+            .ToListAsync(cancellation);
+
+        // Preparar estrutura dos 12 meses
+        System.Globalization.DateTimeFormatInfo labels = System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat;
+        var last12Months = Enumerable.Range(0, 12)
+            .Select(i => firstMonth.AddMonths(i))
+            .Select(d => new
+            {
+                Year = d.Year,
+                Month = d.Month,
+                Label = labels.GetAbbreviatedMonthName(d.Month)
+            })
+            .ToList();
+
+        // Juntar os dados
+        var result = last12Months.Select(m =>
+        {
+            var monthData = groupedData.Where(x => x.Year == m.Year && x.Month == m.Month);
+
+            return new
+            {
+                Month = m.Label,
+                Pending = monthData.FirstOrDefault(x => x.Status == 0)?.Count ?? 0,
+                Approved = monthData.FirstOrDefault(x => x.Status == 1)?.Count ?? 0,
+                Rejected = monthData.FirstOrDefault(x => x.Status == -1)?.Count ?? 0
+            };
+        }).ToList();
 
         var stats = new
         {
             TotalRequests = totalRequest,
             TotalRequestPending = totalRequestPending,
-            TotalRequestApproved = 0,
-            TotalRequestRejected = 0,
-            TotalRequestsLastMonth = 0,
-            TotalRequestsCurrentMonth = 0,
+            TotalRequestApproved = totalRequestApproved,
+            TotalRequestRejected = totalRequestRejected,
+            TotalRequestsByMonth = result,
             TotalAmountRequestsApproved = amount
         };
 
         return stats;
-
     }
 }

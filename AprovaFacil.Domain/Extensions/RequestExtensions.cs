@@ -66,12 +66,12 @@ public static class RequestExtensions
 
         if (applicationUserId.HasValue && applicationUserId.Value != 0)
         {
-            query = query.Where(x => x.RequesterId == applicationUserId).OrderBy(x => x.Level);
+            query = query.Where(x => x.RequesterId == applicationUserId).OrderByDescending(x => x.CreateAt);
         }
 
         if (filter.Levels.Length > 0)
         {
-            query = query.Where(x => filter.Levels.ToList().Contains(x.Level)).OrderBy(x => x.Level);
+            query = query.Where(x => filter.Levels.ToList().Contains(x.Level)).OrderByDescending(x => x.CreateAt);
         }
 
         return query.AsQueryable();

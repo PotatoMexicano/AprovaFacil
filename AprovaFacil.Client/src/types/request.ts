@@ -25,12 +25,18 @@ export interface RequestReponse {
   directors: UserResponse[];
 }
 
+export interface MonthlyStatusData {
+  month: string
+  pending: number
+  approved: number
+  rejected: number
+}
+
 export interface RequestStatsResponse {
-  total_requests: number;
-  total_request_pending: number;
-  total_request_approved: number;
-  total_request_rejected: number;
-  total_requests_last_month: number;
-  total_requests_current_month: number;
-  total_amount_requests_approved: number;
+  total_requests: number
+  total_request_pending: number
+  total_request_approved: number
+  total_request_rejected: number
+  total_amount_requests_approved: number
+  total_requests_by_month: MonthlyStatusData[] // atualizado!
 }
