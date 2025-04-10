@@ -82,8 +82,8 @@ public class RequestController(RequestInterfaces.IRequestService service, Notifi
         return Ok(result);
     }
 
-    [HttpGet("myself/stats")]
     [Authorize]
+    [HttpGet("myself/stats")]
     public async Task<IActionResult> MyStats(CancellationToken cancellation = default)
     {
         String? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
