@@ -10,7 +10,7 @@ interface SignalRContextProps {
 
 const toastId = "update-data-received";
 
-const signalRContext = createContext<SignalRContextProps>({ connection: null });
+const SignalRContext = createContext<SignalRContextProps>({ connection: null });
 
 export const SignalRProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [connection, setConnection] = useState<HubConnection | null>(null);
@@ -19,7 +19,7 @@ export const SignalRProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     const connect = async () =>  {
       const newConnection = new HubConnectionBuilder()
-      .withUrl(`${import.meta.env.VITE_API_URL}/notification`)
+      .withUrl(`/notification`)
       .withAutomaticReconnect()
       .build();
 
@@ -46,10 +46,10 @@ export const SignalRProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   return (
-    <signalRContext.Provider value={{ connection }}>
+    <SignalRContext.Provider value={{ connection }}>
       {children}
-    </signalRContext.Provider>
+    </SignalRContext.Provider>
   );
 }
 
-export const useSignalR = () => useContext(signalRContext);
+export const useSignalR = () => useContext(SignalRContext);

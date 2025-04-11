@@ -105,7 +105,7 @@ public class RequestService(
 
         Dictionary<Int32, IApplicationUser> users = await userRepository.GetUsersDictionary(usersId, cancellation);
 
-        Int32 level = request.DirectorsIds.Length > 0 ? LevelRequest.Pending : LevelRequest.FirstLevel;
+        Int32 level = request.DirectorsIds.Length > 0 ? LevelRequest.Pending : LevelRequest.Pending;
 
         Request? newRequest = new Request
         {

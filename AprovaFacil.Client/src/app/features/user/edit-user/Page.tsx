@@ -57,8 +57,6 @@ export default function EditUserPage() {
     },
   });
 
-  const { reset } = form;
-
   const { data: user, isSuccess: isUserSuccess } = useGetUserQuery(id || "");
 
   useEffect(() => {
@@ -85,7 +83,10 @@ export default function EditUserPage() {
 
   async function onSubmit(values: z.infer<typeof userSchemaUpdate>) {
     try {
-      await updateUser({ ...values, id: Number(id) }).unwrap();
+      await updateUser({
+        ...values, id: Number(id),
+        request_approved: 0
+      }).unwrap();
 
       setUpdateSuccess(isUserSuccess);
 

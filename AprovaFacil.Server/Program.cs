@@ -43,7 +43,7 @@ public class Program
             options.AddPolicy("AllowLocalhost", policy =>
             {
                 policy
-                .WithOrigins("http://localhost:5173", "http://127.0.0.1:5173", "http://192.168.7.128:5173", "http://192.168.7.128:7296")
+                .WithOrigins("http://192.168.7.128:7296")
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials()
@@ -58,6 +58,9 @@ public class Program
         WebApplication app = builder.Build();
 
         app.UseDefaultFiles();
+        app.UseStaticFiles();
+
+        app.MapFallbackToFile("index.html");
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())

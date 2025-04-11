@@ -542,3 +542,4 @@ sketch
 # End of https://www.toptal.com/developers/gitignore/api/csharp,aspnetcore,react
 AprovaFacil.Server/mydb.db
 AprovaFacil.Infra.Data
+AprovaFacil.Server/wwwroot

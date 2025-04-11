@@ -4,17 +4,14 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <SpaRoot>..\AprovaFacil.Client</SpaRoot>
-    <SpaProxyLaunchCommand>npm run dev -- --host</SpaProxyLaunchCommand>
-    <SpaProxyServerUrl>http://localhost:5173</SpaProxyServerUrl>
     <UserSecretsId>b3a19473-f0c7-4fbd-8f81-6ccfd5397687</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.14" />
-    <PackageReference Include="Microsoft.AspNetCore.SpaProxy">
+    <!--<PackageReference Include="Microsoft.AspNetCore.SpaProxy">
       <Version>8.*-*</Version>
-    </PackageReference>
+    </PackageReference>-->
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.3" />
     <PackageReference Include="Serilog" Version="4.2.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
@@ -25,9 +22,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AprovaFacil.Client\AprovaFacil.Client.esproj">
+    <!--<ProjectReference Include="..\AprovaFacil.Client\AprovaFacil.Client.esproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
+    </ProjectReference>-->
     <ProjectReference Include="..\AprovaFacil.Infra.IoC\AprovaFacil.Infra.IoC.csproj" />
   </ItemGroup>
 
