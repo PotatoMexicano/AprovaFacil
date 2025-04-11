@@ -6,10 +6,7 @@ import { defineConfig } from "vite"
 export default defineConfig({
   plugins: [react()],
   server: {
-    // https: {
-    //   key: fs.readFileSync('E:\\Desenvolvimento\\CSharp\\AprovaFacil\\certificado\\key.pem'),
-    //   cert: fs.readFileSync('E:\\Desenvolvimento\\CSharp\\AprovaFacil\\certificado\\cert.pem')
-    // },
+    allowedHosts: ["optimal-pleasantly-spaniel.ngrok-free.app"],
     port: 5173
   },
   resolve: {

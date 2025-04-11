@@ -7,9 +7,8 @@ import { Skeleton } from "@/app/components/ui/skeleton";
 import { useEffect, useState } from "react";
 import { useBreadcrumb } from "@/app/context/breadcrumb-context";
 import { DataTable } from "../_shared/data-table";
-import { useAllRequestsQuery, useGetMyRequestsQuery } from "@/app/api/requestApiSlice";
+import { useAllRequestsQuery } from "@/app/api/requestApiSlice";
 import { VisibilityState } from "@tanstack/react-table";
-import { RootState, useAppSelector } from "@/app/store/store";
 
 export default function ViewAllRequestsPage() {
   const { data, isLoading, error } = useAllRequestsQuery();

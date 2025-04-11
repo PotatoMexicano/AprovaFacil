@@ -8,6 +8,7 @@ import {
   ColumnFiltersState,
   getPaginationRowModel,
   getFilteredRowModel,
+  FilterFn,
 } from "@tanstack/react-table"
 
 import {
@@ -23,7 +24,6 @@ import { Button } from "@/app/components/ui/button"
 
 import { Input } from "@/app/components/ui/input"
 import { useState } from "react"
-import React from "react"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/app/components/ui/select"
 import { AnimatePresence, motion } from "framer-motion"
 import { Search } from "lucide-react"
@@ -45,7 +45,7 @@ export function DataTable<TData, TValue>({
     pageSize: Number(selectedOption), //default page size
   });
 
-  const globalFilterFn = (row, columnId, filterValue) => {
+  const globalFilterFn: FilterFn<TData> = (row, filterValue) => {
     if (!filterValue) return true;
 
     const value = filterValue.toLowerCase();

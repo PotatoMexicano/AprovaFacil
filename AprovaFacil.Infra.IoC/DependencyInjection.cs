@@ -108,8 +108,8 @@ public static class DependencyInjection
         {
             options.Cookie.Domain = "192.168.7.128";
             options.Cookie.HttpOnly = true;
-            options.Cookie.SecurePolicy = CookieSecurePolicy.None;
-            options.Cookie.SameSite = SameSiteMode.Lax;
+            options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+            options.Cookie.SameSite = SameSiteMode.Strict;
             options.ExpireTimeSpan = TimeSpan.FromHours(1);
             options.LoginPath = "/api/auth/login";
             options.SlidingExpiration = true;

@@ -486,7 +486,7 @@ export default function ViewRequest() {
               <CardTitle>Notas</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">{data?.note}</p>
+              <p className="text-sm text-muted-foreground whitespace-pre-line">{data?.note}</p>
             </CardContent>
           </Card>
         )}
