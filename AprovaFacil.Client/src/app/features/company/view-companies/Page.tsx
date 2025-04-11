@@ -1,4 +1,4 @@
-import { useBreadcrumb } from "@/app/context/breadkcrumb-context"
+import { useBreadcrumb } from "@/app/context/breadcrumb-context"
 import { useEffect } from "react";
 import { DataTable } from "./data-table";
 import { Skeleton } from "@/app/components/ui/skeleton";
@@ -28,7 +28,7 @@ export default function ViewCompaniesPage() {
   }, [errorCompany, isCompanyError, toast]);
 
   useEffect(() => {
-    setBreadcrumbs(["Início", "Empresas"]); // Define os breadcrumbs da página atual
+    setBreadcrumbs(["Início", "Empresa"]); // Define os breadcrumbs da página atual
   }, [setBreadcrumbs]);
 
   return (
@@ -37,9 +37,9 @@ export default function ViewCompaniesPage() {
         <CardHeader>
           <CardTitle className="text-2xl w-full flex justify-between">
             Empresas cadastradas
-            <Button asChild><a href="/company/register">Adicionar empresa</a></Button>
-            
-            {/* <Badge className="m-2" variant={"default"}> {isCompanyLoading ? "..." : companies?.length} Empresas </Badge> */}
+
+            <Button type="button" asChild><a href="/company/register">Adicionar empresa</a></Button>
+
           </CardTitle>
           <CardDescription>Empresas cadastradas para emissão de nota fiscal.</CardDescription>
         </CardHeader>

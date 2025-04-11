@@ -1,7 +1,6 @@
+using AprovaFacil.Application.SignalR;
 using AprovaFacil.Infra.IoC;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Exceptions;
 using System.Net;
@@ -18,76 +17,70 @@ public class Program
         {
             options.Listen(IPAddress.Any, 7296, listenOptions =>
             {
-                listenOptions.Protocols = HttpProtocols.Http2;
-                listenOptions.UseHttps(@"E:\Desenvolvimento\CSharp\AprovaFacil\certificado\localhost.pfx", "12345678");
-            });
-
-            options.Listen(IPAddress.Any, 5118, listenOptions =>
-            {
                 listenOptions.Protocols = HttpProtocols.Http1;
             });
-
         });
 
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Information()
+            .MinimumLevel.Verbose()
             .Enrich.WithExceptionDetails()
             .WriteTo.Console()
             .CreateLogger();
 
         builder.Host.UseSerilog(Log.Logger);
 
-        builder.Services.AddControllers()
-            .AddJsonOptions(options =>
+        builder.Services.AddControllers().AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.SnakeCaseLower;
                 options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
             });
 
-        builder.Services.AddOpenApi();
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
 
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("AllowLocalhost", policy =>
             {
-                policy.WithOrigins("https://localhost:5173")
+                policy
+                .WithOrigins("http://192.168.7.128:7296")
                 .AllowAnyMethod()
                 .AllowAnyHeader()
-                .AllowCredentials();
+                .AllowCredentials()
+                .WithExposedHeaders("Content-Disposition");
             });
         });
 
         builder.Services.AddInfrastructure(builder.Configuration);
 
-        builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
-            .AddCookie(IdentityConstants.ApplicationScheme);
-
-        builder.Services.AddAuthorization();
+        builder.Services.AddSignalR();
 
         WebApplication app = builder.Build();
 
         app.UseDefaultFiles();
-        app.MapStaticAssets();
+        app.UseStaticFiles();
+
+        app.MapFallbackToFile("index.html");
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
-            app.MapOpenApi();
-            app.MapScalarApiReference(opt => opt.AddServer(new ScalarServer("https://localhost:7296")));
+            app.UseSwagger();
+            app.UseSwaggerUI();
         }
 
         DependencyInjection.SeedData(app.Services);
 
         app.UseCors("AllowLocalhost");
 
-        app.UseHttpsRedirection();
+        //app.UseHttpsRedirection();
 
         app.UseAuthentication();
         app.UseAuthorization();
 
         app.MapControllers();
 
-        app.MapFallbackToFile("/index.html");
+        app.MapHub<NotificationHub>("/notification");
 
         app.Run();
     }

@@ -1,9 +1,9 @@
 ﻿using AprovaFacil.Domain.DTOs;
 using AprovaFacil.Domain.Models;
 
-namespace AprovaFacil.Application.Extensions;
+namespace AprovaFacil.Domain.Extensions;
 
-public static class CompanyExtension
+public static class CompanyExtensions
 {
     public static CompanyDTO ToDTO(this Company company)
     {

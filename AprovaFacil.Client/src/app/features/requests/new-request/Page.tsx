@@ -12,7 +12,7 @@ import { ptBR } from "date-fns/locale"
 import { z } from "zod";
 import { useGetCompaniesQuery } from "@/app/api/companyApiSlice";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/app/components/ui/command";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/app/components/ui/separator";
 import CurrencyFormField from "@/app/components/ui/currency-form-field";
@@ -22,8 +22,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MultiSelectUserField } from "@/app/components/ui/multiple-select-field";
 import { useRegisterRequestMutation } from "@/app/api/requestApiSlice";
 import formSchema from "@/app/schemas/requestSchema";
-import { useGetUsersQuery } from "@/app/api/userApiSlice";
+import { useGetEnabledUsersQuery } from "@/app/api/userApiSlice";
 import { toast } from "sonner";
+import ButtonSuccess from "@/app/components/ui/button-success";
+import { useBreadcrumb } from "@/app/context/breadcrumb-context";
 
 const getInitials = (fullName: string) => {
   if (!fullName) return "";
@@ -44,9 +46,26 @@ const getInitials = (fullName: string) => {
 
 export default function NewRequestPage() {
 
+  const { setBreadcrumbs } = useBreadcrumb()
+
   const { data: companies, isFetching: isCompaniesFetching } = useGetCompaniesQuery();
-  const { data: users, isFetching: isUsersFetching } = useGetUsersQuery();
-  const [registerRequest, {isSuccess: isSuccessRegisterRequest, error: errorRegisterRequest}] = useRegisterRequestMutation();
+  const { data: users, isFetching: isUsersFetching } = useGetEnabledUsersQuery();
+  const [registerRequest, { isSuccess, isError, isLoading, error }] = useRegisterRequestMutation();
+  const [registerSuccess, setRegisterSuccess] = useState<boolean | undefined>(undefined)
+
+  useEffect(() => {
+      setRegisterSuccess(isSuccess)
+  
+      const timer = setTimeout(() => {
+        setRegisterSuccess(undefined)
+      }, 3500)
+  
+      return () => clearTimeout(timer)
+    }, [isSuccess, isError]);
+
+  useEffect(() => {
+    setBreadcrumbs(["Início", "Solicitação", "Adicionar"])
+  }, [setBreadcrumbs])
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -62,9 +81,9 @@ export default function NewRequestPage() {
     }
   });
 
+  const { reset } = form;
   const [openPopoverUser, setOpenPopoverUser] = useState(false);
   const [idPopoverUser, setIdPopoverUser] = useState<number | null>(null);
-
   const [openPopoverCompany, setOpenPopoverCompany] = useState(false);
   const [idPopoverCompany, setIdPopoverCompany] = useState<number | null>(null);
 
@@ -72,15 +91,29 @@ export default function NewRequestPage() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      console.log(values);
       await registerRequest(values).unwrap();
-      toast.success('Requisição cadastrada !');
-      
-    } catch (error) {
-      console.error(error)
 
-      if (error instanceof Error) {
-        toast.info(error.message)
+      setRegisterSuccess(isSuccess);
+
+      toast.success('Requisição cadastrada !');
+
+      reset({
+        companyId: undefined,
+        paymentDate: undefined,
+        amount: 0,
+        note: "",
+        invoice: undefined,
+        budget: undefined,
+        managerId: 0,
+        directorsIds: [],
+      });
+      setIdPopoverCompany(null);
+      setIdPopoverUser(null);
+
+    } catch (err) {
+      console.error(`Erro ao registrar solicitação:`, error);
+      if (error) {
+        toast.error(`Falha ao registrar solicitação`)
       }
     }
   }
@@ -134,16 +167,20 @@ export default function NewRequestPage() {
                   <div>
                     {!isMobile && (
                       <div className="flex w-full justify-start">
-                        <Button className="w-36" tabIndex={-1} type="submit" variant={"default"}>
-                          Cadastrar
-                        </Button>
+                        <ButtonSuccess
+                          isLoading={isLoading}
+                          isSuccess={registerSuccess}
+                          defaultText="Cadastrar Requisição"
+                          loadingText="Cadastrando..."
+                          successText="Requisição Cadastrada!"
+                        />
                       </div>
                     )}
                   </div>
 
                 </div>
 
-                <div className="p-0 px-10 justify-self-end flex flex-col col-span-12 md:col-span-4 gap-5 w-full">
+                <div className="p-0 md:px-10 justify-self-end flex flex-col col-span-12 md:col-span-4 gap-5 w-full">
 
                   <FormField
                     control={form.control}
@@ -197,7 +234,7 @@ export default function NewRequestPage() {
                                           : "font-normal"
                                       )}>
                                         <p>{user.full_name}</p>
-                                        <small className="text-[14px] font-normal text-foreground/80">{user.role} | {user.department}</small>
+                                        <small className="text-[14px] font-normal text-foreground/80">{user.role_label} | {user.department_label}</small>
                                       </div>
                                       <Check
                                         className={cn(
@@ -345,9 +382,13 @@ export default function NewRequestPage() {
 
                   {isMobile && (
                     <div className="flex w-full justify-start">
-                      <Button className="w-full" type="submit" variant={"default"}>
-                        Cadastrar
-                      </Button>
+                      <ButtonSuccess
+                        isLoading={isLoading}
+                        isSuccess={registerSuccess}
+                        defaultText="Cadastrar Requisição"
+                        loadingText="Cadastrando..."
+                        successText="Requisição Cadastrada!"
+                      />
                     </div>
                   )}
                 </div>

@@ -1,81 +1,91 @@
 "use client"
 
-import { ChevronRight, type LucideIcon } from "lucide-react"
+import { Boxes, GalleryVerticalEndIcon, PackageIcon, PackagePlus, type LucideIcon } from "lucide-react"
 
 import {
   Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
 } from "@/app/components/ui/collapsible"
 import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from "@/app/components/ui/sidebar"
-
+import { RootState, useAppSelector } from "../store/store"
 
 export interface subItems {
   title: string
+  url: string
+  icon: LucideIcon
+  isActive?: boolean
+  isAccent?: boolean
+  items?: {
+    title: string
     url: string
-    icon: LucideIcon
-    isActive?: boolean
-    isAccent?: boolean
-    items?: {
-      title: string
-      url: string
-    }[]
+  }[]
 }
 
-export function NavRequests({
-  items,
-}: {
-  items: subItems[]
-}) {
+export function NavRequests() {
+  const { user } = useAppSelector((state: RootState) => state.auth);
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Requisições</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) => (
-          <Collapsible key={item.title} asChild defaultOpen={item.isActive}>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={item.title}>
-                <a href={item.url}>
-                  <item.icon />
-                  <span>{item.title}</span>
-                </a>
-              </SidebarMenuButton>
-              {item.items?.length ? (
-                <>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuAction className="data-[state=open]:rotate-90">
-                      <ChevronRight />
-                      <span className="sr-only">Toggle</span>
-                    </SidebarMenuAction>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {item.items?.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild>
-                            <a href={subItem.url}>
-                              <span>{subItem.title}</span>
-                            </a>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </>
-              ) : null}
-            </SidebarMenuItem>
-          </Collapsible>
-        ))}
+
+        <Collapsible asChild>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Nova solicitação">
+              <a href="/request/register">
+                <PackagePlus />
+                <span>Nova solicitação</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </Collapsible>
+
+        <Collapsible asChild>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Minhas solicitações">
+              <a href="/request/">
+                <Boxes />
+                <span>Minhas solicitações</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </Collapsible>
+
+        {user && (user.role === "Manager" || user.role === "Director")
+          ? (
+            <Collapsible asChild>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Solicitações pendentes">
+                  <a href="/request/pending">
+                    <PackageIcon />
+                    <span>Solicitações pendentes</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </Collapsible>
+          )
+          : null}
+
+        {user && (user.role === "Manager" || user.role === "Director")
+          ? (
+            <Collapsible asChild>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Todas as solicitações">
+                  <a href="/request/all">
+                    <GalleryVerticalEndIcon />
+                    <span>Histórico de solicitações</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </Collapsible>
+          )
+          : null}
+
       </SidebarMenu>
     </SidebarGroup>
   )

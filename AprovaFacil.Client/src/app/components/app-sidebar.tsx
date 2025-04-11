@@ -1,11 +1,9 @@
 import * as React from "react"
 import {
-  Boxes,
   LifeBuoy,
-  PackagePlus,
   PackageSearch,
   Building2,
-  UsersIcon
+  UsersIcon,
 } from "lucide-react"
 
 import { NavRequests } from "@/app/components/nav-requests"
@@ -23,26 +21,9 @@ import {
 } from "@/app/components/ui/sidebar"
 import { NavUsers } from "./nav-users"
 import { useGetCurrentUserQuery } from "../api/authApiSlice"
+import { RootState, useAppSelector } from "../store/store"
 
 const data = {
-  user: {
-    name: "Jonh Doe",
-    email: "jonh@doe.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
-    {
-      title: "Nova solicitação",
-      url: "/request/register",
-      icon: PackagePlus,
-      isAccent: true,
-    },
-    {
-      title: "Minhas solicitações",
-      url: "/request/",
-      icon: Boxes,
-     },
-  ],
   navSecondary: [
     {
       title: "Ajuda",
@@ -68,8 +49,12 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
-  const { data: authData, error: authError, isLoading: isAuthLoading } = useGetCurrentUserQuery();
+  const { data: authData } = useGetCurrentUserQuery();
+  const { isAuthenticated } = useAppSelector((state: RootState) => state.auth);
 
+  if (!isAuthenticated) {
+    return <div></div>
+  }
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -77,7 +62,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <a href="/">
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <PackageSearch className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
@@ -90,7 +75,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavRequests items={data.navMain} />
+        <NavRequests />
         <NavCompanies projects={data.companies} />
         <NavUsers users={data.users} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />

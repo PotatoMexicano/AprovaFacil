@@ -15,6 +15,7 @@ import {
 } from "@/app/components/ui/sidebar"
 
 export default function Page() {
+  
   return (
     <SidebarProvider>
       <AppSidebar />

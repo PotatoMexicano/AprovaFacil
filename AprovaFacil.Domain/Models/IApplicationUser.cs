@@ -10,4 +10,9 @@ public interface IApplicationUser
     String PictureUrl { get; set; }
     String Email { get; set; }
     Boolean Enabled { get; set; }
+    String SecurityStamp { get; set; }
+
+    public List<Request> Requests { get; set; }
+    public List<RequestManager> RequestManagers { get; set; }
+    public List<RequestDirector> RequestDirectors { get; set; }
 }

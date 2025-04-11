@@ -1,13 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
-import { useBreadcrumb } from "@/app/context/breadkcrumb-context"
+import { useBreadcrumb } from "@/app/context/breadcrumb-context"
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/app/components/ui/form";
 import { useGetCepQuery } from "../../../api/cepApiSlice";
-import { toast } from "@/hooks/use-toast";
 import { useMaskito } from "@maskito/react"
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Button } from "@/app/components/ui/button";
@@ -17,13 +16,16 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import formSchema from "@/app/schemas/companySchema";
 import { useRegisterCompanyMutation } from "@/app/api/companyApiSlice";
 import ButtonSuccess from "@/app/components/ui/button-success";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function NewCompanyPage() {
 
   const isMobile = useIsMobile();
+  const navigate = useNavigate()
 
-  const [registerCompany, { isLoading: isLoadingRegisterCompany, isSuccess: isSuccessRegisterCompany, isError: isErrorRegisterCompany }] = useRegisterCompanyMutation();
-    const [registerSuccess, setRegisterSuccess] = useState<boolean | undefined>(undefined);
+  const [registerCompany, { isLoading, isSuccess, isError, error }] = useRegisterCompanyMutation();
+  const [registerSuccess, setRegisterSuccess] = useState<boolean | undefined>(undefined);
 
   const maskedCnpjRef = useMaskito({
     options: {
@@ -94,26 +96,14 @@ export default function NewCompanyPage() {
   }
 
   useEffect(() => {
-      setRegisterSuccess(isSuccessRegisterCompany);
-      if (isSuccessRegisterCompany) {
-        toast({
-          title: "Empresa registrada",
-          description: "Os dados da empresa foram registrados com sucesso."
-        });
-      }
-      if (isErrorRegisterCompany) {
-        toast({
-          title: "Falha ao registrar empresa",
-          description: "Não foi possível registrar os dados da empresa."
-        })
-      }
-      
-     const timer = setTimeout(() => {
-      setRegisterSuccess(undefined);
-     }, 3500);
-  
-     return () => clearTimeout(timer);
-    }, [isSuccessRegisterCompany, isErrorRegisterCompany]);
+    setRegisterSuccess(isSuccess)
+
+    const timer = setTimeout(() => {
+      setRegisterSuccess(undefined)
+    }, 3500)
+
+    return () => clearTimeout(timer)
+  }, [isSuccess, isError, navigate]);
 
   useEffect(() => {
     if (isPostalCodeError) {
@@ -143,25 +133,28 @@ export default function NewCompanyPage() {
   }, [address, postalCodeSearch]);
 
   useEffect(() => {
-    setBreadcrumbs(["Início", "Empresas", "Adicionar"]); // Define os breadcrumbs da página atual
+    setBreadcrumbs(["Início", "Empresa", "Adicionar"]); // Define os breadcrumbs da página atual
   }, [setBreadcrumbs]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-      try {
-        await registerCompany(values).unwrap();
-      } catch (error) {
-  
-        console.error(`Erro ao registrar empresa:`, error);
-  
-        if (error instanceof Error) {
-          toast({
-            title: 'Falha ao registrar empresa',
-            description: error.message,
-          })
-  
-        }
+    try {
+      await registerCompany(values).unwrap();
+
+      setRegisterSuccess(isSuccess);
+
+      toast.success("Empresa registrada com sucesso.");
+
+      setTimeout(() => {
+        navigate("/company")
+      }, 2000);
+
+    } catch (err) {
+      console.error(`Erro ao registrar empresa:`, error);
+      if (error) {
+        toast.error(`Falha ao registrar empresa`)
       }
     }
+  }
 
   return (
     <>
@@ -176,7 +169,7 @@ export default function NewCompanyPage() {
               </CardHeader>
               <CardContent>
 
-                <div className="grid grid-cols-1 md:grid-cols-2  gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col space-y-2">
                     <div>
                       <FormField
@@ -415,7 +408,12 @@ export default function NewCompanyPage() {
                 </div>
 
                 <div className="pt-5">
-                  <ButtonSuccess isLoading={isLoadingRegisterCompany} isSuccess={registerSuccess} defaultText="Cadastrar" loadingText="Cadastrando..." successText="Sucesso !" />
+                  <ButtonSuccess
+                    isLoading={isLoading}
+                    isSuccess={registerSuccess}
+                    defaultText="Cadastrar Empresa"
+                    loadingText="Cadastrando..."
+                    successText="Sucesso !" />
                 </div>
               </CardContent>
             </Card>

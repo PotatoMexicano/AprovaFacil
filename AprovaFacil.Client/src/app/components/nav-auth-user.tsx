@@ -1,9 +1,11 @@
 "use client"
 
 import {
-  BadgeCheck,
   ChevronsUpDown,
+  Laptop,
   LogOut,
+  MoonIcon,
+  SunIcon,
 } from "lucide-react"
 
 import {
@@ -27,10 +29,10 @@ import {
   useSidebar,
 } from "@/app/components/ui/sidebar"
 import { UserResponse } from "@/types/auth"
-import { useLogoutMutation } from "../api/authApiSlice"
-import { useNavigate } from "react-router-dom"
+import { authApi, useLogoutMutation } from "../api/authApiSlice"
 import { useAppDispatch } from "../store/store"
 import { clearUser } from "@/auth/authSlice"
+import { useTheme } from "./theme-provider"
 
 interface Props {
   user: UserResponse
@@ -39,14 +41,15 @@ interface Props {
 
 export function NavAuthUser({ user }: Props) {
   const [funcLogout] = useLogoutMutation();
-  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isMobile } = useSidebar()
-  
+  const { setTheme } = useTheme()
+
   const logout = async () => {
-    await funcLogout().unwrap();
     dispatch(clearUser());
-    navigate('/login', {replace: true});
+    dispatch(authApi.util.resetApiState());
+    await funcLogout().unwrap();
+    window.location.replace('/login')
   };
 
   return (
@@ -87,14 +90,13 @@ export function NavAuthUser({ user }: Props) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Minha conta
-              </DropdownMenuItem>
+            <DropdownMenuGroup className="flex flex-row justify-between">
+              <DropdownMenuItem className="w-full justify-center" onClick={() => setTheme("light")}><SunIcon /></DropdownMenuItem>
+              <DropdownMenuItem className="w-full justify-center" onClick={() => setTheme("dark")}><MoonIcon /></DropdownMenuItem>
+              <DropdownMenuItem className="w-full justify-center" onClick={() => setTheme("system")}><Laptop /></DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => {logout()}}>
+            <DropdownMenuItem onClick={() => { logout() }}>
               <LogOut />
               Sair
             </DropdownMenuItem>

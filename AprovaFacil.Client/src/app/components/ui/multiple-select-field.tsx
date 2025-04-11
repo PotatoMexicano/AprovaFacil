@@ -33,6 +33,18 @@ export function MultiSelectUserField({
   const [openPopoverUser, setOpenPopoverUser] = useState(false)
   const [selectedIds, setSelectedIds] = useState<number[]>([])
 
+  const {formState: {isSubmitSuccessful}} = form;
+
+  useEffect(() => {
+    if (isSubmitSuccessful) {
+      // Após o sucesso e o reset, podemos zerar estados adicionais aqui
+      setOpenPopoverUser(false);
+      setSelectedIds([]);
+      // Opcional: Redefinir outros estados fora do formulário, se existirem
+      // Exemplo: setSomeExternalState(initialValue);
+    }
+  }, [isSubmitSuccessful]);
+
   // Sincroniza o estado local com o valor do formulário
   useEffect(() => {
     const currentValue = form.getValues("directorsIds") || []
@@ -133,7 +145,7 @@ export function MultiSelectUserField({
                         >
                           <p>{user.full_name}</p>
                           <small className="text-[14px] font-normal text-foreground/80">
-                            {user.role} | {user.department}
+                            {user.role_label} | {user.department_label}
                           </small>
                         </div>
                         <Check className={cn("ml-auto", selectedIds.includes(user.id) ? "opacity-100" : "opacity-0")} />

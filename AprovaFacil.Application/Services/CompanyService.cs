@@ -1,5 +1,5 @@
-﻿using AprovaFacil.Application.Extensions;
-using AprovaFacil.Domain.DTOs;
+﻿using AprovaFacil.Domain.DTOs;
+using AprovaFacil.Domain.Extensions;
 using AprovaFacil.Domain.Interfaces;
 using AprovaFacil.Domain.Models;
 using Serilog;
@@ -36,7 +36,7 @@ public class CompanyService : CompanyInterfaces.ICompanyService
     public async Task<CompanyDTO[]> GetAllCompanies(CancellationToken cancellation)
     {
         Company[] companies = await _repository.GetAllCompaniesAsync(cancellation);
-        CompanyDTO[] dtos = companies.Select(CompanyExtension.ToDTO).ToArray();
+        CompanyDTO[] dtos = [.. companies.Select(CompanyExtensions.ToDTO)];
         return dtos;
     }
 

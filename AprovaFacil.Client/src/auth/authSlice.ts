@@ -1,7 +1,6 @@
 import { UserResponse } from "@/types/auth";
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice} from "@reduxjs/toolkit";
 
-// src/features/auth/authSlice.ts
 interface AuthState {
   user: UserResponse | null;
   isAuthenticated: boolean;
@@ -16,21 +15,21 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setUser: (state, action: PayloadAction<UserResponse>) => {
-      state.user = {
-        ...action.payload,
-        identity_roles: action.payload.identity_roles || [],
-      };
+    setUser: (state, action) => {
+      state.user = action.payload.user;
       state.isAuthenticated = true;
     },
     clearUser: (state) => {
       state.user = null;
       state.isAuthenticated = false;
     },
+    disableUser: (state) => {
+      state.isAuthenticated = false
+    }
   },
 });
 
-export const { setUser, clearUser } = authSlice.actions;
+export const { setUser, clearUser, disableUser } = authSlice.actions;
 export default authSlice.reducer;
 
 export const saveAuthSate = (state: AuthState) => {

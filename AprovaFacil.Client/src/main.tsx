@@ -5,11 +5,14 @@ import { Provider } from 'react-redux'
 import { store } from './app/store/store'
 import { RouterProvider } from 'react-router-dom'
 import { router } from './app/routes/routes'
+import { SignalRProvider } from './app/context/SignalRContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
-      <RouterProvider router={router} />
+      <SignalRProvider>
+        <RouterProvider router={router} />
+      </SignalRProvider>
     </Provider>
   </StrictMode>
 )

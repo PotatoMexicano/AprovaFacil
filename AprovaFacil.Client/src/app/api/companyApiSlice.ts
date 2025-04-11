@@ -1,32 +1,33 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { Company } from "@/types/company";
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { CompanyResponse } from "@/types/company";
+import { customBaseQuery } from "./base-api";
 
 export const companyApi = createApi({
   reducerPath: "companyApi",
-  baseQuery: fetchBaseQuery({ baseUrl: "https://localhost:7296/api/company" }),
+  baseQuery: customBaseQuery(),
   tagTypes: ["Companies"],
   endpoints: (builder) => ({
-    getCompanies: builder.query<Company[], void>({
-      query: () => '',
+    getCompanies: builder.query<CompanyResponse[], void>({
+      query: () => 'company',
       providesTags: ["Companies"]
     }),
 
-    getCompany: builder.query<Company | undefined, string>({
-      query: (id) => `/${id}`
+    getCompany: builder.query<CompanyResponse | undefined, string>({
+      query: (id) => `company/${id}`
     }),
 
-    registerCompany: (builder.mutation<Company, Company>({
+    registerCompany: (builder.mutation<CompanyResponse, CompanyResponse>({
       query: (company) => ({
-        url: `register`,
+        url: `company/register`,
         method: `POST`,
         body: company,
       }),
       invalidatesTags: ["Companies"]
     })),
 
-    updateCompany: (builder.mutation<Company, Company>({
+    updateCompany: (builder.mutation<CompanyResponse, CompanyResponse>({
       query: (company) => ({
-        url: `update`,
+        url: `company/update`,
         method: `POST`,
         body: company
       }),
@@ -35,7 +36,7 @@ export const companyApi = createApi({
 
     removeCompany: (builder.mutation<void, number>({
       query: (id) => ({
-        url: `/${id}`,
+        url: `company/${id}`,
         method: `DELETE`,
       }),
       invalidatesTags: ["Companies"]

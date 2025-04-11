@@ -7,13 +7,11 @@ import formSchema from "@/app/schemas/authSchema";
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useLoginMutation } from "@/app/api/authApiSlice"
-import { useDispatch, useSelector } from "react-redux"
+import { authApi, useLazyGetCurrentUserQuery, useLoginMutation } from "@/app/api/authApiSlice"
+import { useDispatch } from "react-redux"
 import { setUser } from "@/auth/authSlice"
 import { toast, Toaster } from "sonner"
 import { useNavigate } from "react-router-dom"
-import { RootState } from "@/app/store/store"
-import { useEffect } from "react"
 import { ThemeProvider } from "@/app/components/theme-provider"
 
 export default function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
@@ -26,36 +24,32 @@ export default function LoginForm({ className, ...props }: React.ComponentProps<
     },
   });
 
-  const [login, { isLoading: isLoadingAuth }] = useLoginMutation();
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const [login, { isLoading: isLoadingAuth, isSuccess }] = useLoginMutation();
+  const [getUser] = useLazyGetCurrentUserQuery();
+
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/', { replace: true });
-    }
-  }, [isAuthenticated, navigate]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const response = await login({ email: values.email, password: values.password }).unwrap();
 
-      dispatch(setUser(response.user));
-      toast.success('Login bem-sucedido!');
-      navigate('/');
-      
-    } catch (error) {
-      console.error('Erro no login:', error);
-      // Extrair mensagem de erro do objeto de erro do RTK Query
-      const errorMessage =
-        (error as Error).message || 'Erro ao fazer login. Verifique suas credenciais.';
-      toast.error(errorMessage);
-    }
-  }
+      dispatch(setUser(response));
+      dispatch(authApi.util.resetApiState());
 
-  if (isAuthenticated) {
-    return null; // Ou uma mensagem como "Redirecionando..."
+      const userData = await getUser().unwrap();
+
+      if (userData) {
+        // Usuário já está autenticado, redireciona para a página principal
+        navigate('/', { replace: false });
+      }
+
+    } catch (error) {
+      const errorMessage =
+        error?.data?.message || error?.message || 'Erro ao fazer login. Verifique suas credenciais.';
+      toast.error(`Erro no login: ${JSON.stringify(errorMessage)}`);
+    }
   }
 
   return (
@@ -112,21 +106,21 @@ export default function LoginForm({ className, ...props }: React.ComponentProps<
                         />
                       </div>
                       <Button type="submit" className="w-full" disabled={isLoadingAuth}>
-                      {isLoadingAuth ? 'Entrando...' : 'Entrar'}
+                        {isLoadingAuth ? 'Entrando...' : 'Entrar'}
                       </Button>
                     </div>
                   </form>
                 </Form>
                 <div className="relative hidden bg-muted md:block">
                   <a href="https://storyset.com/nature" target="_blank" className="flex justify-center">
-                  <div className="relative text-center">
-                    <img
-                      src="/strelitzia plant-amico.svg"
-                      alt="Image"
-                      className="inset-0 h-full w-full object-cover -z-1"
-                    />
-                    <small className="p-1 text-gray-400 z-10 bottom-0">Nature illustrations by Storyset</small>
-                  </div>
+                    <div className="relative text-center">
+                      <img
+                        src="/strelitzia plant-amico.svg"
+                        alt="Image"
+                        className="inset-0 h-full w-full object-cover -z-1"
+                      />
+                      <small className="p-1 text-gray-400 z-10 bottom-0">Nature illustrations by Storyset</small>
+                    </div>
                   </a>
                 </div>
               </CardContent>

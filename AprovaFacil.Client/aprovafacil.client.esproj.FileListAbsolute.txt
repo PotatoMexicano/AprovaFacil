@@ -1,0 +1,2 @@
+E:\Desenvolvimento\C#\AprovaFacil\AprovaFacil.Client\obj\Debug\aprovafacil.client.esproj.CoreCompileInputs.cache
+E:\Desenvolvimento\CSharp\AprovaFacil\AprovaFacil.Client\obj\Debug\AprovaFacil.Client.esproj.CoreCompileInputs.cache

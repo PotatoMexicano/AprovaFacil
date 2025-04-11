@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
-import { useBreadcrumb } from "@/app/context/breadkcrumb-context"
+import { useBreadcrumb } from "@/app/context/breadcrumb-context"
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -154,7 +154,7 @@ export default function EditCompanyPage() {
   }, [address, postalCodeSearch]);
 
   useEffect(() => {
-    setBreadcrumbs(["Início", "Empresas", "Editar"]); // Define os breadcrumbs da página atual
+    setBreadcrumbs(["Início", "Empresa", "Editar"]); // Define os breadcrumbs da página atual
   }, [setBreadcrumbs]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {

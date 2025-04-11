@@ -1,6 +1,10 @@
 ﻿
+using AprovaFacil.Application.Services;
+using AprovaFacil.Domain.DTOs;
+using AprovaFacil.Domain.Extensions;
 using AprovaFacil.Infra.Data.Identity;
-using AprovaFacil.Server.DTOs;
+using AprovaFacil.Server.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,15 +16,17 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly JwtService _jwtService;
 
-    public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+    public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, JwtService jwtService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _jwtService = jwtService;
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] LoginContract request)
     {
         if (!ModelState.IsValid)
         {
@@ -33,21 +39,13 @@ public class AuthController : ControllerBase
         {
             ApplicationUser? user = await _userManager.FindByEmailAsync(request.Email);
             IList<String> roles = await _userManager.GetRolesAsync(user);
-            return Ok(new
-            {
-                Message = "Login bem-sucedido",
-                User = new
-                {
-                    user.Id,
-                    user.Email,
-                    user.FullName,
-                    user.Role,
-                    user.Department,
-                    user.PictureUrl,
-                    user.Enabled,
-                    IdentityRoles = roles
-                }
-            });
+            IList<System.Security.Claims.Claim> claims = await _userManager.GetClaimsAsync(user);
+
+            String token = _jwtService.GenerateJwtToken(user, roles);
+
+            UserDTO userDTO = user.ToDTO(roles);
+
+            return Ok(new { Token = token, User = userDTO });
         }
 
         if (result.IsLockedOut)
@@ -59,6 +57,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("logout")]
+    [Authorize]
     public async Task<IActionResult> Logout()
     {
         await _signInManager.SignOutAsync();
@@ -66,6 +65,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("me")]
+    [Authorize]
     public async Task<IActionResult> CurrentUser()
     {
         if (User.Identity == null || !User.Identity.IsAuthenticated)
@@ -88,6 +88,9 @@ public class AuthController : ControllerBase
         }
 
         IList<String> roles = await _userManager.GetRolesAsync(user);
+
+        Response.Headers.CacheControl = "no-store, no-cache, must-revalidade, max-age=0";
+        Response.Headers.Pragma = "no-cache";
 
         return Ok(new
         {

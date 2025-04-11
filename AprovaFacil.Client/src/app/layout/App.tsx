@@ -1,16 +1,38 @@
-import { ThemeProvider } from '../components/theme-provider'
-import { Outlet } from 'react-router-dom'
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar'
-import { AppSidebar } from '../components/app-sidebar'
-import { Separator } from '../components/ui/separator'
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '../components/ui/breadcrumb'
-import { BreadcrumbProvider, useBreadcrumb } from '../context/breadkcrumb-context'
-import React from 'react'
-import { Toaster } from 'sonner'
+import { ThemeProvider } from '../components/theme-provider';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar';
+import { AppSidebar } from '../components/app-sidebar';
+import { Separator } from '../components/ui/separator';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '../components/ui/breadcrumb';
+import { BreadcrumbProvider, useBreadcrumb } from '@/app/context/breadcrumb-context';
+import React, { useEffect } from 'react';
+import { toast, Toaster } from 'sonner';
+import { useDispatch } from 'react-redux';
+import { authApi, useGetCurrentUserQuery } from '../api/authApiSlice';
+import { QueryStatus } from '@reduxjs/toolkit/query';
+import { clearUser } from '@/auth/authSlice';
 
 function AppHeader() {
-
   const { breadcrumbs } = useBreadcrumb();
+
+  const navigate = useNavigate();
+    const dispatch = useDispatch();
+  
+    const { status, error } = useGetCurrentUserQuery();
+  
+    useEffect(() => {
+      if (status === QueryStatus.rejected) {
+        dispatch(authApi.util.resetApiState());
+        dispatch(clearUser());
+  
+        toast.error("Sessão Expirada");
+        navigate("/login", { replace: true }); // Use navigate instead of window.location.href
+      };
+    }, [dispatch, error, navigate, status])
+  
+    if (status === QueryStatus.pending) {
+      return <div></div>
+    };
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-2">
@@ -21,9 +43,9 @@ function AppHeader() {
           <BreadcrumbList>
             {breadcrumbs.map((item, index) => (
               <React.Fragment key={index}>
-                {index > 0 ? (<BreadcrumbSeparator />) : null}
-                <BreadcrumbItem key={index}>
-                  <BreadcrumbLink>{item}</BreadcrumbLink>
+                {index > 0 && <BreadcrumbSeparator />}
+                <BreadcrumbItem>
+                  <BreadcrumbLink>{String(item)}</BreadcrumbLink>
                 </BreadcrumbItem>
               </React.Fragment>
             ))}
@@ -36,11 +58,11 @@ function AppHeader() {
 
 function App() {
   return (
-    <div className="flex w-screen">
-      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-        <Toaster />
-        <BreadcrumbProvider>
-          <SidebarProvider className="flex m-auto w-full">
+    <div className="flex">
+      <Toaster />
+      <ThemeProvider>
+        <SidebarProvider className="flex m-auto w-full">
+          <BreadcrumbProvider>
             <AppSidebar />
             <SidebarInset>
               <AppHeader />
@@ -48,11 +70,11 @@ function App() {
                 <Outlet />
               </div>
             </SidebarInset>
-          </SidebarProvider>
-        </BreadcrumbProvider>
+          </BreadcrumbProvider>
+        </SidebarProvider>
       </ThemeProvider>
     </div>
   );
 }
 
-export default App
+export default App;
