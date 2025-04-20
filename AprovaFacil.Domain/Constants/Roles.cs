@@ -8,6 +8,13 @@ public static class Roles
     public const String Finance = nameof(Finance);
     public const String Assistant = nameof(Assistant);
 
+    public static Boolean IsFinance(String? role)
+    {
+        if (String.IsNullOrEmpty(role)) return false;
+        if (role.Equals(Finance, StringComparison.OrdinalIgnoreCase)) return true;
+        return false;
+    }
+
     public static Boolean IsAdmin(String? role)
     {
         if (String.IsNullOrEmpty(role)) return false;
