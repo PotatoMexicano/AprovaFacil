@@ -1,6 +1,8 @@
 ﻿using AprovaFacil.Domain.Constants;
 using AprovaFacil.Domain.DTOs;
 using AprovaFacil.Domain.Interfaces;
+using AprovaFacil.Domain.Results;
+using AprovaFacil.Server.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -15,47 +17,37 @@ public class UserController(UserInterfaces.IUserService service) : ControllerBas
     [HttpGet("")]
     public async Task<IActionResult> GetAllUsers(CancellationToken cancellation = default)
     {
-        UserDTO[] result = await service.GetAllUsers(cancellation);
-        return Ok(result);
+        Result<UserDTO[]> result = await service.GetAllUsers(cancellation);
+        return result.ToActionResult();
     }
 
     [HttpGet("enabled")]
     public async Task<IActionResult> GetAllUsersEnabled(CancellationToken cancellation = default)
     {
-        UserDTO[] result = await service.GetAllusersEnabled(cancellation);
-        return Ok(result);
+        Result<UserDTO[]> result = await service.GetAllusersEnabled(cancellation);
+        return result.ToActionResult();
     }
 
     [HttpGet("{idUser:int}")]
     public async Task<IActionResult> GetUser(Int32 idUser, CancellationToken cancellation = default)
     {
-        UserDTO? result = await service.GetUser(idUser, cancellation);
-
-        if (result is null)
-        {
-            return NotFound(new ProblemDetails
-            {
-                Detail = $"Usuário com ID {idUser} não encontrado.",
-                Status = StatusCodes.Status404NotFound
-            });
-        }
-
-        return Ok(result);
+        Result<UserDTO> result = await service.GetUser(idUser, cancellation);
+        return result.ToActionResult();
     }
 
     [HttpPost("{idUser:int}/disable")]
     [Authorize(Roles = $"{Roles.Manager}, {Roles.Director}")]
     public async Task<IActionResult> DisableUser(Int32 idUser, CancellationToken cancellation = default)
     {
-        Boolean result = await service.DisableUser(idUser, cancellation);
+        Result result = await service.DisableUser(idUser, cancellation);
 
-        if (result)
+        if (result.IsSuccess)
         {
-            return StatusCode(StatusCodes.Status202Accepted, result);
+            return StatusCode(StatusCodes.Status202Accepted);
         }
         else
         {
-            return StatusCode(StatusCodes.Status304NotModified, result);
+            return StatusCode(StatusCodes.Status304NotModified);
         }
     }
 
@@ -63,15 +55,15 @@ public class UserController(UserInterfaces.IUserService service) : ControllerBas
     [Authorize(Roles = $"{Roles.Manager}, {Roles.Director}")]
     public async Task<IActionResult> EnableUser(Int32 idUser, CancellationToken cancellation = default)
     {
-        Boolean result = await service.EnableUser(idUser, cancellation);
+        Result result = await service.EnableUser(idUser, cancellation);
 
-        if (result)
+        if (result.IsSuccess)
         {
-            return StatusCode(StatusCodes.Status202Accepted, result);
+            return StatusCode(StatusCodes.Status202Accepted);
         }
         else
         {
-            return StatusCode(StatusCodes.Status304NotModified, result);
+            return StatusCode(StatusCodes.Status304NotModified);
         }
     }
 
@@ -79,19 +71,8 @@ public class UserController(UserInterfaces.IUserService service) : ControllerBas
     [Authorize(Roles = $"{Roles.Manager}, {Roles.Director}")]
     public async Task<IActionResult> RegisterUser([FromBody] UserRegisterDTO request, CancellationToken cancellation = default)
     {
-        UserDTO? result = await service.RegisterUser(request, cancellation);
-
-        if (result is null)
-        {
-            return BadRequest(new ProblemDetails
-            {
-                Detail = "Não foi possível registrar o usuário.",
-                Status = StatusCodes.Status400BadRequest
-            });
-
-        }
-
-        return Ok(result);
+        Result<UserDTO> result = await service.RegisterUser(request, cancellation);
+        return result.ToActionResult();
     }
 
     [HttpPost("update")]
@@ -112,17 +93,9 @@ public class UserController(UserInterfaces.IUserService service) : ControllerBas
             });
         }
 
-        UserDTO? result = await service.UpdateUser(request, cancellation);
+        Result<UserDTO> result = await service.UpdateUser(request, cancellation);
 
-        if (result is null)
-        {
-            return BadRequest(new ProblemDetails
-            {
-                Detail = "Falha ao atualizar usuário"
-            });
-        }
-
-        return Ok(result);
+        return result.ToActionResult();
     }
 }
 
