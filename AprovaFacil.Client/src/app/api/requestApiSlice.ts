@@ -5,7 +5,7 @@ import { RequestReponse, RequestStatsResponse } from "@/types/request";
 export const requestApi = createApi({
   reducerPath: "requestApi",
   baseQuery: customBaseQuery(),
-  tagTypes: ["Requests", "Stats"],
+  tagTypes: ["Requests", "Approved"], 
   endpoints: (builder) => ({
     registerRequest: builder.mutation({
       query: (requestData) => {
@@ -86,7 +86,6 @@ export const requestApi = createApi({
         url: "request/myself/stats",
         method: 'GET',
       }),
-      providesTags: ["Stats"]
     }),
 
     getPendingRequests: builder.query<RequestReponse[], void>({
@@ -96,6 +95,14 @@ export const requestApi = createApi({
         body: {}
       }),
       providesTags: ["Requests"]
+    }),
+
+    getApprovedRequests: builder.query<RequestReponse[], void>({
+      query: () => ({
+        url: "request/approved",
+        method: "POST",
+      }),
+      providesTags: ["Approved"],
     }),
 
     getFileRequest: builder.query<{ blob: Blob, fileName: string }, { fileType: string, requestId: string, fileId: string }>({
@@ -147,5 +154,6 @@ export const {
   useApproveRequestMutation,
   useRejectRequestMutation,
   useAllRequestsQuery,
-  useGetMyStatsQuery
+  useGetMyStatsQuery,
+  useGetApprovedRequestsQuery,
 } = requestApi;

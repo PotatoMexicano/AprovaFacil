@@ -16,6 +16,7 @@ export interface RequestReponse {
   approved_second_level: number;
   approved: number;
   approved_label: string;
+  level: number;
   received_at: string;
   amount: number;
   note: string;

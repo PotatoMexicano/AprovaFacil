@@ -238,7 +238,7 @@ export default function EditUserPage() {
               <ButtonSuccess
                 isLoading={isLoading}
                 isSuccess={updateSuccess}
-                defaultText="Atualizar Usuário"
+                defaultText="Atualizar usuário"
                 loadingText="Atualizando..."
                 successText="Usuário Atualizado!"
               />

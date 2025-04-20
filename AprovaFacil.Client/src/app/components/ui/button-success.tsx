@@ -14,7 +14,7 @@ export default function ButtonSuccess({isLoading, isSuccess, defaultText, loadin
   return (
     <Button
       disabled={isLoading}
-      className={`p-5 ${isSuccess ? "bg-green-500 hover:bg-green-600 text-white" : ""}`}
+      className={`p-5 ${isSuccess ? "bg-success hover:bg-success-light text-white" : ""}`}
       variant={"default"}
       type="submit"
       >
