@@ -1,5 +1,6 @@
 ﻿using AprovaFacil.Domain.DTOs;
 using AprovaFacil.Domain.Models;
+using AprovaFacil.Domain.Results;
 
 namespace AprovaFacil.Domain.Interfaces;
 
@@ -7,15 +8,15 @@ public static class UserInterfaces
 {
     public interface IUserService
     {
-        Task<UserDTO[]> GetAllUsers(CancellationToken cancellation);
-        Task<UserDTO[]> GetAllusersEnabled(CancellationToken cancellation);
-        Task<UserDTO?> GetUser(Int32 idUser, CancellationToken cancellation);
+        Task<Result<UserDTO[]>> GetAllUsers(CancellationToken cancellation);
+        Task<Result<UserDTO[]>> GetAllusersEnabled(CancellationToken cancellation);
+        Task<Result<UserDTO>> GetUser(Int32 idUser, CancellationToken cancellation);
 
-        Task<UserDTO?> RegisterUser(UserRegisterDTO request, CancellationToken cancellation);
-        Task<UserDTO?> UpdateUser(UserUpdateDTO request, CancellationToken cancellation);
+        Task<Result<UserDTO>> RegisterUser(UserRegisterDTO request, CancellationToken cancellation);
+        Task<Result<UserDTO>> UpdateUser(UserUpdateDTO request, CancellationToken cancellation);
 
-        Task<Boolean> DisableUser(Int32 idUser, CancellationToken cancellation);
-        Task<Boolean> EnableUser(Int32 idUser, CancellationToken cancellation);
+        Task<Result> DisableUser(Int32 idUser, CancellationToken cancellation);
+        Task<Result> EnableUser(Int32 idUser, CancellationToken cancellation);
 
     }
 

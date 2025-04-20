@@ -1,5 +1,4 @@
-﻿
-using AprovaFacil.Application.Services;
+﻿using AprovaFacil.Application.Services;
 using AprovaFacil.Domain.DTOs;
 using AprovaFacil.Domain.Extensions;
 using AprovaFacil.Infra.Data.Identity;
