@@ -6,6 +6,7 @@ import { authApi } from '../api/authApiSlice';
 import { requestApi } from '../api/requestApiSlice';
 import authReducer, {loadAuthState, saveAuthSate} from '../../auth/authSlice';
 import { userApi } from '../api/userApiSlice';
+import { notificationApi } from '../api/notificationApiSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,13 +15,14 @@ export const store = configureStore({
     [authApi.reducerPath]: authApi.reducer,
     [requestApi.reducerPath]: requestApi.reducer,
     [userApi.reducerPath]: userApi.reducer,
+    [notificationApi.reducerPath]: notificationApi.reducer,
     auth: authReducer,
   },
   preloadedState: {
     auth: loadAuthState(),
   },
   middleware: (getDefaultmiddleware) => getDefaultmiddleware()
-  .concat(cepApi.middleware, companyApi.middleware, authApi.middleware, requestApi.middleware, userApi.middleware)
+  .concat(cepApi.middleware, companyApi.middleware, authApi.middleware, requestApi.middleware, userApi.middleware, notificationApi.middleware)
 });
 
 export type RootState = ReturnType<typeof store.getState>

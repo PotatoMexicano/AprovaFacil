@@ -29,10 +29,10 @@ import {
   useSidebar,
 } from "@/app/components/ui/sidebar"
 import { UserResponse } from "@/types/auth"
-import { authApi, useLogoutMutation } from "../api/authApiSlice"
-import { useAppDispatch } from "../store/store"
+import { authApi, useLogoutMutation } from "@/app/api/authApiSlice"
+import { useAppDispatch } from "@/app/store/store"
 import { clearUser } from "@/auth/authSlice"
-import { useTheme } from "./theme-provider"
+import { useTheme } from "@/app/components/theme-provider"
 
 interface Props {
   user: UserResponse

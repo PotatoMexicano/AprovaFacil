@@ -3,16 +3,7 @@ import { fetchBaseQuery } from "@reduxjs/toolkit/query"
 
 export const customBaseQuery = () => {
   return fetchBaseQuery({
-    baseUrl: `/api`, // Base URL da sua API
+    baseUrl: `${import.meta.env.VITE_API_URL}/api`,
     credentials: 'include',
-    // prepareHeaders: (headers, { getState }) => {
-    //   // const token = (getState() as RootState).auth.token; // Pega o token do estado global (Redux)
-    //   // if (token) {
-    //   //   // Adiciona o token nas requisições
-    //   //   headers.set('Authorization', `Bearer ${token}`);
-    //   // }
-
-    //   return headers;
-    // },
   });
 }

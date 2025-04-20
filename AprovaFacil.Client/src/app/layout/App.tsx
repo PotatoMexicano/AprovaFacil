@@ -1,7 +1,7 @@
 import { ThemeProvider } from '../components/theme-provider';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar';
-import { AppSidebar } from '../components/app-sidebar';
+import { AppSidebar } from '@/app/components/sidebar/app-sidebar';
 import { Separator } from '../components/ui/separator';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '../components/ui/breadcrumb';
 import { BreadcrumbProvider, useBreadcrumb } from '@/app/context/breadcrumb-context';

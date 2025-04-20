@@ -133,7 +133,7 @@ const useColumns = () => {
 
         return (
           <div>
-            <img className={cn("h-12 p-1 border-2 m-1 rounded-full", usuario.enabled ? "border-green-400" : "border-red-400")} src={usuario.picture_url} alt={usuario.full_name} />
+            <img className={cn("h-12 p-1 border-2 m-1 rounded-full", usuario.enabled ? "border-green-500" : "border-red-400")} src={usuario.picture_url} alt={usuario.full_name} />
           </div>
         )
       }
@@ -165,9 +165,7 @@ const useColumns = () => {
         const usuario = row.original;
 
         return (
-          usuario.enabled
-            ? (<Badge>{usuario.enabled ? "Ativo" : "Desativado"}</Badge>)
-            : (<Badge className="bg-red-400 hover:bg-red-500 hover:text-white">{usuario.enabled ? "Ativo" : "Desativado"}</Badge>)
+          (<Badge variant={usuario.enabled ? "success" : "destructive"} className="hover:text-white">{usuario.enabled ? "Ativo" : "Desativado"}</Badge>)
         )
       }
     },
@@ -176,7 +174,7 @@ const useColumns = () => {
       header: "Editar",
       cell: ({ row }) => {
         const usuario = row.original
-        if (usuario.id !== user?.id && !isAdmin){
+        if (usuario.id !== user?.id && !isAdmin) {
           return <></>
         }
 

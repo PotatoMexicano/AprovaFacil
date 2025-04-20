@@ -42,6 +42,11 @@ export const useIsAdmin = (): boolean => {
   return user?.role === "Manager" || user?.role === "Director";
 }
 
+export const useIsFinance = (): boolean => {
+  const {user} = useAppSelector((state: RootState) => state.auth);
+  return user?.role === "Finance";
+}
+
 export function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('pt-BR', {
     year: 'numeric',

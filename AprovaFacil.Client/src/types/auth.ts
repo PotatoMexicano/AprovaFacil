@@ -17,6 +17,16 @@ export interface UserResponse {
   request_approved: number;
 }
 
+export interface UserNotification {
+  uuid: string;
+  create_at: Date;
+  expire_at: Date;
+  message: string;
+  user_id: number
+  read: boolean;
+  request_uuid: string;
+}
+
 export interface LoginResponse {
   message: string;
   user: UserResponse;

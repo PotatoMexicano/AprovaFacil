@@ -178,7 +178,6 @@ export default function ViewRequest() {
     </>
   }
 
-
   return (
     <div className="flex bg-background py-8">
       <div className="container mx-auto">
@@ -316,14 +315,14 @@ export default function ViewRequest() {
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={handleReject}
-                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-red-600 border border-red-600 hover:bg-red-50 transition-colors"
+                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-red-600 border border-red-600 hover:bg-red-50 dark:hover:bg-red-800/30 transition-colors"
                   >
                     <XCircle className="w-4 h-4" />
                     Recusar
                   </button>
                   <button
                     onClick={handleApprove}
-                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-green-600 border border-green-600 hover:bg-green-50 transition-colors"
+                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-green-600 border border-green-600 hover:bg-green-50 dark:hover:bg-green-800/30 transition-colors"
                   >
                     <CheckCircle className="w-4 h-4" />
                     Aprovar
@@ -331,18 +330,18 @@ export default function ViewRequest() {
                 </div>
               )}
 
-              {isDirector && directorInRequest && directorInRequest.request_approved === 0 && (
+              {isDirector && directorInRequest && directorInRequest.request_approved === 0 && data.level === 1 && (
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={handleReject}
-                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-red-600 border border-red-600 hover:bg-red-50 transition-colors"
+                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-red-600 border border-red-600 hover:bg-red-50 dark:hover:bg-red-800/30 transition-colors"
                   >
                     <XCircle className="w-4 h-4" />
                     Recusar
                   </button>
                   <button
                     onClick={handleApprove}
-                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-green-600 border border-green-600 hover:bg-green-50 transition-colors"
+                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-green-600 border border-green-600 hover:bg-green-50 dark:hover:bg-green-800/30 transition-colors"
                   >
                     <CheckCircle className="w-4 h-4" />
                     Aprovar
