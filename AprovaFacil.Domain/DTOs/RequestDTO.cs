@@ -1,8 +1,11 @@
-﻿namespace AprovaFacil.Domain.DTOs;
+﻿using AprovaFacil.Domain.Extensions;
+using AprovaFacil.Domain.Models;
+
+namespace AprovaFacil.Domain.DTOs;
 
 public class RequestDTO
 {
-    public String UUID { get; set; } = null!;
+    public Guid UUID { get; set; }
 
     public Int32 RequesterId { get; set; }
 
@@ -73,6 +76,7 @@ public class RequestDTO
 
     public DateTime? ReceivedAt { get; set; }
 
+    public Int32 Level { get; set; }
     public Int32 Approved
     {
         get
@@ -124,10 +128,52 @@ public class RequestDTO
     public Int64 Amount { get; set; }
     public String? Note { get; set; }
 
-    public CompanyDTO Company { get; set; } = null!;
+    public CompanyDTO? Company { get; set; }
     public UserDTO Requester { get; set; } = null!;
     public List<UserDTO> Managers { get; set; } = new();
     public List<UserDTO> Directors { get; set; } = new();
+
+    public static implicit operator RequestDTO(Request? request)
+    {
+        if (request is null) return new RequestDTO { };
+
+        return new RequestDTO
+        {
+            UUID = request.UUID,
+            RequesterId = request.RequesterId,
+            InvoiceName = request.InvoiceName.ToString("N"),
+            BudgetName = request.BudgetName.ToString("N"),
+            PaymentDate = request.PaymentDate,
+            CreateAt = request.CreateAt,
+            HasInvoice = request.HasInvoice,
+            HasBudget = request.HasBudget,
+            FirstLevelAt = request.FirstLevelAt,
+            SecondLevelAt = request.SecondLevelAt,
+            ReceivedAt = request.FinishedAt,
+            Level = request.Level,
+            Amount = request.Amount,
+            Note = request.Note,
+            Company = ( request.Company is not null ) ? new CompanyDTO
+            {
+                Id = request.Company.Id,
+                LegalName = request.Company.LegalName,
+                TradeName = request.Company.TradeName,
+                CNPJ = request.Company.CNPJ,
+                Phone = request.Company.Phone,
+                Email = request.Company.Email,
+                City = request.Company.Address.City,
+                Complement = request.Company.Address.Complement,
+                Neighborhood = request.Company.Address.Neighborhood,
+                Number = request.Company.Address.Number,
+                PostalCode = request.Company.Address.PostalCode,
+                State = request.Company.Address.State,
+                Street = request.Company.Address.Street
+            } : null,
+            Requester = request.Requester.ToDTO(),
+            Managers = [.. request.Managers.Select(x => x.ToDTO())],
+            Directors = [.. request.Directors.Select(x => x.ToDTO())],
+        };
+    }
 }
 
 public class RequestRegisterDTO
