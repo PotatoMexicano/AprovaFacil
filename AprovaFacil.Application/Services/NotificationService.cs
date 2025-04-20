@@ -12,22 +12,15 @@ public class NotificationService(IHubContext<NotificationHub> hubNotification) :
         await hubNotification.Clients.All.SendAsync("UpdateRequests", new { }, cancellation);
     }
 
-    public async Task NotifyRegisterAsync(NotificationRequestDTO notificationRequest, CancellationToken cancellation)
+    public async Task NotifyGroup(NotificationGroupRequest request, CancellationToken cancellation)
     {
-        await hubNotification.Clients.Group($"user-{notificationRequest.RequesterID}")
-            .SendAsync("UpdateRequests", new
-            {
-                notificationRequest.RequestUUID
-            }, cancellation);
-
-        foreach (Int32 manager in notificationRequest.ManagerIds)
-        {
-            await hubNotification.Clients.Group($"user-{manager}")
-                .SendAsync("UpdateRequests", new
-                {
-                    notificationRequest.RequestUUID
-                }, cancellation);
-        }
+        IEnumerable<Task> tasks = request.Groups.Select(group => hubNotification.Clients.Group(group).SendAsync("UpdateApproved", new { request.RequestUUID }, cancellation));
+        await Task.WhenAll(tasks);
     }
 
+    public async Task NotifyUsers(NotificationRequest request, CancellationToken cancellation)
+    {
+        IEnumerable<Task> tasks = request.UsersID.Select(userId => hubNotification.Clients.Group($"user-{userId}").SendAsync("UpdateRequests", new { request.RequestUUID }, cancellation));
+        await Task.WhenAll(tasks);
+    }
 }
