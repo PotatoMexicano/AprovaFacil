@@ -33,6 +33,8 @@ public class ApplicationUser : IdentityUser<Int32>, IApplicationUser
     public List<RequestManager> RequestManagers { get; set; } = new();
     public List<RequestDirector> RequestDirectors { get; set; } = new();
 
+    public List<Notification> Notifications { get; set; } = new();
+
     public ApplicationUser() { }
 
     public ApplicationUser(String email, String fullName, String role, String department)
