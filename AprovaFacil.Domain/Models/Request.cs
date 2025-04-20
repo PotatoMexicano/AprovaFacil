@@ -32,6 +32,8 @@ public class Request
     public IApplicationUser Requester { get; set; } = null!;
     public List<RequestManager> Managers { get; set; } = new();
     public List<RequestDirector> Directors { get; set; } = new();
+
+    public List<Notification> Notifications { get; set; } = new();
 }
 
 public class RequestManager
