@@ -8,6 +8,7 @@ public class RequestDTO
     public Guid UUID { get; set; }
 
     public Int32 RequesterId { get; set; }
+    public Int32? FinisherId { get; set; }
 
     public String InvoiceName { get; set; } = null!;
     public String BudgetName { get; set; } = null!;
@@ -129,7 +130,10 @@ public class RequestDTO
     public String? Note { get; set; }
 
     public CompanyDTO? Company { get; set; }
+
     public UserDTO Requester { get; set; } = null!;
+    public UserDTO? Finisher { get; set; }
+
     public List<UserDTO> Managers { get; set; } = new();
     public List<UserDTO> Directors { get; set; } = new();
 
@@ -141,6 +145,7 @@ public class RequestDTO
         {
             UUID = request.UUID,
             RequesterId = request.RequesterId,
+            FinisherId = request.FinisherId,
             InvoiceName = request.InvoiceName.ToString("N"),
             BudgetName = request.BudgetName.ToString("N"),
             PaymentDate = request.PaymentDate,
@@ -170,6 +175,7 @@ public class RequestDTO
                 Street = request.Company.Address.Street
             } : null,
             Requester = request.Requester.ToDTO(),
+            Finisher = request.Finisher?.ToDTO(),
             Managers = [.. request.Managers.Select(x => x.ToDTO())],
             Directors = [.. request.Directors.Select(x => x.ToDTO())],
         };

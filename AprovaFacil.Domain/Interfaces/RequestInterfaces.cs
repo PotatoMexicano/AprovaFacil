@@ -16,12 +16,14 @@ public static class RequestInterfaces
 
         Task<Result<RequestDTO[]>> ListApprovedRequests(FilterRequest filter, CancellationToken cancellation);
         Task<Result<RequestDTO[]>> ListPendingRequests(FilterRequest filter, CancellationToken cancellation);
+        Task<Result<RequestDTO[]>> ListFinishedRequests(FilterRequest filter, CancellationToken cancellation);
 
         Task<Result<RequestDTO>> RegisterRequest(RequestRegisterDTO request, CancellationToken cancellation);
         Task<Result<Byte[]>> LoadFileRequest(String type, Guid requestGuid, Guid fileGuid, CancellationToken cancellation);
 
         Task<Result> ApproveRequest(Guid requestGuid, Int32 applicationUserId, CancellationToken cancellation);
         Task<Result> RejectRequest(Guid requestGuid, Int32 applicationUserId, CancellationToken cancellation);
+        Task<Result> FinishRequest(Guid requestGuid, Int32 applicationUserId, CancellationToken cancellation);
     }
 
     public interface IRequestRepository
@@ -33,10 +35,12 @@ public static class RequestInterfaces
 
         Task<Request[]> ListPendingRequestsAsync(FilterRequest filter, CancellationToken cancellation);
         Task<Request[]> ListApprovedRequestsAsync(FilterRequest filter, CancellationToken cancellation);
+        Task<Request[]> ListFinishedRequestsAsync(FilterRequest filter, CancellationToken cancellation);
 
         Task<Request?> RegisterRequestAsync(Request request, CancellationToken cancellation);
 
         Task<Boolean> ApproveRequestAsync(Guid requestGuid, Int32 applicationUserId, CancellationToken cancellation);
         Task<Boolean> RejectRequestAsync(Guid requestGuid, Int32 applicationUserId, CancellationToken cancellation);
+        Task<Boolean> FinishRequestAsync(Guid requestGuid, Int32 applicationUserId, CancellationToken cancellation);
     }
 }

@@ -62,6 +62,17 @@ export const requestApi = createApi({
       invalidatesTags: ["Requests"]
     }),
 
+    finishRequest: builder.mutation({
+      query: (id) => {
+        return {
+          url: `request/${id}/finish`,
+          method: `POST`,
+          priority: `high`
+        }
+      },
+      invalidatesTags: ["Requests"]
+    }),
+
     getRequest: builder.query<RequestReponse, string>({
       query: (id) => ({
         url: `request/${id}`,
@@ -103,6 +114,14 @@ export const requestApi = createApi({
         method: "POST",
       }),
       providesTags: ["Approved"],
+    }),
+
+    getFinishedRequests: builder.query<RequestStatsResponse[], void>({
+      query: () => ({
+        url: "request/finished",
+        method: "POST",
+      }),
+      providesTags: ["Requests"],
     }),
 
     getFileRequest: builder.query<{ blob: Blob, fileName: string }, { fileType: string, requestId: string, fileId: string }>({
@@ -149,10 +168,13 @@ export const {
   useRegisterRequestMutation,
   useGetMyRequestsQuery,
   useGetPendingRequestsQuery,
+  useGetFinishedRequestsQuery,
+  useLazyGetPendingRequestsQuery,
   useLazyGetFileRequestQuery,
   useGetRequestQuery,
   useApproveRequestMutation,
   useRejectRequestMutation,
+  useFinishRequestMutation,
   useAllRequestsQuery,
   useGetMyStatsQuery,
   useGetApprovedRequestsQuery,

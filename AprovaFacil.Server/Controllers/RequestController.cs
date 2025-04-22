@@ -166,6 +166,31 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
         return result.ToActionResult();
     }
 
+    [HttpPost("finished")]
+    [Authorize(Roles = $"{Roles.Finance}, {Roles.Director}, {Roles.Manager}")]
+    public async Task<IActionResult> ListFinishedRequest(CancellationToken cancellation = default)
+    {
+        FilterRequest request = new FilterRequest();
+
+        Int32? userId = User.FindUserIdentifier();
+        String? userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (userId is null)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Detail = "Are you logged in ?"
+            });
+        }
+
+        request.UserRole = userRole;
+        request.ApplicationUserId = userId;
+
+        Result<RequestDTO[]> result = await service.ListFinishedRequests(request, cancellation);
+
+        return result.ToActionResult();
+    }
+
     [HttpGet("file/{type}/{uuidRequest}/{uuidFile}")]
     public async Task<IActionResult> LoadFileRequest(String type, String uuidRequest, String uuidFile, CancellationToken cancellation = default)
     {
@@ -326,6 +351,7 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
     }
 
     [HttpPost("{uuidRequest}/approve")]
+    [Authorize(Roles = $"{Roles.Manager}, {Roles.Director}")]
     public async Task<IActionResult> ApproveRequest(String uuidRequest, CancellationToken cancellation = default)
     {
         // Receber o id da solicitação, id do usuario.
@@ -353,6 +379,7 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
     }
 
     [HttpPost("{uuidRequest}/reject")]
+    [Authorize(Roles = $"{Roles.Manager}, {Roles.Director}")]
     public async Task<IActionResult> RejectRequest(String uuidRequest, CancellationToken cancellation = default)
     {
         // Receber o id da solicitação, id do usuario.
@@ -375,6 +402,33 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
         }
 
         await service.RejectRequest(requestGuid, userId.Value, cancellation);
+
+        return NoContent();
+    }
+
+    [HttpPost("{uuidRequest}/finish")]
+    public async Task<IActionResult> FinishRequest(String uuidRequest, CancellationToken cancellation = default)
+    {
+        // Receber o id da solicitação, id do usuario.
+        Int32? userId = User.FindUserIdentifier();
+
+        if (userId is null)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Detail = "Are you logged in ?"
+            });
+        }
+
+        if (!Guid.TryParse(uuidRequest, out Guid requestGuid))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Detail = "UUID not valid."
+            });
+        }
+
+        await service.FinishRequest(requestGuid, userId.Value, cancellation);
 
         return NoContent();
     }
