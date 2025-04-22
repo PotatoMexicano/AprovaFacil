@@ -1,6 +1,6 @@
 "use client"
 
-import { Boxes, GalleryVerticalEndIcon, LucideCheckCheck, PackageIcon, PackagePlus, type LucideIcon } from "lucide-react"
+import { BanknoteIcon, Boxes, GalleryVerticalEndIcon, LucideCheckCheck, PackageIcon, PackagePlus, type LucideIcon } from "lucide-react"
 
 import {
   Collapsible,
@@ -13,8 +13,10 @@ import {
   SidebarMenuItem,
 } from "@/app/components/ui/sidebar"
 import { RootState, useAppSelector } from "@/app/store/store"
-import { useGetPendingRequestsQuery } from "@/app/api/requestApiSlice"
+import { useLazyGetPendingRequestsQuery } from "@/app/api/requestApiSlice"
 import { motion } from "framer-motion"
+import { useEffect } from "react"
+import { useIsAdmin } from "@/lib/utils"
 
 export interface subItems {
   title: string
@@ -29,8 +31,16 @@ export interface subItems {
 }
 
 export function NavRequests() {
+  const isAdmin = useIsAdmin();
+
   const { user } = useAppSelector((state: RootState) => state.auth);
-  const { data } = useGetPendingRequestsQuery();
+  const [trigger, { data }] = useLazyGetPendingRequestsQuery();
+
+  useEffect(() => {
+    if (isAdmin){
+      trigger(); // dispara a query somente uma vez ao montar
+    }
+  }, []);
 
   return (
     <>
@@ -63,7 +73,7 @@ export function NavRequests() {
         </SidebarMenu>
       </SidebarGroup>
 
-      {user && (user.role === "Manager" || user.role === "Director")
+      {user && isAdmin
         ? (
           <SidebarGroup>
             <SidebarGroupLabel>Administração</SidebarGroupLabel>
@@ -99,7 +109,7 @@ export function NavRequests() {
 
             </SidebarMenu>
           </SidebarGroup>
-        ) : null
+        ) : <></>
       }
 
       {user && (user.role === "Finance")
@@ -107,7 +117,7 @@ export function NavRequests() {
           <SidebarGroup>
             <SidebarGroupLabel>Financeiro</SidebarGroupLabel>
             <SidebarMenu>
-              <Collapsible asChild>
+              <Collapsible>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Solicitações aprovadas">
                     <a href="/request/approved">
@@ -116,6 +126,16 @@ export function NavRequests() {
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Solicitações faturadas">
+                    <a href="/request/finished">
+                      <BanknoteIcon />
+                      <span>Solicitações faturadas</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
               </Collapsible>
             </SidebarMenu>
           </SidebarGroup>

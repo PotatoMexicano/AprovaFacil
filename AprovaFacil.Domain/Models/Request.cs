@@ -6,6 +6,7 @@ public class Request
 
     public Int32 CompanyId { get; set; }
     public Int32 RequesterId { get; set; }
+    public Int32? FinisherId { get; set; }
 
     public Guid InvoiceName { get; set; }
     public Boolean HasInvoice { get; set; }
@@ -29,7 +30,10 @@ public class Request
     public String? Note { get; set; }
 
     public Company Company { get; set; } = null!;
+
     public IApplicationUser Requester { get; set; } = null!;
+    public IApplicationUser? Finisher { get; set; }
+
     public List<RequestManager> Managers { get; set; } = new();
     public List<RequestDirector> Directors { get; set; } = new();
 

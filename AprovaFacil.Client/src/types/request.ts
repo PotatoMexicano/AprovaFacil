@@ -22,6 +22,7 @@ export interface RequestReponse {
   note: string;
   company: CompanyResponse;
   requester: UserResponse;
+  finisher: UserResponse;
   managers: UserResponse[];
   directors: UserResponse[];
 }

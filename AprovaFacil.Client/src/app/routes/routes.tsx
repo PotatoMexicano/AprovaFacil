@@ -17,6 +17,7 @@ import ViewRequest from "../features/requests/view-request/Page";
 import ViewAllRequestsPage from "../features/requests/view-all-requests/Page";
 import FinanceRoute from "../components/finance-route";
 import ViewApprovedRequestsPage from "../features/requests/view-approved-requests/Page";
+import ViewFinishedRequestsPage from "../features/requests/view-finished-requests/Page";
 
 export const router = createBrowserRouter([
   { path: 'login', element: <LoginPage /> },
@@ -53,6 +54,7 @@ export const router = createBrowserRouter([
               {
                 element: <FinanceRoute />,
                 children: [
+                  { path: 'finished', element: <ViewFinishedRequestsPage /> },
                   { path: 'approved', element: <ViewApprovedRequestsPage /> },
                   { path: 'all', element: <ViewAllRequestsPage /> },
                 ]

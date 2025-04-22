@@ -95,6 +95,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasForeignKey(r => r.RequesterId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<Request>()
+            .HasOne(r => (ApplicationUser?)r.Finisher)
+            .WithMany(rs => rs.RequestsFinished)
+            .HasForeignKey(r => r.FinisherId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Configuração da tabela RequestGerentes
         builder.Entity<RequestManager>()
             .HasKey(rg => new { rg.RequestUUID, rg.ManagerId });

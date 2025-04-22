@@ -198,7 +198,9 @@ export function DataTable<TData extends RequestReponse>({ data, columnVisibility
               ? "outline"
               : "destructive"}>
             {row.original.approved === 1
+              ? row.original.level !== 3 
               ? "Aprovado"
+              : "Faturado"
               : row.original.approved === 0
                 ? "Pendente"
                 : "Recusado"}

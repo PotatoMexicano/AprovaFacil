@@ -13,6 +13,8 @@ public interface IApplicationUser
     String SecurityStamp { get; set; }
 
     public List<Request> Requests { get; set; }
+    public List<Request> RequestsFinished { get; set; }
+
     public List<RequestManager> RequestManagers { get; set; }
     public List<RequestDirector> RequestDirectors { get; set; }
 

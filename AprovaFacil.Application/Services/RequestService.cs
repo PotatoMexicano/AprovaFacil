@@ -68,6 +68,27 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
         }
     }
 
+    public async Task<Result> FinishRequest(Guid requestGuid, Int32 applicationUserId, CancellationToken cancellation)
+    {
+        try
+        {
+            Boolean result = await repository.FinishRequestAsync(requestGuid, applicationUserId, cancellation);
+
+            Request? request = await repository.ListRequestAsync(requestGuid, cancellation);
+
+            if (request is null) return Result.Failure("Não foi possível buscar a solicitação.");
+
+            await notification.NotifyUsers(new NotificationRequest(request.UUID, request.RequesterId), cancellation);
+
+            return result ? Result.Success() : Result.Failure("Não foi possível finalizar a solicitação.");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, ex.Message);
+            return Result.Failure("Não foi possível finalizar a solicitação.");
+        }
+    }
+
     public async Task<Result<RequestDTO[]>> ListRequests(FilterRequest filter, Int32 applicationUserId, CancellationToken cancellation)
     {
         try
@@ -377,6 +398,25 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
         {
             Log.Error(ex, ex.Message);
             return Result<RequestDTO[]>.Failure(ErrorType.InternalError, "Ocorreu um erro ao buscar solicitações aprovadas.");
+        }
+    }
+
+    public async Task<Result<RequestDTO[]>> ListFinishedRequests(FilterRequest filter, CancellationToken cancellation)
+    {
+        try
+        {
+            Request[] requests = await repository.ListFinishedRequestsAsync(filter, cancellation);
+
+            if (requests is null) return Result<RequestDTO[]>.Failure(ErrorType.NotFound, "Nenhuma solicitação finalizada encontrada.");
+
+            RequestDTO[] response = requests.Select<Request, RequestDTO>(x => x).ToArray();
+
+            return Result<RequestDTO[]>.Success(response);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, ex.Message);
+            return Result<RequestDTO[]>.Failure(ErrorType.InternalError, "Ocorreu um erro ao buscar solicitações finalizadas.");
         }
     }
 }
