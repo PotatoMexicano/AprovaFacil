@@ -58,7 +58,11 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
 
         // Configurar DbContext
-        services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite("Data Source=E:\\Desenvolvimento\\CSharp\\AprovaFacil\\AprovaFacil.Server\\mydb.db"));
+        services.AddDbContext<ApplicationDbContext>(options =>
+        {
+            options.UseSqlite("Data Source=E:\\Desenvolvimento\\CSharp\\AprovaFacil\\AprovaFacil.Server\\mydb.db",
+                opt => opt.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+        });
 
         // Configurar Identity com AddIdentityCore
         services.AddIdentity<ApplicationUser, IdentityRole<Int32>>(options =>

@@ -22,7 +22,7 @@ public class Program
         });
 
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Verbose()
+            .MinimumLevel.Warning()
             .Enrich.WithExceptionDetails()
             .WriteTo.Console()
             .CreateLogger();
