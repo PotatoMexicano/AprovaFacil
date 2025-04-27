@@ -1,15 +1,14 @@
 import * as React from "react"
 import {
-  LifeBuoy,
   PackageSearch,
   Building2,
   UsersIcon,
 } from "lucide-react"
 
-import { NavRequests } from "@/app/components/nav-requests"
-import { NavCompanies } from "@/app/components/nav-companies"
-import { NavSecondary } from "@/app/components/nav-secondary"
-import { NavAuthUser } from "@/app/components/nav-auth-user"
+import { NavRequests } from "@/app/components/sidebar/nav-requests"
+import { NavCompanies } from "@/app/components/sidebar/nav-companies"
+import { NavNotifications } from "@/app/components/sidebar/nav-notifications"
+import { NavAuthUser } from "@/app/components/sidebar/nav-auth-user"
 import {
   Sidebar,
   SidebarContent,
@@ -20,17 +19,10 @@ import {
   SidebarMenuItem,
 } from "@/app/components/ui/sidebar"
 import { NavUsers } from "./nav-users"
-import { useGetCurrentUserQuery } from "../api/authApiSlice"
-import { RootState, useAppSelector } from "../store/store"
+import { useGetCurrentUserQuery } from "@/app/api/authApiSlice"
+import { RootState, useAppSelector } from "@/app/store/store"
 
 const data = {
-  navSecondary: [
-    {
-      title: "Ajuda",
-      url: "#",
-      icon: LifeBuoy,
-    }
-  ],
   users: [
     {
       name: "Usuários",
@@ -78,7 +70,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavRequests />
         <NavCompanies projects={data.companies} />
         <NavUsers users={data.users} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavNotifications className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         {authData && (

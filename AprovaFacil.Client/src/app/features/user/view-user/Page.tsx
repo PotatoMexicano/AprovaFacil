@@ -38,7 +38,7 @@ export default function ViewUsersPage() {
       <Card className="col-span-12 flex flex-col shadow-none border-0">
         <CardHeader>
           <CardTitle className="text-2xl w-full flex justify-between">
-            Usuários cadastradas
+            Usuários cadastrados
 
             {isAdmin &&
               <Button asChild><a href="/users/register">Adicionar usuário</a></Button>

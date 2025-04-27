@@ -1,9 +1,10 @@
 ﻿using AprovaFacil.Domain.Constants;
 using AprovaFacil.Domain.DTOs;
-using AprovaFacil.Domain.Extensions;
 using AprovaFacil.Domain.Filters;
 using AprovaFacil.Domain.Interfaces;
+using AprovaFacil.Domain.Results;
 using AprovaFacil.Server.Contracts;
+using AprovaFacil.Server.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -13,23 +14,24 @@ namespace AprovaFacil.Server.Controllers;
 [Route("api/request")]
 [ApiController]
 [Authorize]
-public class RequestController(RequestInterfaces.IRequestService service, NotificationInterfaces.INotificationService notificationService) : ControllerBase
+public class RequestController(RequestInterfaces.IRequestService service) : ControllerBase
 {
     [HttpGet]
     [Authorize(Roles = $"{Roles.Manager}, {Roles.Director}")]
     public async Task<IActionResult> ListAllRequests(CancellationToken cancellation = default)
     {
-        RequestDTO[] requests = await service.ListAll(cancellation);
-        return Ok(requests);
+        Result<RequestDTO[]> requests = await service.ListAll(cancellation);
+        return requests.ToActionResult();
     }
 
     [HttpGet("{uuidRequest}")]
     public async Task<IActionResult> ListRequest(String uuidRequest, CancellationToken cancellation = default)
     {
-        String? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        Int32? userId = User.FindUserIdentifier();
         String? role = User.FindFirst(ClaimTypes.Role)?.Value;
 
         Boolean isAdmin = Roles.IsAdmin(role);
+        Boolean isFinance = Roles.IsFinance(role);
 
         if (!Guid.TryParse(uuidRequest, out Guid requestGuid))
         {
@@ -39,19 +41,24 @@ public class RequestController(RequestInterfaces.IRequestService service, Notifi
             });
         }
 
-        RequestDTO? result = await service.ListRequest(requestGuid, cancellation);
+        Result<RequestDTO>? result = await service.ListRequest(requestGuid, cancellation);
 
-        if (result is null)
+        if (result.IsFailure)
+        {
+            return result.ToActionResult();
+        }
+
+        if (result.Value is null)
         {
             return NotFound(new ProblemDetails
             {
-                Detail = "Request not found"
+                Detail = "Nenhuma solicitação encontrada."
             });
         }
 
-        Boolean isOwner = String.Equals(result.RequesterId.ToString(), userId, StringComparison.InvariantCultureIgnoreCase);
+        Boolean isOwner = result.Value.RequesterId == userId;
 
-        if (!isAdmin && !isOwner)
+        if (!isAdmin && !isOwner && !isFinance)
         {
             return Unauthorized(new ProblemDetails
             {
@@ -61,13 +68,13 @@ public class RequestController(RequestInterfaces.IRequestService service, Notifi
             });
         }
 
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpPost("myself")]
     public async Task<IActionResult> ListMyRequest([FromBody] FilterRequest request, CancellationToken cancellation = default)
     {
-        String? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        Int32? userId = User.FindUserIdentifier();
 
         if (userId is null)
         {
@@ -77,16 +84,16 @@ public class RequestController(RequestInterfaces.IRequestService service, Notifi
             });
         }
 
-        RequestDTO[] result = await service.ListRequests(request, userId, cancellation);
+        Result<RequestDTO[]> result = await service.ListRequests(request, userId.Value, cancellation);
 
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [Authorize]
     [HttpGet("myself/stats")]
     public async Task<IActionResult> MyStats(CancellationToken cancellation = default)
     {
-        String? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        Int32? userId = User.FindUserIdentifier();
 
         if (userId is null)
         {
@@ -96,26 +103,19 @@ public class RequestController(RequestInterfaces.IRequestService service, Notifi
             });
         }
 
-        Object result = await service.MyStats(userId, cancellation);
+        Result<Object> result = await service.MyStats(userId.Value, cancellation);
 
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpPost("pending")]
     [Authorize(Roles = $"{Roles.Manager}, {Roles.Director}")]
-    public async Task<IActionResult> ListPendingRequst([FromBody] FilterRequest request, CancellationToken cancellation = default)
+    public async Task<IActionResult> ListPendingRequst(CancellationToken cancellation = default)
     {
-        String? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        String? userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+        FilterRequest request = new FilterRequest();
 
-        if (userRole == Roles.Director)
-        {
-            request.UserRole = Roles.Director;
-        }
-        else if (userRole == Roles.Manager)
-        {
-            request.UserRole = Roles.Manager;
-        }
+        Int32? userId = User.FindUserIdentifier();
+        String? userRole = User.FindFirst(ClaimTypes.Role)?.Value;
 
         if (userId is null)
         {
@@ -125,17 +125,76 @@ public class RequestController(RequestInterfaces.IRequestService service, Notifi
             });
         }
 
-        RequestDTO[] result = await service.ListPendingRequests(request, cancellation);
+        if (userRole == Roles.Director)
+        {
+            request.UserRole = Roles.Director;
+            request.ApplicationUserId = userId;
+        }
+        else if (userRole == Roles.Manager)
+        {
+            request.UserRole = Roles.Manager;
+            request.ApplicationUserId = userId;
+        }
 
-        return Ok(result);
+        Result<RequestDTO[]> result = await service.ListPendingRequests(request, cancellation);
+
+        return result.ToActionResult();
+    }
+
+    [HttpPost("approved")]
+    [Authorize(Roles = $"{Roles.Finance}")]
+    public async Task<IActionResult> ListApprovedRequest(CancellationToken cancellation = default)
+    {
+        FilterRequest request = new FilterRequest();
+
+        Int32? userId = User.FindUserIdentifier();
+        String? userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (userId is null)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Detail = "Are you logged in ?"
+            });
+        }
+
+        request.UserRole = userRole;
+        request.ApplicationUserId = userId;
+
+        Result<RequestDTO[]> result = await service.ListApprovedRequests(request, cancellation);
+
+        return result.ToActionResult();
+    }
+
+    [HttpPost("finished")]
+    [Authorize(Roles = $"{Roles.Finance}, {Roles.Director}, {Roles.Manager}")]
+    public async Task<IActionResult> ListFinishedRequest(CancellationToken cancellation = default)
+    {
+        FilterRequest request = new FilterRequest();
+
+        Int32? userId = User.FindUserIdentifier();
+        String? userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (userId is null)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Detail = "Are you logged in ?"
+            });
+        }
+
+        request.UserRole = userRole;
+        request.ApplicationUserId = userId;
+
+        Result<RequestDTO[]> result = await service.ListFinishedRequests(request, cancellation);
+
+        return result.ToActionResult();
     }
 
     [HttpGet("file/{type}/{uuidRequest}/{uuidFile}")]
     public async Task<IActionResult> LoadFileRequest(String type, String uuidRequest, String uuidFile, CancellationToken cancellation = default)
     {
-        if (
-            !String.Equals(type, "invoice", StringComparison.InvariantCultureIgnoreCase) &&
-            !String.Equals(type, "budget", StringComparison.OrdinalIgnoreCase))
+        if (!String.Equals(type, "invoice", StringComparison.InvariantCultureIgnoreCase) && !String.Equals(type, "budget", StringComparison.OrdinalIgnoreCase))
         {
             return BadRequest(new ProblemDetails
             {
@@ -161,29 +220,32 @@ public class RequestController(RequestInterfaces.IRequestService service, Notifi
 
         cancellation.ThrowIfCancellationRequested();
 
-        Byte[] response = await service.LoadFileRequest(type, guidRequest, guidFile, cancellation);
+        Result<Byte[]> response = await service.LoadFileRequest(type, guidRequest, guidFile, cancellation);
 
-        if (response.Length > 0)
+        if (response.IsFailure)
         {
+            return response.ToActionResult();
+        }
 
+        if (response.Value is not null && response.Value.Length > 0)
+        {
             String fileName = guidFile + ".pdf";
 
             Response.Headers["Content-type"] = "application/pdf";
             Response.Headers["Content-Disposition"] = $"attachment; filename={fileName}";
 
-            return File(response, "application/pdf", fileName);
-
+            return File(response.Value, "application/pdf", fileName);
         }
 
         return NotFound(new ProblemDetails
         {
-            Detail = "File not found."
+            Detail = "Arquivo não encontrado."
         });
 
     }
 
     [HttpPost("register")]
-    public async Task<ActionResult<RequestDTO>> RegisterRequest([FromForm] HttpRegisterRequest request, CancellationToken cancellation = default)
+    public async Task<IActionResult> RegisterRequest([FromForm] HttpRegisterRequest request, CancellationToken cancellation = default)
     {
         if (request.Invoice != null)
         {
@@ -255,23 +317,24 @@ public class RequestController(RequestInterfaces.IRequestService service, Notifi
             }
         }
 
-        if (!Int32.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out Int32 idUserAuthenticated))
+        Int32? userId = User.FindUserIdentifier();
+
+        if (userId is null)
         {
-            return BadRequest(new ProblemDetails
+            return Unauthorized(new ProblemDetails
             {
-                Detail = "Are you logged ?",
-                Status = StatusCodes.Status400BadRequest
+                Detail = "Are you logged in ?"
             });
         }
 
-        RequestDTO result = await service.RegisterRequest(new RequestRegisterDTO
+        Result<RequestDTO> result = await service.RegisterRequest(new RequestRegisterDTO
         {
             Budget = budgetBytes ?? [],
             Invoice = invoiceBytes ?? [],
             Amount = request.Amount,
             CompanyId = request.CompanyId,
             Note = request.Note,
-            RequesterId = idUserAuthenticated,
+            RequesterId = userId.Value,
             DirectorsIds = request.DirectorsIds,
             ManagersId = request.ManagersId,
             PaymentDate = request.PaymentDate,
@@ -279,17 +342,20 @@ public class RequestController(RequestInterfaces.IRequestService service, Notifi
             BudgetFileName = request.Budget?.FileName
         }, cancellation);
 
-        NotificationRequestDTO notification = result.ToNotificationDTO();
-        await notificationService.NotifyRegisterAsync(notification, cancellation);
+        if (result.IsFailure)
+        {
+            return result.ToActionResult();
+        }
 
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpPost("{uuidRequest}/approve")]
+    [Authorize(Roles = $"{Roles.Manager}, {Roles.Director}")]
     public async Task<IActionResult> ApproveRequest(String uuidRequest, CancellationToken cancellation = default)
     {
         // Receber o id da solicitação, id do usuario.
-        String? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        Int32? userId = User.FindUserIdentifier();
 
         if (userId is null)
         {
@@ -307,18 +373,17 @@ public class RequestController(RequestInterfaces.IRequestService service, Notifi
             });
         }
 
-        await service.ApproveRequest(requestGuid, userId, cancellation);
+        await service.ApproveRequest(requestGuid, userId.Value, cancellation);
 
-        await notificationService.NotifyBroadcast(cancellation);
-
-        return Ok();
+        return NoContent();
     }
 
     [HttpPost("{uuidRequest}/reject")]
+    [Authorize(Roles = $"{Roles.Manager}, {Roles.Director}")]
     public async Task<IActionResult> RejectRequest(String uuidRequest, CancellationToken cancellation = default)
     {
         // Receber o id da solicitação, id do usuario.
-        String? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        Int32? userId = User.FindUserIdentifier();
 
         if (userId is null)
         {
@@ -336,10 +401,35 @@ public class RequestController(RequestInterfaces.IRequestService service, Notifi
             });
         }
 
-        await service.RejectRequest(requestGuid, userId, cancellation);
+        await service.RejectRequest(requestGuid, userId.Value, cancellation);
 
-        await notificationService.NotifyBroadcast(cancellation);
+        return NoContent();
+    }
 
-        return Ok();
+    [HttpPost("{uuidRequest}/finish")]
+    public async Task<IActionResult> FinishRequest(String uuidRequest, CancellationToken cancellation = default)
+    {
+        // Receber o id da solicitação, id do usuario.
+        Int32? userId = User.FindUserIdentifier();
+
+        if (userId is null)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Detail = "Are you logged in ?"
+            });
+        }
+
+        if (!Guid.TryParse(uuidRequest, out Guid requestGuid))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Detail = "UUID not valid."
+            });
+        }
+
+        await service.FinishRequest(requestGuid, userId.Value, cancellation);
+
+        return NoContent();
     }
 }

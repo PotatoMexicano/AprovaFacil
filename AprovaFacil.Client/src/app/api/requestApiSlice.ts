@@ -5,7 +5,7 @@ import { RequestReponse, RequestStatsResponse } from "@/types/request";
 export const requestApi = createApi({
   reducerPath: "requestApi",
   baseQuery: customBaseQuery(),
-  tagTypes: ["Requests", "Stats"],
+  tagTypes: ["Requests", "Approved"], 
   endpoints: (builder) => ({
     registerRequest: builder.mutation({
       query: (requestData) => {
@@ -62,6 +62,17 @@ export const requestApi = createApi({
       invalidatesTags: ["Requests"]
     }),
 
+    finishRequest: builder.mutation({
+      query: (id) => {
+        return {
+          url: `request/${id}/finish`,
+          method: `POST`,
+          priority: `high`
+        }
+      },
+      invalidatesTags: ["Requests"]
+    }),
+
     getRequest: builder.query<RequestReponse, string>({
       query: (id) => ({
         url: `request/${id}`,
@@ -86,7 +97,6 @@ export const requestApi = createApi({
         url: "request/myself/stats",
         method: 'GET',
       }),
-      providesTags: ["Stats"]
     }),
 
     getPendingRequests: builder.query<RequestReponse[], void>({
@@ -96,6 +106,22 @@ export const requestApi = createApi({
         body: {}
       }),
       providesTags: ["Requests"]
+    }),
+
+    getApprovedRequests: builder.query<RequestReponse[], void>({
+      query: () => ({
+        url: "request/approved",
+        method: "POST",
+      }),
+      providesTags: ["Approved"],
+    }),
+
+    getFinishedRequests: builder.query<RequestStatsResponse[], void>({
+      query: () => ({
+        url: "request/finished",
+        method: "POST",
+      }),
+      providesTags: ["Requests"],
     }),
 
     getFileRequest: builder.query<{ blob: Blob, fileName: string }, { fileType: string, requestId: string, fileId: string }>({
@@ -142,10 +168,14 @@ export const {
   useRegisterRequestMutation,
   useGetMyRequestsQuery,
   useGetPendingRequestsQuery,
+  useGetFinishedRequestsQuery,
+  useLazyGetPendingRequestsQuery,
   useLazyGetFileRequestQuery,
   useGetRequestQuery,
   useApproveRequestMutation,
   useRejectRequestMutation,
+  useFinishRequestMutation,
   useAllRequestsQuery,
-  useGetMyStatsQuery
+  useGetMyStatsQuery,
+  useGetApprovedRequestsQuery,
 } = requestApi;

@@ -2,82 +2,125 @@
 using AprovaFacil.Domain.Extensions;
 using AprovaFacil.Domain.Interfaces;
 using AprovaFacil.Domain.Models;
+using AprovaFacil.Domain.Results;
 using Serilog;
 
 namespace AprovaFacil.Application.Services;
 
-public class CompanyService : CompanyInterfaces.ICompanyService
+public class CompanyService(CompanyInterfaces.ICompanyRepository repository) : CompanyInterfaces.ICompanyService
 {
-    private readonly CompanyInterfaces.ICompanyRepository _repository;
-    private readonly ILogger _logger;
-
-    public CompanyService(CompanyInterfaces.ICompanyRepository repository, ILogger logger)
+    public async Task<Result> DeleteCompany(Int32 id, CancellationToken cancellation)
     {
-        this._repository = repository;
-        this._logger = logger;
+        try
+        {
+            Company? company = await repository.GetCompanyAsync(id, cancellation);
 
+            if (company is null) return Result.Failure("Não foi possível deletar a empresa.");
+
+            company.Enabled = false;
+
+            await repository.DeleteCompanyAsync(company, cancellation);
+
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, ex.Message);
+            return Result.Failure("Ocorreu um erro ao deletar a empresa.");
+        }
     }
 
-    public async Task DeleteCompany(Int32 id, CancellationToken cancellation)
+    public async Task<Result<CompanyDTO[]>> GetAllCompanies(CancellationToken cancellation)
     {
-        Company? company = await _repository.GetCompanyAsync(id, cancellation);
+        try
+        {
+            Company[] companies = await repository.GetAllCompaniesAsync(cancellation);
 
-        if (company is null) return;
+            if (companies is null) return Result<CompanyDTO[]>.Failure(ErrorType.NotFound, "Nenhuma empresa encontrada.");
 
-        company.Enabled = false;
+            CompanyDTO[] result = companies.Select<Company, CompanyDTO>(x => x).ToArray();
 
-        await _repository.DeleteCompanyAsync(company, cancellation);
-
-        _logger.Information("Company {Id} deleted", id);
-
-        return;
+            return Result<CompanyDTO[]>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, ex.Message);
+            return Result<CompanyDTO[]>.Failure(ErrorType.InternalError, "Ocorreu um erro ao buscar empresas.");
+        }
     }
 
-    public async Task<CompanyDTO[]> GetAllCompanies(CancellationToken cancellation)
+    public async Task<Result<CompanyDTO>> GetCompany(Int64 idCompany, CancellationToken cancellation)
     {
-        Company[] companies = await _repository.GetAllCompaniesAsync(cancellation);
-        CompanyDTO[] dtos = [.. companies.Select(CompanyExtensions.ToDTO)];
-        return dtos;
+        try
+        {
+            Company? company = await repository.GetCompanyAsync(idCompany, cancellation);
+
+            if (company is null) return Result<CompanyDTO>.Failure(ErrorType.NotFound, "Nenhuma empresa encontrada.");
+
+            CompanyDTO? result = company;
+
+            if (result is null) return Result<CompanyDTO>.Failure(ErrorType.Validation, "Falha ao validar empresa.");
+
+            return Result<CompanyDTO>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, ex.Message);
+            return Result<CompanyDTO>.Failure(ErrorType.InternalError, "Ocorreu um erro ao buscar empresa.");
+        }
     }
 
-    public async Task<CompanyDTO?> GetCompany(Int64 idCompany, CancellationToken cancellation)
+    public async Task<Result<CompanyDTO>> RegisterCompany(CompanyDTO request, CancellationToken cancellation)
     {
-        Company? company = await _repository.GetCompanyAsync(idCompany, cancellation);
-        CompanyDTO? dto = company?.ToDTO();
-        return dto;
+        try
+        {
+            Company? company = request;
+
+            if (company is null) return Result<CompanyDTO>.Failure(ErrorType.Validation, "Falha ao validar requisição.");
+
+            Company? registeredCompany = await repository.RegisterCompanyAsync(company, cancellation);
+
+            if (registeredCompany is null) return Result<CompanyDTO>.Failure(ErrorType.NotFound, "Não foi possível registrar a empresa.");
+
+            CompanyDTO? result = registeredCompany;
+
+            if (result is null) return Result<CompanyDTO>.Failure(ErrorType.Validation, "Falha ao validar empresa.");
+
+            return Result<CompanyDTO>.Success(result);
+
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, ex.Message);
+            return Result<CompanyDTO>.Failure(ErrorType.InternalError, "Ocorreu um erro ao registrar empresa.");
+        }
     }
 
-    public async Task<CompanyDTO?> RegisterCompany(CompanyDTO request, CancellationToken cancellation)
+    public async Task<Result<CompanyDTO>> UpdateCompany(CompanyDTO request, CancellationToken cancellation)
     {
-        Company company = request.ToEntity();
+        try
+        {
+            Company? companyEntity = await repository.GetCompanyAsync(request.Id, cancellation);
 
-        Company? registeredCompany = await _repository.RegisterCompanyAsync(company, cancellation);
+            if (companyEntity is null) return Result<CompanyDTO>.Failure(ErrorType.NotFound, "Nenhuma empresa encontrada.");
 
-        if (registeredCompany is null) return null;
+            companyEntity = request.UpdateEntity(companyEntity);
 
-        _logger.Information("Company {Id} registered", registeredCompany.Id);
+            Company? updatedCompany = await repository.UpdateCompanyAsync(companyEntity, cancellation);
 
-        CompanyDTO dto = registeredCompany.ToDTO();
+            if (updatedCompany is null) return Result<CompanyDTO>.Failure(ErrorType.NotFound, "Não foi possível atualizar a empresa.");
 
-        return dto;
-    }
+            CompanyDTO? result = updatedCompany;
 
-    public async Task<CompanyDTO?> UpdateCompany(CompanyDTO request, CancellationToken cancellation)
-    {
-        Company? companyEntity = await _repository.GetCompanyAsync(request.Id, cancellation);
+            if (result is null) return Result<CompanyDTO>.Failure(ErrorType.Validation, "Falha ao validar empresa.");
 
-        if (companyEntity is null) return null;
+            return Result<CompanyDTO>.Success(result);
 
-        companyEntity = request.UpdateEntity(companyEntity);
-
-        Company? updatedCompany = await _repository.UpdateCompanyAsync(companyEntity, cancellation);
-
-        if (updatedCompany is null) return null;
-
-        _logger.Information("Company {Id} updated", updatedCompany.Id);
-
-        CompanyDTO dto = updatedCompany.ToDTO();
-
-        return dto;
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, ex.Message);
+            return Result<CompanyDTO>.Failure(ErrorType.InternalError, "Ocorreu um erro ao atualizar a empresa.");
+        }
     }
 }

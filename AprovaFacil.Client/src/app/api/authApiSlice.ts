@@ -24,8 +24,13 @@ export const authApi = createApi({
         url: `auth/me`,
         method: 'GET'
       }),
-    }),
+    })
   }),
 });
 
-export const { useLoginMutation, useLogoutMutation, useGetCurrentUserQuery, useLazyGetCurrentUserQuery } = authApi;
+export const {
+  useLoginMutation,
+  useLogoutMutation,
+  useGetCurrentUserQuery,
+  useLazyGetCurrentUserQuery
+} = authApi;

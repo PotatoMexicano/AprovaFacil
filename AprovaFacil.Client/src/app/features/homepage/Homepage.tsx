@@ -15,7 +15,7 @@ import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTool
 export default function Homepage() {
   const { setBreadcrumbs } = useBreadcrumb();
   const { user } = useAppSelector((state: RootState) => state.auth);
-  const { data: MyRecentsRequests, isLoading } = useGetMyRequestsQuery(5);
+  const { data: MyRecentsRequests } = useGetMyRequestsQuery(5);
   const { data: MyStats } = useGetMyStatsQuery();
 
   const chartConfig = {
@@ -33,7 +33,6 @@ export default function Homepage() {
     },
   } satisfies ChartConfig;
 
-
   const chartData = [
     { status: "approved", value: MyStats?.total_request_approved, fill: "hsl(var(--chart-1))" },
     { status: "rejected", value: MyStats?.total_request_rejected, fill: "hsl(var(--chart-2))" },
@@ -47,7 +46,7 @@ export default function Homepage() {
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      <div className="w-full px-10 py-5 text-3xl font-semibold text-primary">
+      <div className="w-full px-10 py-5 text-3xl font-semibold text-foreground/90">
         Olá, {user?.full_name}! Que bom ter você por aqui. 🎉
       </div>
 
@@ -58,12 +57,12 @@ export default function Homepage() {
           <Card>
             <CardHeader>
               <div className="flex items-center space-x-4">
-                <FileText className="h-6 w-6 text-primary" />
+                <FileText className="h-6 w-6 text-foreground/90" />
                 <div className="w-full flex justify-between">
-                  <CardTitle className="text-xl font-medium text-primary">
+                  <CardTitle className="text-xl font-medium text-foreground/90">
                     Total de Solicitações
                   </CardTitle>
-                  <div className="text-2xl font-medium text-primary">
+                  <div className="text-2xl font-medium text-foreground/90">
                     {MyStats?.total_requests}
                   </div>
                 </div>
@@ -77,12 +76,12 @@ export default function Homepage() {
           <Card>
             <CardHeader>
               <div className="flex items-center space-x-4">
-                <ClockAlertIcon className="h-6 w-6 text-primary" />
+                <ClockAlertIcon className="h-6 w-6 text-foreground/90" />
                 <div className="w-full flex justify-between">
-                  <CardTitle className="text-xl font-medium text-primary">
+                  <CardTitle className="text-xl font-medium text-foreground/90">
                     Total de solicitações pendentes
                   </CardTitle>
-                  <div className="text-2xl font-medium text-primary">
+                  <div className="text-2xl font-medium text-foreground/90">
                     {MyStats?.total_request_pending}
                   </div>
                 </div>
@@ -96,12 +95,12 @@ export default function Homepage() {
           <Card>
             <CardHeader>
               <div className="flex items-center space-x-4">
-                <LucideDollarSign className="h-6 w-6 text-primary" />
+                <LucideDollarSign className="h-6 w-6 text-foreground/90" />
                 <div className="w-full flex justify-between">
-                  <CardTitle className="text-xl font-medium text-primary">
+                  <CardTitle className="text-xl font-medium text-foreground/90">
                     Total movimentado
                   </CardTitle>
-                  <div className="text-2xl font-medium text-primary">
+                  <div className="text-2xl font-medium text-foreground/90">
                     {formatCurrency((MyStats?.total_amount_requests_approved ?? 0) / 100)}
                   </div>
                 </div>
@@ -113,81 +112,75 @@ export default function Homepage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
         {/* Pie Chart - Proporção */}
-        {MyStats?.total_request_approved === 0 && MyStats?.total_request_rejected === 0 ?
-          (<></>)
-          : (
-            <Card>
-              <CardHeader>
-                <CardTitle>Proporção de solicitações</CardTitle>
-                <CardDescription>
-                  Proporção de solicitações aprovadas para recusadas
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 pb-0">
-                <ChartContainer
-                  config={chartConfig}
-                  className="mx-auto aspect-square max-h-[300px]"
-                >
-                  <PieChart>
-                    <ChartTooltip
-                      cursor={false}
-                      content={<ChartTooltipContent hideLabel />}
-                    />
-                    <Pie data={chartData} dataKey="value" nameKey="status" />
-                    <ChartLegend
-                      content={<ChartLegendContent nameKey="status" />}
-                      className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
-                    />
-                  </PieChart>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-          )}
+        <Card>
+          <CardHeader>
+            <CardTitle>Proporção de solicitações</CardTitle>
+            <CardDescription>
+              Proporção de solicitações aprovadas para recusadas
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 pb-0">
+            <ChartContainer
+              config={chartConfig}
+              className="mx-auto aspect-square max-h-[300px]"
+            >
+              <PieChart>
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent hideLabel />}
+                />
+                <Pie data={chartData} dataKey="value" nameKey="status" />
+                <ChartLegend
+                  content={<ChartLegendContent nameKey="status" />}
+                  className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
+                />
+              </PieChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
 
         {/* Line Chart - Status mensal */}
-        {MyStats?.total_request_approved === 0 && MyStats?.total_request_rejected === 0 ?
-          (<></>)
-          : (
-            <Card>
-              <CardHeader>
-                <CardTitle>Status das Solicitações</CardTitle>
-                <CardDescription>Últimos 12 meses</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ChartContainer config={chartConfig}>
-                  <LineChart
-                    accessibilityLayer
-                    data={lineChartData}
-                    margin={{ left: 12, right: 12 }}
-                  >
-                    <CartesianGrid vertical={false} />
-                    <XAxis
-                      dataKey="month"
-                      tickLine={false}
-                      axisLine={false}
-                      tickMargin={8}
-                    />
-                    <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                    <Line
-                      dataKey="approved"
-                      type="monotone"
-                      stroke={chartConfig.approved.color}
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                    <Line
-                      dataKey="rejected"
-                      type="monotone"
-                      stroke={chartConfig.rejected.color}
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                  </LineChart>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-          )}
+        <Card>
+          <CardHeader>
+            <CardTitle>Status das Solicitações</CardTitle>
+            <CardDescription>Últimos 12 meses</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig}>
+              <LineChart
+                accessibilityLayer
+                data={lineChartData}
+                margin={{ left: 12, right: 12 }}
+              >
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="month"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                <Line
+                  dataKey="approved"
+                  type="monotone"
+                  stroke={chartConfig.approved.color}
+                  strokeWidth={2}
+                  dot={false}
+                />
+                <Line
+                  dataKey="rejected"
+                  type="monotone"
+                  stroke={chartConfig.rejected.color}
+                  strokeWidth={2}
+                  dot={false}
+                />
+              </LineChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
       </div>
 
       {/* Recent Requests */}
@@ -197,7 +190,7 @@ export default function Homepage() {
             <CardTitle>Últimas Solicitações</CardTitle>
             <Link
               to="/request"
-              className="flex items-center text-sm font-medium text-blue-600 hover:text-blue-700"
+              className="flex items-center text-sm font-medium text-primary hover:text-primary"
             >
               Ver todas
               <ArrowRight className="ml-1 h-4 w-4" />
@@ -213,8 +206,8 @@ export default function Homepage() {
                         <div className="flex items-center">
                           <PackageIcon />
                           <div className="ml-4">
-                            <p className="text-sm text-primary">{request.company.trade_name} - {formatCurrency(request.amount / 100)}</p>
-                            <p className="text-sm text-primary/60">
+                            <p className="text-sm text-foreground/90">{request.company.trade_name} - {formatCurrency(request.amount / 100)}</p>
+                            <p className="text-sm text-foreground/90/60">
                               Criado em {new Date(request.create_at).toLocaleDateString('pt-BR')}
                             </p>
                           </div>
@@ -241,6 +234,7 @@ export default function Homepage() {
           </CardContent>
         </Card>
       </div>
+
     </div >
   )
 }

@@ -14,6 +14,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<RequestManager> RequestManagers { get; set; }
     public DbSet<RequestDirector> RequestDirectors { get; set; }
 
+    public DbSet<Notification> Notifications { get; set; }
+
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
     }
@@ -26,6 +28,20 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<ApplicationUser>(entity =>
         {
             entity.HasKey(e => e.Id);
+        });
+
+        builder.Entity<ApplicationUser>(entity =>
+        {
+            entity.HasMany(x => x.Notifications)
+            .WithOne(x => (ApplicationUser)x.ApplicationUser)
+            .HasPrincipalKey(x => x.Id)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<Notification>(entity =>
+        {
+            entity.HasKey(x => x.UUID);
         });
 
         builder.Entity<IdentityRole<Int32>>(entity =>
@@ -59,6 +75,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         });
 
         builder.Entity<Request>()
+            .HasMany(x => x.Notifications).WithOne()
+            .HasForeignKey(x => x.RequestUUID)
+            .HasPrincipalKey(x => x.UUID)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Request>()
             .HasKey(r => r.UUID);
 
         builder.Entity<Request>()
@@ -71,6 +93,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasOne(r => (ApplicationUser)r.Requester)
             .WithMany(rs => rs.Requests)
             .HasForeignKey(r => r.RequesterId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Request>()
+            .HasOne(r => (ApplicationUser?)r.Finisher)
+            .WithMany(rs => rs.RequestsFinished)
+            .HasForeignKey(r => r.FinisherId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Configuração da tabela RequestGerentes

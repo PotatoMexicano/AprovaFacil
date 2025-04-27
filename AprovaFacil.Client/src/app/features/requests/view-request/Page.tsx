@@ -1,4 +1,4 @@
-import { useApproveRequestMutation, useGetRequestQuery, useLazyGetFileRequestQuery, useRejectRequestMutation } from "@/app/api/requestApiSlice";
+import { useApproveRequestMutation, useFinishRequestMutation, useGetRequestQuery, useLazyGetFileRequestQuery, useRejectRequestMutation } from "@/app/api/requestApiSlice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
 import { useNavigate, useParams } from "react-router-dom";
@@ -16,7 +16,7 @@ import {
   UserCog,
   XCircle,
 } from 'lucide-react';
-import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import { cn, formatCurrency, formatDate, useIsFinance } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/ui/tooltip";
 import { UserResponse } from "@/types/auth";
@@ -27,7 +27,10 @@ import { RootState, useAppSelector } from "@/app/store/store";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/app/components/ui/alert";
 
-function UserCard({ user }: { user: UserResponse | undefined }) {
+function UserCard({ user, status }: { user: UserResponse | undefined, status?: number | undefined }) {
+
+  if (!status)
+    status = user.request_approved;
 
   if (!user)
     return null;
@@ -60,13 +63,13 @@ function UserCard({ user }: { user: UserResponse | undefined }) {
                 : "text-gray-400"
           )}
         >
-          {user.request_approved === 1 && (
+          {status === 1 && (
             <span className="text-2xl">✔</span> // Ícone de aprovado (check)
           )}
-          {user.request_approved === -1 && (
+          {status === -1 && (
             <span className="text-2xl">✖</span> // Ícone de recusado (X)
           )}
-          {user.request_approved === 0 && (
+          {status === 0 && (
             <span className="text-2xl">⏳</span> // Ícone de pendente (relógio)
           )}
         </div>
@@ -87,10 +90,13 @@ export default function ViewRequest() {
   const { setBreadcrumbs } = useBreadcrumb();
   const navigate = useNavigate();
 
+  const isFinance = useIsFinance();
+
   const toastId = "unauthorized-error";
 
   const [approveRequest] = useApproveRequestMutation();
   const [rejectRequest] = useRejectRequestMutation();
+  const [finishRequest] = useFinishRequestMutation();
 
   useEffect(() => {
     setBreadcrumbs(["Início", "Solicitação", "Detalhes"]);
@@ -145,6 +151,16 @@ export default function ViewRequest() {
       console.error(err)
     }
   };
+  const handleFinish = async () => {
+    try {
+      await finishRequest(id as string).unwrap();
+      refetch();
+    }
+    catch (err) {
+      toast.error("Falha ao finalizar a solicitação.");
+      console.error(err);
+    }
+  };
 
   const managerInRequest = data?.managers.find((manager) => manager.id === user?.id);
   const isManager = user?.role === "Manager" && managerInRequest !== undefined;
@@ -163,11 +179,11 @@ export default function ViewRequest() {
       return () => clearTimeout(timer);
     }
   }, [isError, error, isLoading, navigate, isAuthenticated]);
-  
+
   if (isLoading) {
     return <div>Carregando...</div>
   }
-  
+
   if (isError && error) {
     return <>
       <Alert variant={"destructive"}>
@@ -177,7 +193,6 @@ export default function ViewRequest() {
       </Alert>
     </>
   }
-
 
   return (
     <div className="flex bg-background py-8">
@@ -263,7 +278,10 @@ export default function ViewRequest() {
               {data?.approved !== 0 && (
                 <div className={`p-3 mb-4 text-center rounded-lg ${data?.approved === 1 ? 'bg-green-100' : 'bg-red-100'}`}>
                   <p className={`text-lg font-semibold ${data?.approved === 1 ? 'text-green-800' : 'text-red-800'}`}>
-                    {data?.approved === 1 ? 'Aprovado' : 'Recusado'}
+                    {data?.approved === 1
+                      ? data?.approved === 1 && data.level === 3 ? 'Faturado'
+                        : 'Aprovado'
+                      : 'Recusado'}
                   </p>
                 </div>
               )}
@@ -316,14 +334,14 @@ export default function ViewRequest() {
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={handleReject}
-                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-red-600 border border-red-600 hover:bg-red-50 transition-colors"
+                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-red-600 border border-red-600 hover:bg-red-50 dark:hover:bg-red-800/30 transition-colors"
                   >
                     <XCircle className="w-4 h-4" />
                     Recusar
                   </button>
                   <button
                     onClick={handleApprove}
-                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-green-600 border border-green-600 hover:bg-green-50 transition-colors"
+                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-green-600 border border-green-600 hover:bg-green-50 dark:hover:bg-green-800/30 transition-colors"
                   >
                     <CheckCircle className="w-4 h-4" />
                     Aprovar
@@ -331,18 +349,18 @@ export default function ViewRequest() {
                 </div>
               )}
 
-              {isDirector && directorInRequest && directorInRequest.request_approved === 0 && (
+              {isDirector && directorInRequest && directorInRequest.request_approved === 0 && data.level === 1 && (
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={handleReject}
-                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-red-600 border border-red-600 hover:bg-red-50 transition-colors"
+                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-red-600 border border-red-600 hover:bg-red-50 dark:hover:bg-red-800/30 transition-colors"
                   >
                     <XCircle className="w-4 h-4" />
                     Recusar
                   </button>
                   <button
                     onClick={handleApprove}
-                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-green-600 border border-green-600 hover:bg-green-50 transition-colors"
+                    className="flex-1 px-3 py-1.5 rounded text-sm flex items-center justify-center gap-1 text-green-600 border border-green-600 hover:bg-green-50 dark:hover:bg-green-800/30 transition-colors"
                   >
                     <CheckCircle className="w-4 h-4" />
                     Aprovar
@@ -381,7 +399,7 @@ export default function ViewRequest() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Faturado</span>
                 {data && data.approved === 1 && (
-                  <span className="text-sm font-medium">{data?.received_at ? formatDate(data.received_at) : ""}</span>
+                  <span className="text-sm font-normal">{data?.received_at ? formatDate(data.received_at) : ""}</span>
                 )}
               </div>
 
@@ -432,7 +450,7 @@ export default function ViewRequest() {
         </Card>
 
         {/* People Section */}
-        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className={cn("mt-6 grid grid-cols-1 gap-6", data.level === 3 ? "md:grid-cols-4" : "md:grid-cols-3")}>
           {/* Requester Card */}
           <Card>
             <CardHeader>
@@ -442,7 +460,7 @@ export default function ViewRequest() {
               </div>
             </CardHeader>
             <CardContent>
-              <UserCard user={data?.requester} />
+              <UserCard user={data?.requester} status={1} />
             </CardContent>
           </Card>
 
@@ -477,6 +495,21 @@ export default function ViewRequest() {
               </CardContent>
             </Card>
           )}
+
+          {/* Finance Card */}
+          {data && data.level === 3 && data.approved === 1 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Financeiro</CardTitle>
+                  <UserCog className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <UserCard user={data?.finisher} status={1} />
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Notes */}
@@ -490,6 +523,22 @@ export default function ViewRequest() {
             </CardContent>
           </Card>
         )}
+
+        {/* Finance */}
+        {data.approved === 1 && data.level === 2 && isFinance && (
+          <Card className="mt-6 bg-green-100/40 dark:bg-success/20">
+            <CardHeader>
+              <CardTitle>Finalizar solicitação</CardTitle>
+              <p className="text-sm text-muted-foreground">Finalize essa solicitação assim que estiver sido lançada no sistema financeiro.</p>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => handleFinish()}>
+                Marcar como finalizado
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
       </div>
     </div>
   );

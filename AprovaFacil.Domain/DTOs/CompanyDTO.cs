@@ -1,4 +1,6 @@
-﻿namespace AprovaFacil.Domain.DTOs;
+﻿using AprovaFacil.Domain.Models;
+
+namespace AprovaFacil.Domain.DTOs;
 
 public class CompanyDTO
 {
@@ -17,5 +19,51 @@ public class CompanyDTO
 
     public String Phone { get; set; }
     public String Email { get; set; }
+
+    public static implicit operator CompanyDTO?(Company? company)
+    {
+        if (company is null) return null;
+
+        return new CompanyDTO
+        {
+            Id = company.Id,
+            TradeName = company.TradeName,
+            City = company.Address.City,
+            PostalCode = company.Address.PostalCode,
+            State = company.Address.State,
+            Street = company.Address.Street,
+            Complement = company.Address.Complement,
+            Neighborhood = company.Address.Neighborhood,
+            Number = company.Address.Number,
+            Phone = company.Phone,
+            Email = company.Email,
+            LegalName = company.LegalName,
+            CNPJ = company.CNPJ,
+        };
+    }
+
+    public static implicit operator Company?(CompanyDTO? company)
+    {
+        if (company is null) return null;
+
+        return new Company
+        {
+            TradeName = company.TradeName,
+            CNPJ = company.CNPJ,
+            Email = company.Email,
+            Phone = company.Phone,
+            LegalName = company.LegalName,
+            Address = new Address
+            {
+                City = company.City,
+                Complement = company.Complement,
+                Neighborhood = company.Neighborhood,
+                Number = company.Number,
+                PostalCode = company.PostalCode,
+                State = company.State,
+                Street = company.Street
+            }
+        };
+    }
 }
 
