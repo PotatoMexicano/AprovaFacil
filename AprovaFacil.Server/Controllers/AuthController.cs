@@ -1,5 +1,4 @@
-﻿using AprovaFacil.Application.Services;
-using AprovaFacil.Domain.DTOs;
+﻿using AprovaFacil.Domain.DTOs;
 using AprovaFacil.Domain.Extensions;
 using AprovaFacil.Infra.Data.Identity;
 using AprovaFacil.Server.Contracts;
@@ -15,13 +14,11 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly JwtService _jwtService;
 
-    public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, JwtService jwtService)
+    public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
     {
         _userManager = userManager;
         _signInManager = signInManager;
-        _jwtService = jwtService;
     }
 
     [HttpPost("login")]
@@ -40,11 +37,9 @@ public class AuthController : ControllerBase
             IList<String> roles = await _userManager.GetRolesAsync(user);
             IList<System.Security.Claims.Claim> claims = await _userManager.GetClaimsAsync(user);
 
-            String token = _jwtService.GenerateJwtToken(user, roles);
-
             UserDTO userDTO = user.ToDTO(roles);
 
-            return Ok(new { Token = token, User = userDTO });
+            return Ok(new { User = userDTO });
         }
 
         if (result.IsLockedOut)

@@ -42,11 +42,11 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const { data: authData } = useGetCurrentUserQuery();
-  const { isAuthenticated } = useAppSelector((state: RootState) => state.auth);
-
-  if (!isAuthenticated) {
+    
+  if (!authData) {
     return <div></div>
   }
+
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>

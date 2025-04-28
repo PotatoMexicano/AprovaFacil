@@ -12,8 +12,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using static AprovaFacil.Domain.Interfaces.NotificationInterfaces;
 
 namespace AprovaFacil.Infra.IoC;
@@ -36,11 +34,12 @@ public static class DependencyInjection
 
     internal static IServiceCollection AddServices(this IServiceCollection services)
     {
-        services.AddSingleton<JwtService>();
         services.AddScoped<CompanyInterfaces.ICompanyService, CompanyService>();
         services.AddScoped<UserInterfaces.IUserService, UserService>();
         services.AddScoped<RequestInterfaces.IRequestService, RequestService>();
+
         services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
 
         return services;
     }
@@ -60,7 +59,7 @@ public static class DependencyInjection
         // Configurar DbContext
         services.AddDbContext<ApplicationDbContext>(options =>
         {
-            options.UseSqlite("Data Source=E:\\Desenvolvimento\\CSharp\\AprovaFacil\\AprovaFacil.Server\\mydb.db",
+            options.UseSqlite("Data Source=./mydb.db",
                 opt => opt.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
         });
 
@@ -75,8 +74,6 @@ public static class DependencyInjection
         }).AddEntityFrameworkStores<ApplicationDbContext>()
         .AddDefaultTokenProviders()
         .AddSignInManager<SignInManager<ApplicationUser>>();
-
-        SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<String>("Jwt:Key")));
 
         services.ConfigureApplicationCookie(o =>
         {
@@ -128,6 +125,9 @@ public static class DependencyInjection
     {
         using IServiceScope scope = serviceProvider.CreateScope();
         ApplicationDbContext context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        context.Database.Migrate();
+
         RoleManager<IdentityRole<Int32>> roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Int32>>>();
         UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
