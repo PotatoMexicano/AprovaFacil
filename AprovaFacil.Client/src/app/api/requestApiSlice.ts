@@ -178,4 +178,5 @@ export const {
   useAllRequestsQuery,
   useGetMyStatsQuery,
   useGetApprovedRequestsQuery,
+  useLazyGetApprovedRequestsQuery
 } = requestApi;

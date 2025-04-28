@@ -58,9 +58,9 @@ public class Program
         WebApplication app = builder.Build();
 
         app.UseDefaultFiles();
-        //app.UseStaticFiles();
+        app.UseStaticFiles();
 
-        //app.MapFallbackToFile("index.html");
+        app.MapFallbackToFile("index.html");
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())

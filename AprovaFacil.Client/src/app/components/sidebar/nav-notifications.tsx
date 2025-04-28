@@ -4,6 +4,7 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/app/components/ui/sidebar"
@@ -41,11 +42,12 @@ export function NavNotifications({
                     <span>Notificações</span>
                     {data && data.length > 0 && (
                       <motion.div
+                        className="w-full h-full flex items-center"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.5 }}
                       >
-                        <div className="absolute w-2 h-2 aspect-auto rounded-full bg-orange-500 right-2"></div>
+                        <SidebarMenuBadge><div className="w-2 h-2 aspect-auto rounded-full bg-success-light"></div></SidebarMenuBadge>
                       </motion.div>
                     )}
                   </div>

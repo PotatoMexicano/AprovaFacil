@@ -46,10 +46,10 @@ export function NavAuthUser({ user }: Props) {
   const { setTheme } = useTheme()
 
   const logout = async () => {
+    window.location.replace('/login')
     dispatch(clearUser());
     dispatch(authApi.util.resetApiState());
     await funcLogout().unwrap();
-    window.location.replace('/login')
   };
 
   return (

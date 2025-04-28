@@ -20,7 +20,11 @@ public class NotificationService(IHubContext<NotificationHub> hubNotification) :
 
     public async Task NotifyUsers(NotificationRequest request, CancellationToken cancellation)
     {
-        IEnumerable<Task> tasks = request.UsersID.Select(userId => hubNotification.Clients.Group($"user-{userId}").SendAsync("UpdateRequests", new { request.RequestUUID }, cancellation));
+        List<Task> tasks = new();
+
+        tasks.AddRange(request.UsersID.Select(userId => hubNotification.Clients.Group($"user-{userId}").SendAsync("UpdateRequests", new { request.RequestUUID }, cancellation)));
+        tasks.AddRange(request.UsersID.Select(userId => hubNotification.Clients.Group($"user-{userId}").SendAsync("UpdateNotifications", new { request.RequestUUID }, cancellation)));
+
         await Task.WhenAll(tasks);
     }
 }

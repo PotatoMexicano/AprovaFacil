@@ -8,7 +8,7 @@ using Serilog;
 
 namespace AprovaFacil.Application.Services;
 
-public class RequestService(RequestInterfaces.IRequestRepository repository, UserInterfaces.IUserRepository userRepository, ServerDirectory serverDirectory, NotificationInterfaces.INotificationService notification) : RequestInterfaces.IRequestService
+public class RequestService(RequestInterfaces.IRequestRepository repository, UserInterfaces.IUserRepository userRepository, ServerDirectory serverDirectory, NotificationInterfaces.INotificationService notificationService, NotificationInterfaces.INotificationRepository notificationRepository) : RequestInterfaces.IRequestService
 {
     public async Task<Result> ApproveRequest(Guid requestGuid, Int32 applicationUserId, CancellationToken cancellation)
     {
@@ -24,17 +24,23 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
             if (request.Directors.Count > 0)
             {
                 // Notify everyone
-                await notification.NotifyUsers(new NotificationRequest(request.UUID, [.. request.Managers.Select(x => x.ManagerId), .. request.Directors.Select(x => x.DirectorId), request.RequesterId]), cancellation);
+                await notificationService.NotifyUsers(new NotificationRequest(request.UUID, [.. request.Managers.Select(x => x.ManagerId), .. request.Directors.Select(x => x.DirectorId), request.RequesterId]), cancellation);
+
+                if (request.Status == StatusRequest.Pending)
+                {
+                    await notificationRepository.SaveNotifyAsync(new NotificationRequest(request.UUID, [.. request.Directors.Select(x => x.DirectorId)], "Você foi mencionado em uma solicitação !"));
+                }
             }
             else
             {
                 // Notify requester & manager
-                await notification.NotifyUsers(new NotificationRequest(request.UUID, [.. request.Managers.Select(x => x.ManagerId), request.RequesterId]), cancellation);
+                await notificationService.NotifyUsers(new NotificationRequest(request.UUID, [.. request.Managers.Select(x => x.ManagerId), request.RequesterId]), cancellation);
             }
 
-            if (request.Status == 1 && request.ApprovedFirstLevel && request.ApprovedSecondLevel)
+            if (request.Status == StatusRequest.Approved && request.ApprovedFirstLevel && request.ApprovedSecondLevel)
             {
-                await notification.NotifyGroup(new NotificationGroupRequest(request.UUID, "role-finance"), cancellation);
+                await notificationService.NotifyGroup(new NotificationGroupRequest(request.UUID, "role-finance"), cancellation);
+                await notificationRepository.SaveNotifyAsync(new NotificationRequest(request.UUID, request.RequesterId, "Sua solicitação foi aprovada !"));
             }
 
             return result ? Result.Success() : Result.Failure("Não foi possível aprovar a solicitação.");
@@ -56,8 +62,12 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
 
             if (request is null) return Result.Failure("Não foi possível buscar a solicitação.");
 
-            // Was rejected.
-            await notification.NotifyUsers(new NotificationRequest(request.UUID, [.. request.Managers.Select(x => x.ManagerId), .. request.Directors.Select(x => x.DirectorId), request.RequesterId]), cancellation);
+            if (request.Status == StatusRequest.Reject)
+            {
+                // Was rejected.
+                await notificationService.NotifyUsers(new NotificationRequest(request.UUID, [.. request.Managers.Select(x => x.ManagerId), .. request.Directors.Select(x => x.DirectorId), request.RequesterId]), cancellation);
+                await notificationRepository.SaveNotifyAsync(new NotificationRequest(request.UUID, request.RequesterId, "Sua solicitação foi rejeitada."));
+            }
 
             return result ? Result.Success() : Result.Failure("Não foi possível rejeitar a solicitação.");
         }
@@ -78,7 +88,8 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
 
             if (request is null) return Result.Failure("Não foi possível buscar a solicitação.");
 
-            await notification.NotifyUsers(new NotificationRequest(request.UUID, request.RequesterId), cancellation);
+            await notificationService.NotifyUsers(new NotificationRequest(request.UUID, [request.RequesterId, applicationUserId]), cancellation);
+            await notificationRepository.SaveNotifyAsync(new NotificationRequest(request.UUID, request.RequesterId, "Sua solicitação foi faturada !"));
 
             return result ? Result.Success() : Result.Failure("Não foi possível finalizar a solicitação.");
         }
@@ -262,7 +273,8 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
                 Log.Error(ex, "Exception raise when try save budget file.");
             }
 
-            await notification.NotifyUsers(new NotificationRequest(request.UUID, [.. request.ManagersId, request.RequesterId]), cancellation);
+            await notificationService.NotifyUsers(new NotificationRequest(request.UUID, [.. request.ManagersId, request.RequesterId]), cancellation);
+            await notificationRepository.SaveNotifyAsync(new NotificationRequest(request.UUID, [.. request.ManagersId], "Você foi mencionado em uma solicitação !"));
 
             return Result<RequestDTO>.Success(newRequestDTO);
         }
