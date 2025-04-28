@@ -9,14 +9,15 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/app/components/ui/sidebar"
 import { RootState, useAppSelector } from "@/app/store/store"
-import { useLazyGetPendingRequestsQuery } from "@/app/api/requestApiSlice"
+import { useLazyGetApprovedRequestsQuery, useLazyGetPendingRequestsQuery } from "@/app/api/requestApiSlice"
 import { motion } from "framer-motion"
 import { useEffect } from "react"
-import { useIsAdmin } from "@/lib/utils"
+import { useIsAdmin, useIsFinance } from "@/lib/utils"
 
 export interface subItems {
   title: string
@@ -32,13 +33,20 @@ export interface subItems {
 
 export function NavRequests() {
   const isAdmin = useIsAdmin();
+  const isFinance = useIsFinance();
 
   const { user } = useAppSelector((state: RootState) => state.auth);
-  const [trigger, { data }] = useLazyGetPendingRequestsQuery();
+
+  const [triggerPending, { data: dataPending }] = useLazyGetPendingRequestsQuery();
+  const [triggerApproved, { data: dataApproved }] = useLazyGetApprovedRequestsQuery();
 
   useEffect(() => {
-    if (isAdmin){
-      trigger(); // dispara a query somente uma vez ao montar
+    if (isAdmin) {
+      triggerPending(); // dispara a query somente uma vez ao montar
+    }
+
+    if (isFinance) {
+      triggerApproved();
     }
   }, []);
 
@@ -84,13 +92,16 @@ export function NavRequests() {
                     <a href="/request/pending" className="relative">
                       <PackageIcon />
                       <span>Solicitações pendentes</span>
-                      {data && data.filter(r => r.approved === 0).length > 0 && (
+                      {dataPending && dataPending.filter(r => r.approved === 0).length > 0 && (
                         <motion.div
+                          className="w-full h-full flex items-center"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ duration: 0.5 }}
                         >
-                          <div className="absolute right-2 w-2 h-2 aspect-auto rounded-full bg-orange-500"></div>
+                          <SidebarMenuBadge>
+                            <div className="absolute right-2 w-2 h-2 aspect-auto rounded-full bg-success-light" />
+                          </SidebarMenuBadge>
                         </motion.div>
                       )}
                     </a>
@@ -122,7 +133,19 @@ export function NavRequests() {
                   <SidebarMenuButton asChild tooltip="Solicitações aprovadas">
                     <a href="/request/approved">
                       <LucideCheckCheck />
-                      <span>Solicitações aprovadas</span>
+                      <span className="whitespace-nowrap">Solicitações aprovadas</span>
+                      {dataApproved && dataApproved.filter(r => r.approved === 1).length > 0 && (
+                        <motion.div
+                          className="w-full h-full flex items-center"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 0.5 }}
+                        >
+                          <SidebarMenuBadge>
+                            <div className="w-2 h-2 aspect-auto rounded-full bg-success-light" />
+                          </SidebarMenuBadge>
+                        </motion.div>
+                      )}
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

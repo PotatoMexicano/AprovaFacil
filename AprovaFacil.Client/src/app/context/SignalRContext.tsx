@@ -3,6 +3,7 @@ import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
 import { useDispatch } from 'react-redux';
 import { requestApi } from '../api/requestApiSlice';
 import { toast } from 'sonner';
+import { notificationApi } from '../api/notificationApiSlice';
 
 interface SignalRContextProps {
   connection: HubConnection | null;
@@ -32,6 +33,11 @@ export const SignalRProvider: React.FC<{ children: React.ReactNode }> = ({ child
       newConnection.on(`UpdateRequests`, () => {
         console.log('Pedido de atualização recebido');  
         dispatch(requestApi.util.invalidateTags(['Requests']));
+      });
+
+      newConnection.on(`UpdateNotifications`, () => {
+        console.log('Pedido de atualização recebido');  
+        dispatch(notificationApi.util.invalidateTags(['Notifications']));
       });
 
       setConnection(newConnection);
