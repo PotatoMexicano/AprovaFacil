@@ -1,3 +1,11 @@
+# Build do front-end
+FROM node:20 AS frontend
+WORKDIR /app
+COPY AprovaFacil.Client/package*.json ./
+RUN npm install --force
+COPY AprovaFacil.Client ./
+RUN npm run build
+
 # Etapa de build
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
@@ -21,6 +29,9 @@ RUN dotnet publish AprovaFacil.Server/AprovaFacil.Server.csproj -c Release -o ou
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /app/out .
+
+# Copia os arquivos estáticos do front para o wwwroot
+COPY --from=frontend /app/dist ./wwwroot
 
 # Expõe a porta usada pela aplicação
 EXPOSE 80
