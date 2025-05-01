@@ -41,6 +41,7 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
+  const tenant_name = useAppSelector((state: RootState) => state.auth.user.tenant_name);
   const { data: authData } = useGetCurrentUserQuery();
     
   if (!authData) {
@@ -59,7 +60,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">AprovaFácil</span>
-                  <span className="truncate text-xs">Embraplan</span>
+                  <span className="truncate text-xs">{tenant_name}</span>
                 </div>
               </a>
             </SidebarMenuButton>

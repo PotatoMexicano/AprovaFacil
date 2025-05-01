@@ -1,6 +1,6 @@
 "use client"
 
-import { BanknoteIcon, Boxes, GalleryVerticalEndIcon, LucideCheckCheck, PackageIcon, PackagePlus, type LucideIcon } from "lucide-react"
+import { BanknoteIcon, Boxes, BoxesIcon, GalleryVerticalEndIcon, LucideCheckCheck, PackageIcon, PackageOpenIcon, PackagePlus, type LucideIcon } from "lucide-react"
 
 import {
   Collapsible,
@@ -60,7 +60,7 @@ export function NavRequests() {
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Nova solicitação">
                 <a href="/request/register">
-                  <PackagePlus />
+                  <PackagePlus strokeWidth={1.75} absoluteStrokeWidth />
                   <span>Nova solicitação</span>
                 </a>
               </SidebarMenuButton>
@@ -71,7 +71,7 @@ export function NavRequests() {
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Minhas solicitações">
                 <a href="/request/">
-                  <Boxes />
+                  <PackageOpenIcon strokeWidth={1.75} absoluteStrokeWidth />
                   <span>Minhas solicitações</span>
                 </a>
               </SidebarMenuButton>
@@ -89,9 +89,9 @@ export function NavRequests() {
               <Collapsible>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Solicitações pendentes">
-                    <a href="/request/pending" className="relative">
-                      <PackageIcon />
-                      <span>Solicitações pendentes</span>
+                    <a href="/request/pending" className="relative text-nowrap">
+                      <PackageIcon strokeWidth={1.75} absoluteStrokeWidth />
+                      <span >Solicitações pendentes</span>
                       {dataPending && dataPending.filter(r => r.approved === 0).length > 0 && (
                         <motion.div
                           className="w-full h-full flex items-center"

@@ -5,6 +5,7 @@ using AprovaFacil.Server.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace AprovaFacil.Server.Controllers;
 
@@ -29,25 +30,34 @@ public class AuthController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(request.Email, request.Password, isPersistent: false, lockoutOnFailure: false);
+        ApplicationUser? user = await _userManager.FindByEmailAsync(request.Email);
 
-        if (result.Succeeded)
+        if (user is null)
         {
-            ApplicationUser? user = await _userManager.FindByEmailAsync(request.Email);
-            IList<String> roles = await _userManager.GetRolesAsync(user);
-            IList<System.Security.Claims.Claim> claims = await _userManager.GetClaimsAsync(user);
-
-            UserDTO userDTO = user.ToDTO(roles);
-
-            return Ok(new { User = userDTO });
+            return Unauthorized();
         }
 
-        if (result.IsLockedOut)
+        if (!user.Enabled)
         {
             return StatusCode(403, new { Message = "Conta bloqueada" });
         }
 
-        return Unauthorized(new { Message = "Email ou senha inválidos" });
+        if (!await _userManager.CheckPasswordAsync(user, request.Password))
+        {
+            return Unauthorized(new { Message = "Email ou senha inválidos" });
+        }
+
+        IList<Claim> userClaims = await _userManager.GetClaimsAsync(user);
+        userClaims.Add(new Claim("TenantId", user.TenantId.ToString()));
+
+        await _signInManager.SignInWithClaimsAsync(user, isPersistent: true, userClaims);
+
+        IList<String> roles = await _userManager.GetRolesAsync(user);
+
+        UserDTO userDTO = user.ToDTO(roles);
+
+        return Ok(new { User = userDTO });
+
     }
 
     [HttpPost("logout")]
@@ -72,6 +82,7 @@ public class AuthController : ControllerBase
         }
 
         ApplicationUser? user = await _userManager.GetUserAsync(User);
+
         if (user == null)
         {
             return Unauthorized(new ProblemDetails
@@ -95,6 +106,7 @@ public class AuthController : ControllerBase
             user.Department,
             user.PictureUrl,
             user.Enabled,
+            user.Tenant, // PRECISAR DO TENANT_NAME
             IdentityRoles = roles
         });
     }

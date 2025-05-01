@@ -311,7 +311,7 @@ export function DataTable<TData extends RequestReponse>({ data, columnVisibility
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button type="button" variant={"outline"} size={"icon"} asChild>
-                  <Link to={`/request/${row.original.uuid}`} target="_blank" rel="noopener noreferrer" >
+                  <Link to={`/request/${row.original.uuid}`} rel="noopener noreferrer" >
                     <ExternalLinkIcon />
                   </Link>
                 </Button>

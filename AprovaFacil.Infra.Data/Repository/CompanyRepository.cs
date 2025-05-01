@@ -14,14 +14,15 @@ public class CompanyRepository(ApplicationDbContext context) : CompanyInterfaces
         await context.SaveChangesAsync(cancellation);
     }
 
-    public async Task<Company[]> GetAllCompaniesAsync(CancellationToken cancellation)
+    public async Task<Company[]> GetAllCompaniesAsync(Int32 tenantId, CancellationToken cancellation)
     {
-        return await context.Companies.Where(c => c.Enabled).ToArrayAsync();
+        IQueryable<Company> query = context.Companies.Where(c => c.Enabled && c.TenantId == tenantId);
+        return await query.ToArrayAsync();
     }
 
-    public async Task<Company?> GetCompanyAsync(Int64 idCompany, CancellationToken cancellation)
+    public async Task<Company?> GetCompanyAsync(Int64 idCompany, Int32 tenantId, CancellationToken cancellation)
     {
-        Company? company = await context.Companies.Where(c => c.Id == idCompany).FirstOrDefaultAsync();
+        Company? company = await context.Companies.Where(c => c.Id == idCompany && c.TenantId == tenantId).FirstOrDefaultAsync();
         return company;
     }
 

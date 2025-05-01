@@ -9,7 +9,7 @@ namespace AprovaFacil.Server;
 
 public class Program
 {
-    public static void Main(String[] args)
+    public static async Task Main(String[] args)
     {
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -57,6 +57,8 @@ public class Program
 
         WebApplication app = builder.Build();
 
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
         app.UseDefaultFiles();
         app.UseStaticFiles();
 
@@ -69,7 +71,11 @@ public class Program
             app.UseSwaggerUI();
         }
 
-        DependencyInjection.SeedData(app.Services);
+        using (IServiceScope scope = app.Services.CreateScope())
+        {
+            IServiceProvider services = scope.ServiceProvider;
+            await DependencyInjection.SeedDataAsync(services);
+        }
 
         app.UseCors("AllowLocalhost");
 

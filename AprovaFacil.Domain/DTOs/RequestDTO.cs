@@ -5,7 +5,15 @@ namespace AprovaFacil.Domain.DTOs;
 
 public class RequestDTO
 {
-    public Guid UUID { get; set; }
+    public required String UUID { get; set; }
+
+    public String SimplifiedUUID
+    {
+        get
+        {
+            return this.UUID.ToString().Split("-")[0];
+        }
+    }
 
     public Int32 RequesterId { get; set; }
     public Int32? FinisherId { get; set; }
@@ -139,11 +147,14 @@ public class RequestDTO
 
     public static implicit operator RequestDTO(Request? request)
     {
-        if (request is null) return new RequestDTO { };
+        if (request is null) return new RequestDTO
+        {
+            UUID = Guid.NewGuid().ToString("N")
+        };
 
         return new RequestDTO
         {
-            UUID = request.UUID,
+            UUID = request.UUID.ToString("N"),
             RequesterId = request.RequesterId,
             FinisherId = request.FinisherId,
             InvoiceName = request.InvoiceName.ToString("N"),

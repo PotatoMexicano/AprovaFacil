@@ -9,12 +9,16 @@ using System.Security.Claims;
 
 namespace AprovaFacil.Application.Services;
 
-public class UserService(UserInterfaces.IUserRepository repository, IHttpContextAccessor httpContextAccessor) : UserInterfaces.IUserService
+public class UserService(UserInterfaces.IUserRepository repository, IHttpContextAccessor httpContextAccessor, ITenantProvider tenant) : UserInterfaces.IUserService
 {
     public async Task<Result> DisableUser(Int32 idUser, CancellationToken cancellation)
     {
         try
         {
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result.Failure("TenantId não encontrado.");
+
             ClaimsPrincipal? currentUser = httpContextAccessor.HttpContext?.User;
 
             if (currentUser == null)
@@ -47,6 +51,10 @@ public class UserService(UserInterfaces.IUserRepository repository, IHttpContext
     {
         try
         {
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result.Failure("TenantId não encontrado.");
+
             ClaimsPrincipal? currentUser = httpContextAccessor.HttpContext?.User;
 
             if (currentUser == null)
@@ -79,7 +87,11 @@ public class UserService(UserInterfaces.IUserRepository repository, IHttpContext
     {
         try
         {
-            IApplicationUser[] applicationUsersEntity = await repository.GetAllUsersAsync(cancellation);
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<UserDTO[]>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
+            IApplicationUser[] applicationUsersEntity = await repository.GetAllUsersAsync(tenantId.Value, cancellation);
             UserDTO[] response = [.. applicationUsersEntity.Select(x => UserExtensions.ToDTO(x))];
 
             if (response is null) return Result<UserDTO[]>.Failure(ErrorType.NotFound, "Nenhum usuário encontrado.");
@@ -97,7 +109,11 @@ public class UserService(UserInterfaces.IUserRepository repository, IHttpContext
     {
         try
         {
-            IApplicationUser[] applicationUsersEntity = await repository.GetAllUsersEnabledAsync(cancellation);
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<UserDTO[]>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
+            IApplicationUser[] applicationUsersEntity = await repository.GetAllUsersEnabledAsync(tenantId.Value, cancellation);
 
             if (applicationUsersEntity is null) return Result<UserDTO[]>.Failure(ErrorType.NotFound, "Nenhum usuário encontrado.");
 
@@ -116,7 +132,11 @@ public class UserService(UserInterfaces.IUserRepository repository, IHttpContext
     {
         try
         {
-            IApplicationUser? applicationUserEntity = await repository.GetUserAsync(idUser, cancellation);
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<UserDTO>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
+            IApplicationUser? applicationUserEntity = await repository.GetUserAsync(idUser, tenantId.Value, cancellation);
 
             if (applicationUserEntity is null) return Result<UserDTO>.Failure(ErrorType.NotFound, "Nenhum usuário encontrado.");
 
@@ -135,6 +155,12 @@ public class UserService(UserInterfaces.IUserRepository repository, IHttpContext
     {
         try
         {
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<UserDTO>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
+            request.TenantId = tenantId.Value;
+
             IApplicationUser? entity = await repository.RegisterUserAsync(request, cancellation);
 
             if (entity is null) return Result<UserDTO>.Failure(ErrorType.NotFound, "Nenhum usuário encontrado.");
@@ -154,6 +180,10 @@ public class UserService(UserInterfaces.IUserRepository repository, IHttpContext
     {
         try
         {
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<UserDTO>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
             IApplicationUser? applicationUser = await repository.UpdateUserAsync(request, cancellation);
 
             if (applicationUser is null) return Result<UserDTO>.Failure(ErrorType.NotFound, "Nenhum usuário encontrado.");

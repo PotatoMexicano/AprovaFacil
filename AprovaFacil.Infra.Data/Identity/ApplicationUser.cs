@@ -29,6 +29,9 @@ public class ApplicationUser : IdentityUser<Int32>, IApplicationUser
         set => base.SecurityStamp = value;
     }
 
+    public Int32 TenantId { get; set; }
+    public Tenant Tenant { get; set; } = null!;
+
     public List<Request> Requests { get; set; } = new();
     public List<Request> RequestsFinished { get; set; } = new();
 
@@ -39,16 +42,17 @@ public class ApplicationUser : IdentityUser<Int32>, IApplicationUser
 
     public ApplicationUser() { }
 
-    public ApplicationUser(String email, String fullName, String role, String department)
+    public ApplicationUser(String email, String fullName, String role, String department, Int32 tenantId)
     {
         this.Email = email;
         this.UserName = email;
         this.FullName = fullName;
         this.Role = role;
         this.Department = department;
+        this.TenantId = tenantId;
     }
 
-    public ApplicationUser(String email, String fullName, String role, String department, String pictureUrl) : this(email, fullName, role, department)
+    public ApplicationUser(String email, String fullName, String role, String department, Int32 tenantId, String pictureUrl) : this(email, fullName, role, department, tenantId)
     {
         this.Email = email;
         this.UserName = email;
@@ -56,10 +60,11 @@ public class ApplicationUser : IdentityUser<Int32>, IApplicationUser
         this.Role = role;
         this.Department = department;
         this.PictureUrl = pictureUrl;
+        this.TenantId = tenantId;
         this.Enabled = true;
     }
 
-    public ApplicationUser(String email, String fullName, String role, String department, String pictureUrl, Boolean enabled) : this(email, fullName, role, department)
+    public ApplicationUser(String email, String fullName, String role, String department, Int32 tenantId, String pictureUrl, Boolean enabled) : this(email, fullName, role, department, tenantId)
     {
         this.Email = email;
         this.UserName = email;
@@ -67,6 +72,7 @@ public class ApplicationUser : IdentityUser<Int32>, IApplicationUser
         this.Role = role;
         this.Department = department;
         this.PictureUrl = pictureUrl;
+        this.TenantId = tenantId;
         this.Enabled = enabled;
     }
 }

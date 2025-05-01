@@ -3,6 +3,7 @@ using AprovaFacil.Domain.DTOs;
 using AprovaFacil.Domain.Interfaces;
 using AprovaFacil.Domain.Results;
 using AprovaFacil.Server.Extensions;
+using AprovaFacil.Server.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -11,10 +12,11 @@ namespace AprovaFacil.Server.Controllers;
 
 [Route("api/user")]
 [ApiController]
+[RequireTenant]
 [Authorize]
 public class UserController(UserInterfaces.IUserService service) : ControllerBase
 {
-    [HttpGet("")]
+    [HttpGet]
     public async Task<IActionResult> GetAllUsers(CancellationToken cancellation = default)
     {
         Result<UserDTO[]> result = await service.GetAllUsers(cancellation);

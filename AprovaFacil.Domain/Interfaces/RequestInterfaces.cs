@@ -28,14 +28,14 @@ public static class RequestInterfaces
 
     public interface IRequestRepository
     {
-        Task<Request[]> ListAllAsync(CancellationToken cancellation);
-        Task<Request?> ListRequestAsync(Guid request, CancellationToken cancellation);
-        Task<Request[]> ListRequestsAsync(FilterRequest filter, CancellationToken cancellation);
+        Task<Request[]> ListAllAsync(Int32 tenantId, CancellationToken cancellation);
+        Task<Request?> ListRequestAsync(Guid request, Int32 tenantId, CancellationToken cancellation);
+        Task<Request[]> ListRequestsAsync(FilterRequest filter, Int32 tenantId, CancellationToken cancellation);
         Task<Object> MyStatsAsync(Int32 applicationUserId, CancellationToken cancellation);
 
-        Task<Request[]> ListPendingRequestsAsync(FilterRequest filter, CancellationToken cancellation);
-        Task<Request[]> ListApprovedRequestsAsync(FilterRequest filter, CancellationToken cancellation);
-        Task<Request[]> ListFinishedRequestsAsync(FilterRequest filter, CancellationToken cancellation);
+        Task<Request[]> ListPendingRequestsAsync(FilterRequest filter, Int32 tenantId, CancellationToken cancellation);
+        Task<Request[]> ListApprovedRequestsAsync(FilterRequest filter, Int32 tenantId, CancellationToken cancellation);
+        Task<Request[]> ListFinishedRequestsAsync(FilterRequest filter, Int32 tenantId, CancellationToken cancellation);
 
         Task<Request?> RegisterRequestAsync(Request request, CancellationToken cancellation);
 

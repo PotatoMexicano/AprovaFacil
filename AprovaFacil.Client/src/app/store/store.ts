@@ -4,7 +4,7 @@ import { cepApi } from '../api/cepApiSlice';
 import { companyApi } from '../api/companyApiSlice';
 import { authApi } from '../api/authApiSlice';
 import { requestApi } from '../api/requestApiSlice';
-import authReducer, {loadAuthState, saveAuthSate} from '../../auth/authSlice';
+import authReducer, {loadAuthState, saveAuthSate} from '@/auth/authSlice';
 import { userApi } from '../api/userApiSlice';
 import { notificationApi } from '../api/notificationApiSlice';
 

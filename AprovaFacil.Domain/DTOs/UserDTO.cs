@@ -16,6 +16,9 @@ public class UserDTO
     public Boolean Enabled { get; set; }
     public List<String> IdentityRoles { get; set; } = [];
 
+    public String TenantName { get; set; } = null!;
+    public Int32 TenantId { get; set; }
+
     public Int32 RequestApproved { get; set; }
 }
 
@@ -27,6 +30,7 @@ public class UserRegisterDTO
     public String? PictureUrl { get; set; }
     public required String Email { get; set; }
     public required String Password { get; set; }
+    public Int32 TenantId { get; set; }
 }
 
 public class UserUpdateDTO

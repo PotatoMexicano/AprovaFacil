@@ -20,6 +20,8 @@ public class CompanyDTO
     public String Phone { get; set; }
     public String Email { get; set; }
 
+    public Int32 TenantId { get; set; }
+
     public static implicit operator CompanyDTO?(Company? company)
     {
         if (company is null) return null;
@@ -39,6 +41,7 @@ public class CompanyDTO
             Email = company.Email,
             LegalName = company.LegalName,
             CNPJ = company.CNPJ,
+            TenantId = company.TenantId,
         };
     }
 
@@ -53,6 +56,7 @@ public class CompanyDTO
             Email = company.Email,
             Phone = company.Phone,
             LegalName = company.LegalName,
+            TenantId = company.TenantId,
             Address = new Address
             {
                 City = company.City,
