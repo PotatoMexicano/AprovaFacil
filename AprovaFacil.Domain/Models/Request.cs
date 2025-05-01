@@ -29,6 +29,9 @@ public class Request
     public Int64 Amount { get; set; }
     public String? Note { get; set; }
 
+    public Int32 TenantId { get; set; }
+    public Tenant Tenant { get; set; } = null!;
+
     public Company Company { get; set; } = null!;
 
     public IApplicationUser Requester { get; set; } = null!;

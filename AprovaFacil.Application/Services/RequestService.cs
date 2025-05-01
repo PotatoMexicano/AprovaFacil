@@ -5,18 +5,23 @@ using AprovaFacil.Domain.Interfaces;
 using AprovaFacil.Domain.Models;
 using AprovaFacil.Domain.Results;
 using Serilog;
+using System.Net.Http.Headers;
 
 namespace AprovaFacil.Application.Services;
 
-public class RequestService(RequestInterfaces.IRequestRepository repository, UserInterfaces.IUserRepository userRepository, ServerDirectory serverDirectory, NotificationInterfaces.INotificationService notificationService, NotificationInterfaces.INotificationRepository notificationRepository) : RequestInterfaces.IRequestService
+public class RequestService(RequestInterfaces.IRequestRepository repository, UserInterfaces.IUserRepository userRepository, ServerDirectory serverDirectory, NotificationInterfaces.INotificationService notificationService, NotificationInterfaces.INotificationRepository notificationRepository, ITenantProvider tenant, IHttpClientFactory httpClientFactory) : RequestInterfaces.IRequestService
 {
     public async Task<Result> ApproveRequest(Guid requestGuid, Int32 applicationUserId, CancellationToken cancellation)
     {
         try
         {
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result.Failure("TenantId não encontrado.");
+
             Boolean result = await repository.ApproveRequestAsync(requestGuid, applicationUserId, cancellation);
 
-            Request? request = await repository.ListRequestAsync(requestGuid, cancellation);
+            Request? request = await repository.ListRequestAsync(requestGuid, tenantId.Value, cancellation);
 
             if (request is null) return Result.Failure("Não foi possível buscar a solicitação.");
 
@@ -56,9 +61,13 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result.Failure("TenantId não encontrado.");
+
             Boolean result = await repository.RejectRequestAsync(requestGuid, applicationUserId, cancellation);
 
-            Request? request = await repository.ListRequestAsync(requestGuid, cancellation);
+            Request? request = await repository.ListRequestAsync(requestGuid, tenantId.Value, cancellation);
 
             if (request is null) return Result.Failure("Não foi possível buscar a solicitação.");
 
@@ -82,13 +91,17 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result.Failure("TenantId não encontrado.");
+
             Boolean result = await repository.FinishRequestAsync(requestGuid, applicationUserId, cancellation);
 
-            Request? request = await repository.ListRequestAsync(requestGuid, cancellation);
+            Request? request = await repository.ListRequestAsync(requestGuid, tenantId.Value, cancellation);
 
             if (request is null) return Result.Failure("Não foi possível buscar a solicitação.");
 
-            await notificationService.NotifyUsers(new NotificationRequest(request.UUID, [request.RequesterId, applicationUserId]), cancellation);
+            await notificationService.NotifyUsers(new NotificationRequest(request.UUID, [request.RequesterId, request.FinisherId!.Value, applicationUserId]), cancellation);
             await notificationRepository.SaveNotifyAsync(new NotificationRequest(request.UUID, request.RequesterId, "Sua solicitação foi faturada !"));
 
             return result ? Result.Success() : Result.Failure("Não foi possível finalizar a solicitação.");
@@ -104,9 +117,13 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<RequestDTO[]>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
             filter.ApplicationUserId = applicationUserId;
 
-            Request[] requests = await repository.ListRequestsAsync(filter, cancellation);
+            Request[] requests = await repository.ListRequestsAsync(filter, tenantId.Value, cancellation);
 
             if (requests is null)
             {
@@ -128,7 +145,11 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
-            Request? request = await repository.ListRequestAsync(requestGuid, cancellation);
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<Byte[]>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
+            Request? request = await repository.ListRequestAsync(requestGuid, tenantId.Value, cancellation);
 
             if (request is null)
                 return Result<Byte[]>.Failure(ErrorType.NotFound, "Nenhum arquivo encontrado.");
@@ -137,9 +158,9 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
             {
                 String requestFilePath = Path.Combine(serverDirectory.InvoicePath, request.UUID.ToString("N"), request.InvoiceName.ToString("N") + ".pdf");
 
-                if (File.Exists(requestFilePath))
+                Byte[] fileStream = await DownloadFile(requestFilePath);
+                if (fileStream.Length > 0)
                 {
-                    Byte[] fileStream = await LoadFile(requestFilePath, cancellation);
                     return Result<Byte[]>.Success(fileStream);
                 }
                 else
@@ -152,9 +173,10 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
             {
                 String requestFilePath = Path.Combine(serverDirectory.BudgetPath, request.UUID.ToString("N"), request.BudgetName.ToString("N") + ".pdf");
 
-                if (File.Exists(requestFilePath))
+                Byte[] fileStream = await DownloadFile(requestFilePath);
+
+                if (fileStream.Length > 0)
                 {
-                    Byte[] fileStream = await LoadFile(requestFilePath, cancellation);
                     return Result<Byte[]>.Success(fileStream);
                 }
                 else
@@ -176,6 +198,10 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<RequestDTO>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
             Int32[] usersId = [.. request.ManagersId, .. request.DirectorsIds, request.RequesterId];
 
             Dictionary<Int32, IApplicationUser> users = await userRepository.GetUsersDictionary(usersId, cancellation);
@@ -193,6 +219,7 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
                 CreateAt = request.CreateAt,
                 Note = request.Note,
                 RequesterId = request.RequesterId,
+                TenantId = tenantId.Value,
                 Level = level,
             };
 
@@ -231,7 +258,7 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
 
             try
             {
-                String folderName = newRequestDTO.UUID.ToString("N");
+                String folderName = newRequestDTO.UUID; ;
                 String pathForFile = Path.Combine(serverDirectory.InvoicePath, folderName);
 
                 if (!Directory.Exists(pathForFile))
@@ -243,7 +270,8 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
 
                 if (request.Invoice.Length > 0)
                 {
-                    await File.WriteAllBytesAsync(filePath, request.Invoice, cancellation);
+                    await UploadFile(newRequestDTO, request);
+                    //await File.WriteAllBytesAsync(filePath, request.Invoice, cancellation);
                 }
             }
             catch (Exception ex)
@@ -253,7 +281,7 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
 
             try
             {
-                String folderName = newRequestDTO.UUID.ToString("N");
+                String folderName = newRequestDTO.UUID;
                 String pathForFile = Path.Combine(serverDirectory.BudgetPath, folderName);
 
                 if (!Directory.Exists(pathForFile))
@@ -289,7 +317,11 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
-            Request[] requests = await repository.ListAllAsync(cancellation);
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<RequestDTO[]>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
+            Request[] requests = await repository.ListAllAsync(tenantId.Value, cancellation);
 
             if (requests is null)
             {
@@ -310,6 +342,10 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<Object>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
             Object response = await repository.MyStatsAsync(applicationUserId, cancellation);
 
             if (response is null)
@@ -331,7 +367,11 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
-            Request? request = await repository.ListRequestAsync(requestGuid, cancellation: cancellation);
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<RequestDTO>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
+            Request? request = await repository.ListRequestAsync(requestGuid, tenantId.Value, cancellation: cancellation);
 
             if (request is null)
             {
@@ -348,19 +388,14 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
         }
     }
 
-    private async Task<Byte[]> LoadFile(String path, CancellationToken cancellation)
-    {
-        if (File.Exists(path))
-        {
-            return await File.ReadAllBytesAsync(path, cancellation);
-        }
-        return Array.Empty<Byte>();
-    }
-
     public async Task<Result<RequestDTO[]>> ListPendingRequests(FilterRequest filter, CancellationToken cancellation)
     {
         try
         {
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<RequestDTO[]>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
             if (filter.UserRole == Roles.Manager)
             {
                 filter.Levels = [LevelRequest.Pending];
@@ -374,7 +409,7 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
                 return Result<RequestDTO[]>.Failure(ErrorType.Unathorized, "Usuário não possui permissão para essa consulta.");
             }
 
-            Request[]? requests = await repository.ListPendingRequestsAsync(filter, cancellation);
+            Request[]? requests = await repository.ListPendingRequestsAsync(filter, tenantId.Value, cancellation);
 
             if (requests is null)
             {
@@ -396,9 +431,13 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<RequestDTO[]>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
             if (filter.UserRole != Roles.Finance) return Result<RequestDTO[]>.Failure(ErrorType.Unathorized, "Usuário não possui permissão para essa consulta.");
 
-            Request[] requests = await repository.ListApprovedRequestsAsync(filter, cancellation);
+            Request[] requests = await repository.ListApprovedRequestsAsync(filter, tenantId.Value, cancellation);
 
             if (requests is null) return Result<RequestDTO[]>.Failure(ErrorType.NotFound, "Nenhuma solicitação aprovada encontrada.");
 
@@ -417,7 +456,11 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
-            Request[] requests = await repository.ListFinishedRequestsAsync(filter, cancellation);
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<RequestDTO[]>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
+            Request[] requests = await repository.ListFinishedRequestsAsync(filter, tenantId.Value, cancellation);
 
             if (requests is null) return Result<RequestDTO[]>.Failure(ErrorType.NotFound, "Nenhuma solicitação finalizada encontrada.");
 
@@ -430,6 +473,87 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
             Log.Error(ex, ex.Message);
             return Result<RequestDTO[]>.Failure(ErrorType.InternalError, "Ocorreu um erro ao buscar solicitações finalizadas.");
         }
+    }
+
+    private async Task<Byte[]> DownloadFile(String objectPath)
+    {
+        HttpClient _httpClient = httpClientFactory.CreateClient("Supabase");
+
+        String fullpath = objectPath.Replace("//", "/");
+        HttpResponseMessage response = await _httpClient.GetAsync($"object/{fullpath}", CancellationToken.None);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            String error = await response.Content.ReadAsStringAsync(CancellationToken.None);
+            throw new Exception($"Erro ao baixar arquivo: {response.StatusCode} - {error}");
+        }
+
+        return await response.Content.ReadAsByteArrayAsync(CancellationToken.None);
+    }
+
+    private async Task<Result> UploadFile(RequestDTO request, RequestRegisterDTO register)
+    {
+        async Task<Result> UploadToSupabaseAsync(String bucketName, String objectPath, Byte[] fileBytes)
+        {
+            try
+            {
+                HttpClient _httpClient = httpClientFactory.CreateClient("Supabase");
+
+                using ByteArrayContent content = new ByteArrayContent(fileBytes);
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+
+                String fullPath = objectPath.Replace("//", "/");
+                HttpResponseMessage response = await _httpClient.PostAsync($"object/{fullPath}", content, CancellationToken.None);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    String body = await response.Content.ReadAsStringAsync(CancellationToken.None);
+                    return Result.Failure($"Falha ao salvar {bucketName}.");
+                }
+
+                return Result.Success();
+
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, ex.Message);
+                return Result.Failure(ex.Message);
+            }
+        }
+
+        Result resultInvoice = Result.Success();
+        Result resultBudget = Result.Success();
+
+        if (register.Invoice?.Length > 0)
+        {
+            String folderName = request.UUID;
+            String pathForFile = Path.Combine(serverDirectory.InvoicePath, folderName);
+            String filePath = Path.Combine(pathForFile, request.InvoiceName) + ".pdf";
+
+            resultInvoice = await UploadToSupabaseAsync(
+                bucketName: serverDirectory.InvoicePath,
+                objectPath: filePath,
+                fileBytes: register.Invoice);
+        }
+
+        if (register.Budget?.Length > 0)
+        {
+            String folderName = request.UUID;
+            String pathForFile = Path.Combine(serverDirectory.BudgetPath, folderName);
+            String filePath = Path.Combine(pathForFile, request.BudgetName) + ".pdf";
+
+            resultBudget = await UploadToSupabaseAsync(
+                bucketName: serverDirectory.BudgetPath,
+                objectPath: filePath,
+                fileBytes: register.Budget);
+        }
+
+        if (resultInvoice.IsFailure || resultBudget.IsFailure)
+        {
+            return Result.Failure("Falha ao salvar arquivos.");
+        }
+
+        return Result.Success();
     }
 }
 

@@ -15,6 +15,8 @@ export interface UserResponse {
   enabled: boolean;
   identity_roles: string[];
   request_approved: number;
+  tenant_id: number;
+  tenant_name: string | null;
 }
 
 export interface UserNotification {

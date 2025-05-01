@@ -543,3 +543,4 @@ sketch
 AprovaFacil.Server/mydb.db
 AprovaFacil.Infra.Data
 AprovaFacil.Server/wwwroot
+docker-compose.yml

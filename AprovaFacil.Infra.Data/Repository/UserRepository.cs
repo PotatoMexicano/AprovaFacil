@@ -22,7 +22,7 @@ public class UserRepository(UserManager<ApplicationUser> userManager, ILogger<Us
         else
         {
             user.LockoutEnabled = true;
-            user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
+            user.LockoutEnd = DateTime.UtcNow.AddYears(100);
             user.Enabled = false;
 
             IdentityResult result = await userManager.UpdateAsync(user);
@@ -65,9 +65,10 @@ public class UserRepository(UserManager<ApplicationUser> userManager, ILogger<Us
         }
     }
 
-    public async Task<IApplicationUser[]> GetAllUsersAsync(CancellationToken cancellation)
+    public async Task<IApplicationUser[]> GetAllUsersAsync(Int32 tenantId, CancellationToken cancellation)
     {
         ApplicationUser[] entities = await userManager.Users
+            .Where(u => u.TenantId == tenantId)
             .Select(u => new ApplicationUser
             {
                 Id = u.Id,
@@ -85,9 +86,10 @@ public class UserRepository(UserManager<ApplicationUser> userManager, ILogger<Us
         return entities;
     }
 
-    public async Task<IApplicationUser[]> GetAllUsersEnabledAsync(CancellationToken cancellation)
+    public async Task<IApplicationUser[]> GetAllUsersEnabledAsync(Int32 tenantId, CancellationToken cancellation)
     {
         ApplicationUser[] entities = await userManager.Users
+            .Where(u => u.TenantId == tenantId)
             .Select(u => new ApplicationUser
             {
                 Id = u.Id,
@@ -105,9 +107,10 @@ public class UserRepository(UserManager<ApplicationUser> userManager, ILogger<Us
         return entities;
     }
 
-    public async Task<IApplicationUser?> GetUserAsync(Int32 idUser, CancellationToken cancellation)
+    public async Task<IApplicationUser?> GetUserAsync(Int32 idUser, Int32 tenantId, CancellationToken cancellation)
     {
         ApplicationUser? entity = await userManager.Users
+            .Where(u => u.TenantId == tenantId)
             .Select(u => new ApplicationUser
             {
                 Id = u.Id,
@@ -168,7 +171,8 @@ public class UserRepository(UserManager<ApplicationUser> userManager, ILogger<Us
             Role = request.Role,
             Department = request.Department,
             PictureUrl = request.PictureUrl ?? String.Empty,
-            Enabled = true
+            Enabled = true,
+            TenantId = request.TenantId,
         };
 
         IdentityResult result = userManager.CreateAsync(user, request.Password).Result;
@@ -204,14 +208,25 @@ public class UserRepository(UserManager<ApplicationUser> userManager, ILogger<Us
             {
                 String token = await userManager.GeneratePasswordResetTokenAsync((ApplicationUser)applicationUser);
                 IdentityResult result = await userManager.ResetPasswordAsync((ApplicationUser)applicationUser, token, request.Password);
-                await userManager.UpdateAsync((ApplicationUser)applicationUser);
-                return applicationUser;
             }
-            else
+
+            IdentityResult updateResult = await userManager.UpdateAsync((ApplicationUser)applicationUser);
+
+            if (!updateResult.Succeeded)
             {
-                await userManager.UpdateAsync((ApplicationUser)applicationUser);
-                return applicationUser;
+                return null;
             }
+
+            if (request.Role is not null && request.Role.Any())
+            {
+                IList<String> currentRoles = await userManager.GetRolesAsync((ApplicationUser)applicationUser);
+
+                await userManager.RemoveFromRolesAsync((ApplicationUser)applicationUser, currentRoles);
+
+                await userManager.AddToRoleAsync((ApplicationUser)applicationUser, request.Role);
+            }
+
+            return applicationUser;
 
         }
         catch (Exception ex)

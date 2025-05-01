@@ -7,13 +7,17 @@ using Serilog;
 
 namespace AprovaFacil.Application.Services;
 
-public class CompanyService(CompanyInterfaces.ICompanyRepository repository) : CompanyInterfaces.ICompanyService
+public class CompanyService(CompanyInterfaces.ICompanyRepository repository, ITenantProvider tenant) : CompanyInterfaces.ICompanyService
 {
     public async Task<Result> DeleteCompany(Int32 id, CancellationToken cancellation)
     {
         try
         {
-            Company? company = await repository.GetCompanyAsync(id, cancellation);
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result.Failure("TenantId não encontrado.");
+
+            Company? company = await repository.GetCompanyAsync(id, tenantId.Value, cancellation);
 
             if (company is null) return Result.Failure("Não foi possível deletar a empresa.");
 
@@ -34,7 +38,11 @@ public class CompanyService(CompanyInterfaces.ICompanyRepository repository) : C
     {
         try
         {
-            Company[] companies = await repository.GetAllCompaniesAsync(cancellation);
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<CompanyDTO[]>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
+            Company[] companies = await repository.GetAllCompaniesAsync(tenantId.Value, cancellation);
 
             if (companies is null) return Result<CompanyDTO[]>.Failure(ErrorType.NotFound, "Nenhuma empresa encontrada.");
 
@@ -53,7 +61,11 @@ public class CompanyService(CompanyInterfaces.ICompanyRepository repository) : C
     {
         try
         {
-            Company? company = await repository.GetCompanyAsync(idCompany, cancellation);
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<CompanyDTO>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
+            Company? company = await repository.GetCompanyAsync(idCompany, tenantId.Value, cancellation);
 
             if (company is null) return Result<CompanyDTO>.Failure(ErrorType.NotFound, "Nenhuma empresa encontrada.");
 
@@ -74,7 +86,29 @@ public class CompanyService(CompanyInterfaces.ICompanyRepository repository) : C
     {
         try
         {
-            Company? company = request;
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<CompanyDTO>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
+            Company company = new Company
+            {
+                TradeName = request.TradeName,
+                CNPJ = request.CNPJ,
+                Email = request.Email,
+                LegalName = request.LegalName,
+                Phone = request.Phone,
+                TenantId = tenantId.Value,
+                Address = new Address
+                {
+                    City = request.City,
+                    Complement = request.Complement,
+                    Neighborhood = request.Neighborhood,
+                    Number = request.Number,
+                    PostalCode = request.PostalCode,
+                    State = request.State,
+                    Street = request.Street,
+                }
+            };
 
             if (company is null) return Result<CompanyDTO>.Failure(ErrorType.Validation, "Falha ao validar requisição.");
 
@@ -100,7 +134,11 @@ public class CompanyService(CompanyInterfaces.ICompanyRepository repository) : C
     {
         try
         {
-            Company? companyEntity = await repository.GetCompanyAsync(request.Id, cancellation);
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<CompanyDTO>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
+            Company? companyEntity = await repository.GetCompanyAsync(request.Id, tenantId.Value, cancellation);
 
             if (companyEntity is null) return Result<CompanyDTO>.Failure(ErrorType.NotFound, "Nenhuma empresa encontrada.");
 

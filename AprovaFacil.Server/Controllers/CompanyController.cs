@@ -2,6 +2,7 @@
 using AprovaFacil.Domain.Interfaces;
 using AprovaFacil.Domain.Results;
 using AprovaFacil.Server.Extensions;
+using AprovaFacil.Server.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,6 +10,7 @@ namespace AprovaFacil.Server.Controllers;
 
 [Route("api/company")]
 [ApiController]
+[RequireTenant]
 [Authorize]
 public class CompanyController(CompanyInterfaces.ICompanyService companyService) : ControllerBase
 {

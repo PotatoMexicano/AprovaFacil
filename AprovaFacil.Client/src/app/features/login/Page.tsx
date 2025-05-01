@@ -24,7 +24,7 @@ export default function LoginForm({ className, ...props }: React.ComponentProps<
     },
   });
 
-  const [login, { isLoading: isLoadingAuth, isSuccess }] = useLoginMutation();
+  const [login, { isLoading: isLoadingAuth }] = useLoginMutation();
   const [getUser] = useLazyGetCurrentUserQuery();
 
 

@@ -14,6 +14,8 @@ public static class UserExtensions
             Email = appUser.Email,
             FullName = appUser.FullName,
             Role = appUser.Role,
+            TenantName = "Empresa A",
+            TenantId = appUser.TenantId,
             IdentityRoles = roles?.ToList() ?? [],
             RoleLabel = appUser.Role switch
             {

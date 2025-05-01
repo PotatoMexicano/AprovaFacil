@@ -24,9 +24,9 @@ public static class UserInterfaces
     {
         Task<Dictionary<Int32, IApplicationUser>> GetUsersDictionary(IEnumerable<Int32> usersId, CancellationToken cancellation);
 
-        Task<IApplicationUser[]> GetAllUsersAsync(CancellationToken cancellation);
-        Task<IApplicationUser[]> GetAllUsersEnabledAsync(CancellationToken cancellation);
-        Task<IApplicationUser?> GetUserAsync(Int32 idUser, CancellationToken cancellation);
+        Task<IApplicationUser[]> GetAllUsersAsync(Int32 tenantId, CancellationToken cancellation);
+        Task<IApplicationUser[]> GetAllUsersEnabledAsync(Int32 tenantId, CancellationToken cancellation);
+        Task<IApplicationUser?> GetUserAsync(Int32 idUser, Int32 tenantId, CancellationToken cancellation);
 
         Task<IApplicationUser?> RegisterUserAsync(UserRegisterDTO request, CancellationToken cancellation);
         Task<IApplicationUser?> UpdateUserAsync(UserUpdateDTO user, CancellationToken cancellation);

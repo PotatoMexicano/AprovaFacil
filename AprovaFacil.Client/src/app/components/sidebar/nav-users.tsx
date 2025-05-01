@@ -41,7 +41,7 @@ export function NavUsers({
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
               <a href={item.url}>
-                <item.icon />
+                <item.icon strokeWidth={1.75} absoluteStrokeWidth />
                 <span>{item.name}</span>
               </a>
             </SidebarMenuButton>

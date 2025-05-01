@@ -5,6 +5,7 @@ using AprovaFacil.Domain.Interfaces;
 using AprovaFacil.Domain.Results;
 using AprovaFacil.Server.Contracts;
 using AprovaFacil.Server.Extensions;
+using AprovaFacil.Server.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -13,6 +14,7 @@ namespace AprovaFacil.Server.Controllers;
 
 [Route("api/request")]
 [ApiController]
+[RequireTenant]
 [Authorize]
 public class RequestController(RequestInterfaces.IRequestService service) : ControllerBase
 {

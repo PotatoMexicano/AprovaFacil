@@ -1,6 +1,6 @@
 import { ArrowDown, Building2, FileCheck2, LifeBuoyIcon, UserCheck2, Wallet } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card";
-import { Dialog, DialogContent, DialogTrigger } from "@/app/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/app/components/ui/dialog";
 import { SidebarMenuButton } from "@/app/components/ui/sidebar";
 
 export function WorkflowModal() {
@@ -14,7 +14,9 @@ export function WorkflowModal() {
           </div>
         </SidebarMenuButton>
       </DialogTrigger>
+      <DialogTitle></DialogTitle>
       <DialogContent className="max-w-[600px] bg-sidebar">
+        <DialogDescription></DialogDescription>
         <Card className="w-full border-none shadow-none bg-sidebar">
           <CardHeader>
             <CardTitle className="text-2xl">Fluxo de Atividades</CardTitle>

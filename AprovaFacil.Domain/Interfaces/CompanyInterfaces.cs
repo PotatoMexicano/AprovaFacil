@@ -18,8 +18,8 @@ public static class CompanyInterfaces
 
     public interface ICompanyRepository
     {
-        Task<Company[]> GetAllCompaniesAsync(CancellationToken cancellation);
-        Task<Company?> GetCompanyAsync(Int64 idCompany, CancellationToken cancellation);
+        Task<Company[]> GetAllCompaniesAsync(Int32 tenantId, CancellationToken cancellation);
+        Task<Company?> GetCompanyAsync(Int64 idCompany, Int32 tenantId, CancellationToken cancellation);
 
         Task<Company?> RegisterCompanyAsync(Company request, CancellationToken cancellation);
         Task<Company?> UpdateCompanyAsync(Company request, CancellationToken cancellation);

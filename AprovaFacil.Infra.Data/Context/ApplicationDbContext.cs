@@ -8,12 +8,11 @@ namespace AprovaFacil.Infra.Data.Context;
 
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Int32>, Int32>
 {
+    public DbSet<Tenant> Tenants { get; set; }
     public DbSet<Company> Companies { get; set; }
-
     public DbSet<Request> Requests { get; set; }
     public DbSet<RequestManager> RequestManagers { get; set; }
     public DbSet<RequestDirector> RequestDirectors { get; set; }
-
     public DbSet<Notification> Notifications { get; set; }
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
@@ -22,8 +21,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
+        builder.Entity<Tenant>().HasKey(t => t.Id);
+        builder.Entity<Tenant>().OwnsOne(tenant => tenant.Address);
+
+        builder.Entity<Tenant>().HasMany(t => t.Companies).WithOne(c => c.Tenant).OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<Tenant>().HasMany(t => t.Requests).WithOne(r => r.Tenant).OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<Tenant>().HasMany<ApplicationUser>().WithOne(u => u.Tenant).HasForeignKey(u => u.TenantId).OnDelete(DeleteBehavior.Cascade);
+
         builder.Entity<Company>().HasKey(c => c.Id);
-        builder.Entity<Company>().OwnsOne(Company => Company.Address);
+        builder.Entity<Company>().OwnsOne(c => c.Address);
 
         builder.Entity<ApplicationUser>(entity =>
         {
