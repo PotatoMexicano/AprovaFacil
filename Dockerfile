@@ -23,7 +23,7 @@ WORKDIR /app
 COPY --from=build /app/out .
 
 # Expõe a porta usada pela aplicação
-EXPOSE 7296
+EXPOSE 80
 
 ENV ASPNETCORE_ENVIRONMENT=Production
 

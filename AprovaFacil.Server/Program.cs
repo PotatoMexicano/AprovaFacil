@@ -15,7 +15,7 @@ public class Program
 
         builder.WebHost.ConfigureKestrel(options =>
         {
-            options.Listen(IPAddress.Any, 7296, listenOptions =>
+            options.Listen(IPAddress.Any, 80, listenOptions =>
             {
                 listenOptions.Protocols = HttpProtocols.Http1;
             });
