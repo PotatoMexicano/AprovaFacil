@@ -43,7 +43,7 @@ public class Program
             options.AddPolicy("AllowLocalhost", policy =>
             {
                 policy
-                .WithOrigins("http://192.168.7.128:7296", "http://192.168.7.128:5173")
+                .WithOrigins("http://192.168.7.128:7296", "http://localhost:7296", "http://192.168.7.128:5173")
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials()
