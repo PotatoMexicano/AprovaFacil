@@ -67,13 +67,13 @@ export default function Homepage() {
       <Button onClick={() => setStats(!stats)} className="text-base">
         {stats ? (
           <>
-            <p className="mr-2">Visualização: Empresa</p>
-            <Building2Icon />
+            <p className="mr-2">Visualização: Pessoal</p>
+            <User2Icon />
           </>
         ) : (
           <>
-            <p className="mr-2">Visualização: Pessoal</p>
-            <User2Icon />
+            <p className="mr-2">Visualização: Empresa</p>
+            <Building2Icon />
           </>
         )}
       </Button>
