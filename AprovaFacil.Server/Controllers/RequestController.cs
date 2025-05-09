@@ -74,7 +74,7 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
     }
 
     [HttpPost("myself")]
-    public async Task<IActionResult> ListMyRequest([FromBody] FilterRequest request, CancellationToken cancellation = default)
+    public async Task<IActionResult> ListUserRequests([FromBody] FilterRequest request, CancellationToken cancellation = default)
     {
         Int32? userId = User.FindUserIdentifier();
 
@@ -86,14 +86,32 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
             });
         }
 
-        Result<RequestDTO[]> result = await service.ListRequests(request, userId.Value, cancellation);
+        Result<RequestDTO[]> result = await service.ListUserRequests(request, userId.Value, cancellation);
+
+        return result.ToActionResult();
+    }
+
+    [HttpPost("tenant")]
+    public async Task<IActionResult> ListTenantRequests([FromBody] FilterRequest request, CancellationToken cancellation = default)
+    {
+        Int32? userId = User.FindUserIdentifier();
+
+        if (userId is null)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Detail = "Are you logged in ?"
+            });
+        }
+
+        Result<RequestDTO[]> result = await service.ListTenantRequests(request, cancellation);
 
         return result.ToActionResult();
     }
 
     [Authorize]
     [HttpGet("myself/stats")]
-    public async Task<IActionResult> MyStats(CancellationToken cancellation = default)
+    public async Task<IActionResult> UserStats(CancellationToken cancellation = default)
     {
         Int32? userId = User.FindUserIdentifier();
 
@@ -105,7 +123,26 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
             });
         }
 
-        Result<Object> result = await service.MyStats(userId.Value, cancellation);
+        Result<Object> result = await service.UserStats(userId.Value, cancellation);
+
+        return result.ToActionResult();
+    }
+
+    [Authorize(Roles = $"{Roles.Director}, {Roles.Manager}")]
+    [HttpGet("tenant/stats")]
+    public async Task<IActionResult> TenantStats(CancellationToken cancellation = default)
+    {
+        Int32? userId = User.FindUserIdentifier();
+
+        if (userId is null)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Detail = "Are you logged in ?"
+            });
+        }
+
+        Result<Object> result = await service.TenantStats(cancellation);
 
         return result.ToActionResult();
     }

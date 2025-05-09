@@ -53,12 +53,12 @@ function AppHeader() {
             ))}
           </BreadcrumbList>
         </Breadcrumb>
-        <div className='right-0 flex flex-col mt-5 absolute gap-2 px-10 items-center text-muted-foreground opacity-50 select-none'>
+        {/* <div className='right-0 flex flex-col mt-5 absolute gap-2 px-10 items-center text-muted-foreground opacity-50 select-none'>
           <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
             <span className="text-xs">Ctrl + Space</span>
           </kbd>
           <span className="text-xs">Menu de atalhos</span>
-        </div>
+        </div> */}
       </div>
     </header>
   );

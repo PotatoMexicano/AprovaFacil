@@ -82,8 +82,19 @@ export const requestApi = createApi({
     }),
 
     getMyRequests: builder.query<RequestReponse[], number>({
-      query: (quantity?: number) => ({
+      query: (quantity: number) => ({
         url: "request/myself",
+        method: 'POST',
+        body: {
+          quantity: quantity
+        }
+      }),
+      providesTags: ["Requests"]
+    }),
+
+    getTenantRequests: builder.query<RequestReponse[], number>({
+      query: (quantity?: number) => ({
+        url: "request/tenant",
         method: 'POST',
         body: {
           quantity: quantity
@@ -95,6 +106,13 @@ export const requestApi = createApi({
     getMyStats: builder.query<RequestStatsResponse, void>({
       query: () => ({
         url: "request/myself/stats",
+        method: 'GET',
+      }),
+    }),
+
+    getTenantStats: builder.query<RequestStatsResponse, void>({
+      query: () => ({
+        url: "request/tenant/stats",
         method: 'GET',
       }),
     }),
@@ -167,6 +185,7 @@ export const requestApi = createApi({
 export const {
   useRegisterRequestMutation,
   useGetMyRequestsQuery,
+  useGetTenantRequestsQuery,
   useGetPendingRequestsQuery,
   useGetFinishedRequestsQuery,
   useLazyGetPendingRequestsQuery,
@@ -177,6 +196,7 @@ export const {
   useFinishRequestMutation,
   useAllRequestsQuery,
   useGetMyStatsQuery,
+  useGetTenantStatsQuery,
   useGetApprovedRequestsQuery,
   useLazyGetApprovedRequestsQuery
 } = requestApi;

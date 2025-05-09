@@ -113,7 +113,7 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
         }
     }
 
-    public async Task<Result<RequestDTO[]>> ListRequests(FilterRequest filter, Int32 applicationUserId, CancellationToken cancellation)
+    public async Task<Result<RequestDTO[]>> ListUserRequests(FilterRequest filter, Int32 applicationUserId, CancellationToken cancellation)
     {
         try
         {
@@ -338,7 +338,7 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
         }
     }
 
-    public async Task<Result<Object>> MyStats(Int32 applicationUserId, CancellationToken cancellation)
+    public async Task<Result<Object>> UserStats(Int32 applicationUserId, CancellationToken cancellation)
     {
         try
         {
@@ -346,11 +346,36 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
 
             if (!tenantId.HasValue) return Result<Object>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
 
-            Object response = await repository.MyStatsAsync(applicationUserId, cancellation);
+            Object response = await repository.UserStatsAsync(applicationUserId, cancellation);
 
             if (response is null)
             {
                 return Result<Object>.Failure(ErrorType.NotFound, "Nenhuma informação do usuário foi encontrada.");
+            }
+
+            return Result<Object>.Success(response);
+
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, ex.Message);
+            return Result<Object>.Failure(ErrorType.InternalError, "Ocorreu um erro ao buscar informações do usuário.");
+        }
+    }
+
+    public async Task<Result<Object>> TenantStats(CancellationToken cancellation)
+    {
+        try
+        {
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<Object>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
+            Object response = await repository.TenantStatsAsync(tenantId.Value, cancellation);
+
+            if (response is null)
+            {
+                return Result<Object>.Failure(ErrorType.NotFound, "Nenhuma informação da empresa foi encontrada.");
             }
 
             return Result<Object>.Success(response);
@@ -472,6 +497,32 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
         {
             Log.Error(ex, ex.Message);
             return Result<RequestDTO[]>.Failure(ErrorType.InternalError, "Ocorreu um erro ao buscar solicitações finalizadas.");
+        }
+    }
+
+    public async Task<Result<RequestDTO[]>> ListTenantRequests(FilterRequest filter, CancellationToken cancellation)
+    {
+        try
+        {
+            Int32? tenantId = tenant.GetTenantId();
+
+            if (!tenantId.HasValue) return Result<RequestDTO[]>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+
+            Request[] requests = await repository.ListRequestsAsync(filter, tenantId.Value, cancellation);
+
+            if (requests is null)
+            {
+                return Result<RequestDTO[]>.Failure(ErrorType.NotFound, "Nenhuma solicitação encontrada.");
+            }
+
+            RequestDTO[] response = requests.Select<Request, RequestDTO>(x => x).ToArray();
+
+            return Result<RequestDTO[]>.Success(response);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, ex.Message);
+            return Result<RequestDTO[]>.Failure(ErrorType.InternalError, "Ocorreu um erro ao buscar solicitações.");
         }
     }
 

@@ -10,9 +10,12 @@ public static class RequestInterfaces
     public interface IRequestService
     {
         Task<Result<RequestDTO[]>> ListAll(CancellationToken cancellation);
-        Task<Result<RequestDTO[]>> ListRequests(FilterRequest filter, Int32 applicationUserId, CancellationToken cancellation);
+        Task<Result<RequestDTO[]>> ListUserRequests(FilterRequest filter, Int32 applicationUserId, CancellationToken cancellation);
+        Task<Result<RequestDTO[]>> ListTenantRequests(FilterRequest filter, CancellationToken cancellation);
         Task<Result<RequestDTO>> ListRequest(Guid requestGuid, CancellationToken cancellation);
-        Task<Result<Object>> MyStats(Int32 applicationUserId, CancellationToken cancellation);
+
+        Task<Result<Object>> UserStats(Int32 applicationUserId, CancellationToken cancellation);
+        Task<Result<Object>> TenantStats(CancellationToken cancellation);
 
         Task<Result<RequestDTO[]>> ListApprovedRequests(FilterRequest filter, CancellationToken cancellation);
         Task<Result<RequestDTO[]>> ListPendingRequests(FilterRequest filter, CancellationToken cancellation);
@@ -31,7 +34,9 @@ public static class RequestInterfaces
         Task<Request[]> ListAllAsync(Int32 tenantId, CancellationToken cancellation);
         Task<Request?> ListRequestAsync(Guid request, Int32 tenantId, CancellationToken cancellation);
         Task<Request[]> ListRequestsAsync(FilterRequest filter, Int32 tenantId, CancellationToken cancellation);
-        Task<Object> MyStatsAsync(Int32 applicationUserId, CancellationToken cancellation);
+
+        Task<Object> UserStatsAsync(Int32 applicationUserId, CancellationToken cancellation);
+        Task<Object> TenantStatsAsync(Int32 tenantId, CancellationToken cancellation);
 
         Task<Request[]> ListPendingRequestsAsync(FilterRequest filter, Int32 tenantId, CancellationToken cancellation);
         Task<Request[]> ListApprovedRequestsAsync(FilterRequest filter, Int32 tenantId, CancellationToken cancellation);

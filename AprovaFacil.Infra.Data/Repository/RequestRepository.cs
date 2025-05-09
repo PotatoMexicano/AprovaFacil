@@ -220,8 +220,8 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
     {
         IQueryable<Request> query = context.Requests.AsQueryable();
 
-        RequestExtensions.Filter(ref query, filter);
         RequestExtensions.FilterPersonal(ref query, filter);
+        RequestExtensions.Filter(ref query, filter);
 
         Request[] results = await query
             .Where(r => r.TenantId == tenantId)
@@ -489,7 +489,7 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
         return result;
     }
 
-    public async Task<Object> MyStatsAsync(Int32 applicationUserId, CancellationToken cancellation)
+    public async Task<Object> UserStatsAsync(Int32 applicationUserId, CancellationToken cancellation)
     {
         Int64 amount = await context.Requests.Where(x => x.RequesterId == applicationUserId && x.ApprovedFirstLevel == true && x.ApprovedSecondLevel == true).SumAsync(x => x.Amount, cancellation);
         Int32 totalRequest = await context.Requests.Where(x => x.RequesterId == applicationUserId).CountAsync(cancellation);
@@ -503,6 +503,69 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
         // Agrupando por Mês e Status
         var groupedData = await context.Requests
             .Where(r => r.RequesterId == applicationUserId && r.CreateAt >= firstMonth)
+            .GroupBy(r => new { r.CreateAt.Year, r.CreateAt.Month, r.Status })
+            .Select(g => new
+            {
+                g.Key.Year,
+                g.Key.Month,
+                Status = g.Key.Status, // -1, 0, 1
+                Count = g.Count()
+            })
+            .ToListAsync(cancellation);
+
+        // Preparar estrutura dos 12 meses
+        System.Globalization.DateTimeFormatInfo labels = System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat;
+        var last12Months = Enumerable.Range(0, 12)
+            .Select(i => firstMonth.AddMonths(i))
+            .Select(d => new
+            {
+                Year = d.Year,
+                Month = d.Month,
+                Label = labels.GetAbbreviatedMonthName(d.Month)
+            })
+            .ToList();
+
+        // Juntar os dados
+        var result = last12Months.Select(m =>
+        {
+            var monthData = groupedData.Where(x => x.Year == m.Year && x.Month == m.Month);
+
+            return new
+            {
+                Month = m.Label,
+                Pending = monthData.FirstOrDefault(x => x.Status == StatusRequest.Pending)?.Count ?? 0,
+                Approved = monthData.FirstOrDefault(x => x.Status == StatusRequest.Approved)?.Count ?? 0,
+                Rejected = monthData.FirstOrDefault(x => x.Status == StatusRequest.Reject)?.Count ?? 0
+            };
+        }).ToList();
+
+        var stats = new
+        {
+            TotalRequests = totalRequest,
+            TotalRequestPending = totalRequestPending,
+            TotalRequestApproved = totalRequestApproved,
+            TotalRequestRejected = totalRequestRejected,
+            TotalRequestsByMonth = result,
+            TotalAmountRequestsApproved = amount
+        };
+
+        return stats;
+    }
+
+    public async Task<Object> TenantStatsAsync(Int32 tenantId, CancellationToken cancellation)
+    {
+        Int64 amount = await context.Requests.Where(x => x.TenantId == tenantId && x.ApprovedFirstLevel == true && x.ApprovedSecondLevel == true).SumAsync(x => x.Amount, cancellation);
+        Int32 totalRequest = await context.Requests.Where(x => x.TenantId == tenantId).CountAsync(cancellation);
+        Int32 totalRequestPending = await context.Requests.Where(x => x.TenantId == tenantId && x.Status == StatusRequest.Pending).CountAsync(cancellation);
+        Int32 totalRequestRejected = await context.Requests.Where(x => x.TenantId == tenantId && x.Status == StatusRequest.Reject).CountAsync(cancellation);
+        Int32 totalRequestApproved = await context.Requests.Where(x => x.TenantId == tenantId && x.Status == StatusRequest.Approved).CountAsync(cancellation);
+
+        DateTime now = DateTime.UtcNow;
+        DateTime firstMonth = new DateTime(now.Year, now.Month, 1).AddMonths(-11);
+
+        // Agrupando por Mês e Status
+        var groupedData = await context.Requests
+            .Where(r => r.TenantId == tenantId && r.CreateAt >= firstMonth)
             .GroupBy(r => new { r.CreateAt.Year, r.CreateAt.Month, r.Status })
             .Select(g => new
             {
@@ -842,6 +905,6 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
             .ToArrayAsync(cancellation);
 
         return results;
-    }
 
+    }
 }

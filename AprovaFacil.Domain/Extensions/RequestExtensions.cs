@@ -25,7 +25,7 @@ public static class RequestExtensions
 
         if (filter.ApplicationUserId.HasValue && filter.ApplicationUserId.Value != 0)
         {
-            query = query.Where(x => x.RequesterId == filter.ApplicationUserId).OrderByDescending(x => x.CreateAt);
+            query = query.Where(x => x.RequesterId == filter.ApplicationUserId).OrderByDescending(x => x.CreateAt).AsQueryable();
         }
 
         return query.AsQueryable();
