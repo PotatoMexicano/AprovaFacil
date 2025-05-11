@@ -20,12 +20,15 @@ import { cn, formatCurrency, formatDate, useIsFinance } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/ui/tooltip";
 import { UserResponse } from "@/types/auth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/app/components/ui/button";
 import { useBreadcrumb } from "@/app/context/breadcrumb-context";
 import { RootState, useAppSelector } from "@/app/store/store";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/app/components/ui/alert";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/app/components/ui/dialog";
+import { ScrollArea } from "@/app/components/ui/scroll-area";
+import { Timeline } from "@/app/components/ui/timeline";
 
 function UserCard({ user, status }: { user: UserResponse | undefined, status?: number | undefined }) {
 
@@ -98,6 +101,8 @@ export default function ViewRequest() {
   const [rejectRequest] = useRejectRequestMutation();
   const [finishRequest] = useFinishRequestMutation();
 
+  const [openTimeline, setOpenTimeLine] = useState(false);
+
   useEffect(() => {
     setBreadcrumbs(["Início", "Solicitação", "Detalhes"]);
   }, [setBreadcrumbs])
@@ -141,6 +146,7 @@ export default function ViewRequest() {
       console.error(err)
     }
   };
+
   const handleApprove = async () => {
     try {
       await approveRequest(id as string).unwrap();
@@ -151,6 +157,7 @@ export default function ViewRequest() {
       console.error(err)
     }
   };
+
   const handleFinish = async () => {
     try {
       await finishRequest(id as string).unwrap();
@@ -370,41 +377,65 @@ export default function ViewRequest() {
             </CardContent>
           </Card>
 
-          {/* Timeline Card */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Linha do tempo</CardTitle>
-                <Calendar className="h-5 w-5 text-muted-foreground" />
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Aberto</span>
-                <span className="text-sm font-normal">{data?.create_at ? formatDate(data.create_at) : ""}</span>
-              </div>
+          {/* Timeline Dialog */}
+          <Dialog open={openTimeline} onOpenChange={setOpenTimeLine}>
 
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Gerente</span>
-                <span className="text-sm font-normal">{data?.first_level_at ? formatDate(data.first_level_at) : ""}</span>
-              </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DialogTrigger asChild>
+                    {/* Timeline Card - Trigger */}
+                    <Card className="cursor-pointer">
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg">Linha do tempo</CardTitle>
+                          <Calendar className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Aberto</span>
+                          <span className="text-sm font-normal">{data?.create_at ? formatDate(data.create_at) : ""}</span>
+                        </div>
 
-              {data && data.directors.length > 0 && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Diretor</span>
-                  <span className="text-sm font-normal">{data?.second_level_at ? formatDate(data.second_level_at) : ""}</span>
-                </div>
-              )}
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Gerente</span>
+                          <span className="text-sm font-normal">{data?.first_level_at ? formatDate(data.first_level_at) : ""}</span>
+                        </div>
 
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Faturado</span>
-                {data && data.approved === 1 && (
-                  <span className="text-sm font-normal">{data?.received_at ? formatDate(data.received_at) : ""}</span>
-                )}
-              </div>
+                        {data && data.directors.length > 0 && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">Diretor</span>
+                            <span className="text-sm font-normal">{data?.second_level_at ? formatDate(data.second_level_at) : ""}</span>
+                          </div>
+                        )}
 
-            </CardContent>
-          </Card>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Faturado</span>
+                          {data && data.approved === 1 && (
+                            <span className="text-sm font-normal">{data?.received_at ? formatDate(data.received_at) : ""}</span>
+                          )}
+                        </div>
+
+                      </CardContent>
+                    </Card>
+                  </DialogTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Clique para ver a linha do tempo</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <DialogContent className="sm:max-w-md w-[95vw] rounded-md">
+              <DialogHeader>
+                <DialogTitle>Linha do tempo</DialogTitle>
+              </DialogHeader>
+              <ScrollArea className="max-h-[60vh] pr-4">
+                <Timeline item={data} className="py-4" />
+              </ScrollArea>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Company Details */}

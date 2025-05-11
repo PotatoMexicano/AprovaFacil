@@ -15,7 +15,7 @@ export function WorkflowModal() {
         </SidebarMenuButton>
       </DialogTrigger>
       <DialogTitle></DialogTitle>
-      <DialogContent className="w-[90vw] max-w-[600px] max-h-[90hv] overflow-y-auto bg-sidebar sm:rounded-xl sm:p-6">
+      <DialogContent className="w-[90vw] max-w-[600px] max-h-[85vh] overflow-y-auto bg-sidebar sm:rounded-xl sm:p-6 rounded-md">
         <DialogDescription></DialogDescription>
         <Card className="w-full border-none shadow-none bg-sidebar">
           <CardHeader>
