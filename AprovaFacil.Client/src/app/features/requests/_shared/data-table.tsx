@@ -28,7 +28,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/app/components/ui/select"
 import { AnimatePresence, motion } from "framer-motion"
 import { ArrowDownNarrowWideIcon, ExternalLinkIcon, Search } from "lucide-react"
-import { RequestReponse } from "@/types/request"
+import { RequestResponse } from "@/types/request"
 import { UserResponse } from "@/types/auth"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/app/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/ui/tooltip"
@@ -41,13 +41,13 @@ import { useLazyGetFileRequestQuery } from "@/app/api/requestApiSlice"
 import { toast } from "sonner"
 import { RootState, useAppSelector } from "@/app/store/store"
 
-interface DataTableProps<TData extends RequestReponse> {
+interface DataTableProps<TData extends RequestResponse> {
   data: TData[];
   columnVisibility: VisibilityState;
   setColumnVisibility: React.Dispatch<React.SetStateAction<VisibilityState>>;
 }
 
-export function DataTable<TData extends RequestReponse>({ data, columnVisibility, setColumnVisibility }: DataTableProps<TData>) {
+export function DataTable<TData extends RequestResponse>({ data, columnVisibility, setColumnVisibility }: DataTableProps<TData>) {
   const { user } = useAppSelector((state: RootState) => state.auth);
   const isManagerOrDirector = user.role === "Manager" || user.role === "Director";
 
@@ -64,7 +64,7 @@ export function DataTable<TData extends RequestReponse>({ data, columnVisibility
       return [];
     }
 
-    const _columns: ColumnDef<RequestReponse>[] = [
+    const _columns: ColumnDef<RequestResponse>[] = [
       {
         accessorKey: "requester",
         header: "Solicitante",
@@ -342,13 +342,13 @@ export function DataTable<TData extends RequestReponse>({ data, columnVisibility
     pageSize: Number(selectedOption), //default page size
   });
 
-  const globalFilterFn = (row: Row<RequestReponse>, columnId: string, filterValue: string) => {
+  const globalFilterFn = (row: Row<RequestResponse>, columnId: string, filterValue: string) => {
     if (!filterValue) return true;
 
     const value = filterValue.toLowerCase();
 
     // Acessa o objeto company dentro de row.original
-    const request: RequestReponse = row.original || {};
+    const request: RequestResponse = row.original || {};
 
     // Converte os valores para string e lowercase, tratando casos undefined/null
     const tradeName = String(request.company.trade_name || "").toLowerCase();

@@ -1,6 +1,6 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { customBaseQuery } from "./base-api";
-import { RequestReponse, RequestStatsResponse } from "@/types/request";
+import { RequestResponse, RequestStatsResponse } from "@/types/request";
 
 export const requestApi = createApi({
   reducerPath: "requestApi",
@@ -30,7 +30,7 @@ export const requestApi = createApi({
       invalidatesTags: ["Requests"]
     }),
 
-    allRequests: builder.query<RequestReponse[], void>({
+    allRequests: builder.query<RequestResponse[], void>({
       query: () => {
         return {
           url: "request",
@@ -73,7 +73,7 @@ export const requestApi = createApi({
       invalidatesTags: ["Requests"]
     }),
 
-    getRequest: builder.query<RequestReponse, string>({
+    getRequest: builder.query<RequestResponse, string>({
       query: (id) => ({
         url: `request/${id}`,
         method: "GET",
@@ -81,7 +81,7 @@ export const requestApi = createApi({
       providesTags: ["Requests"]
     }),
 
-    getMyRequests: builder.query<RequestReponse[], number>({
+    getMyRequests: builder.query<RequestResponse[], number>({
       query: (quantity: number) => ({
         url: "request/myself",
         method: 'POST',
@@ -92,7 +92,7 @@ export const requestApi = createApi({
       providesTags: ["Requests"]
     }),
 
-    getTenantRequests: builder.query<RequestReponse[], number>({
+    getTenantRequests: builder.query<RequestResponse[], number>({
       query: (quantity?: number) => ({
         url: "request/tenant",
         method: 'POST',
@@ -117,7 +117,7 @@ export const requestApi = createApi({
       }),
     }),
 
-    getPendingRequests: builder.query<RequestReponse[], void>({
+    getPendingRequests: builder.query<RequestResponse[], void>({
       query: () => ({
         url: "request/pending",
         method: "POST",
@@ -126,7 +126,7 @@ export const requestApi = createApi({
       providesTags: ["Requests"]
     }),
 
-    getApprovedRequests: builder.query<RequestReponse[], void>({
+    getApprovedRequests: builder.query<RequestResponse[], void>({
       query: () => ({
         url: "request/approved",
         method: "POST",

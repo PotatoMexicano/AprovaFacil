@@ -1,7 +1,7 @@
 import { UserResponse } from "./auth";
 import { CompanyResponse } from "./company";
 
-export interface RequestReponse {
+export interface RequestResponse {
   uuid: string;
   requester_id: number;
   invoice_name: string;
