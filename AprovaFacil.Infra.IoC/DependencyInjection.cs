@@ -1,4 +1,4 @@
-﻿using AprovaFacil.Application.Services;
+using AprovaFacil.Application.Services;
 using AprovaFacil.Domain.Constants;
 using AprovaFacil.Domain.DTOs;
 using AprovaFacil.Domain.Interfaces;
@@ -62,6 +62,7 @@ public static class DependencyInjection
         services.AddScoped<CompanyInterfaces.ICompanyRepository, CompanyRepository>();
         services.AddScoped<UserInterfaces.IUserRepository, UserRepository>();
         services.AddScoped<RequestInterfaces.IRequestRepository, RequestRepository>();
+        services.AddScoped<ITenantRepository, TenantRepository>(); // Added TenantRepository
         return services;
     }
 
@@ -146,31 +147,44 @@ public static class DependencyInjection
         ApplicationDbContext context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         RoleManager<IdentityRole<Int32>> roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Int32>>>();
         UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        ITenantRepository tenantRepository = scope.ServiceProvider.GetRequiredService<ITenantRepository>();
 
         //await context.Database.MigrateAsync();
 
-        Tenant tenant = new Tenant
+        Tenant? tenant = await tenantRepository.GetByIdAsync(1); // Check if tenant exists
+        if (tenant == null)
         {
-            Id = 1,
-            Name = "Embraplan",
-            Email = "email@embraplan.com",
-            PhoneNumber = "(19) 99897-0000",
-            CNPJ = "0394853653",
-            Address = new Address
+            tenant = new Tenant
             {
-                City = "Piracicaba",
-                Number = "1200",
-                State = "São Paulo",
-                PostalCode = "13400-765",
-                Street = "R. Tiradentes",
-                Neighborhood = "Centro",
-                Complement = String.Empty
-            },
-            ContactPerson = "Luciano Cordeiro"
-        };
-
-        if (!await context.Tenants.AnyAsync(t => t.Id == tenant.Id))
+                Id = 1, // Explicitly set Id for seeding if it's not auto-generated or if you want a specific Id
+                Name = "Embraplan",
+                Email = "email@embraplan.com",
+                PhoneNumber = "(19) 99897-0000",
+                CNPJ = "0394853653",
+                Address = new Address
+                {
+                    City = "Piracicaba",
+                    Number = "1200",
+                    State = "São Paulo",
+                    PostalCode = "13400-765",
+                    Street = "R. Tiradentes",
+                    Neighborhood = "Centro",
+                    Complement = String.Empty
+                },
+                ContactPerson = "Luciano Cordeiro",
+                Plan = PlanType.Business // Example: Set a plan
+            };
+            tenant.SetLimitsBasedOnPlan(); // Set limits based on the plan
             await context.Tenants.AddAsync(tenant);
+            await context.SaveChangesAsync(); // Save tenant to get Id if auto-generated, and to persist
+        }
+        else
+        {
+            // If tenant exists, ensure limits are set (e.g., if this code runs after model changes)
+            tenant.SetLimitsBasedOnPlan();
+            await tenantRepository.UpdateAsync(tenant);
+        }
+
 
         List<Company> companies = new List<Company>
     {
@@ -192,7 +206,7 @@ public static class DependencyInjection
             },
             Phone = "(11) 98765-4321",
             Email = "contact@techsolutions.com",
-            TenantId = 1,
+            TenantId = tenant.Id, // Use the Id of the seeded/fetched tenant
         },
         new Company
         {
@@ -212,51 +226,55 @@ public static class DependencyInjection
             },
             Phone = "(21) 91234-5678",
             Email = "info@greenenergy.com.br",
-            TenantId = 1,
+            TenantId = tenant.Id, // Use the Id of the seeded/fetched tenant
         }
     };
 
         foreach (Company company in companies)
         {
-            if (!await context.Companies.AnyAsync(c => c.Id == company.Id))
+            if (!await context.Companies.AnyAsync(c => c.Id == company.Id && c.TenantId == tenant.Id))
+            {
+                company.TenantId = tenant.Id; // Ensure TenantId is set
                 await context.Companies.AddAsync(company);
+            }
         }
 
         await context.SaveChangesAsync();
 
         String[] roles = new[] { Roles.Requester, Roles.Manager, Roles.Director, Roles.Finance, Roles.Assistant };
 
-        foreach (String? role in roles)
+        foreach (String? roleName in roles) // Changed variable name for clarity
         {
-            if (!await roleManager.RoleExistsAsync(role))
+            if (!await roleManager.RoleExistsAsync(roleName))
             {
-                await roleManager.CreateAsync(new IdentityRole<Int32>(role));
+                await roleManager.CreateAsync(new IdentityRole<Int32>(roleName));
             }
         }
 
         ApplicationUser[] users = new[]
         {
-        new ApplicationUser("ana@example.com", "Ana Luiza", Roles.Requester, Departaments.IT, 1, Avatars.Female86),
-        new ApplicationUser("bruno@example.com", "Bruno Lima", Roles.Manager, Departaments.Engineer, 1, Avatars.Male47),
-        new ApplicationUser("marcos@example.com", "Marcos Souza", Roles.Requester, Departaments.IT, 1, Avatars.Male24, false),
-        new ApplicationUser("clara@example.com", "Clara dias", Roles.Director, Departaments.Sales, 1, Avatars.Female82),
-        new ApplicationUser("diego@example.com", "Diego Felippe", Roles.Finance, Departaments.Finance, 1, Avatars.Male19),
-        new ApplicationUser("elisa@example.com", "Elisa Lucca", Roles.Assistant, Departaments.HR, 1, Avatars.Female100),
+        new ApplicationUser("ana@example.com", "Ana Luiza", Roles.Requester, Departaments.IT, tenant.Id, Avatars.Female86),
+        new ApplicationUser("bruno@example.com", "Bruno Lima", Roles.Manager, Departaments.Engineer, tenant.Id, Avatars.Male47),
+        new ApplicationUser("marcos@example.com", "Marcos Souza", Roles.Requester, Departaments.IT, tenant.Id, Avatars.Male24, false),
+        new ApplicationUser("clara@example.com", "Clara dias", Roles.Director, Departaments.Sales, tenant.Id, Avatars.Female82),
+        new ApplicationUser("diego@example.com", "Diego Felippe", Roles.Finance, Departaments.Finance, tenant.Id, Avatars.Male19),
+        new ApplicationUser("elisa@example.com", "Elisa Lucca", Roles.Assistant, Departaments.HR, tenant.Id, Avatars.Female100),
     };
 
-        foreach (ApplicationUser? user in users)
+        foreach (ApplicationUser? userSeedInfo in users) // Changed variable name for clarity
         {
-            ApplicationUser? existingUser = await userManager.FindByEmailAsync(user.Email);
+            ApplicationUser? existingUser = await userManager.FindByEmailAsync(userSeedInfo.Email);
             if (existingUser == null)
             {
-                IdentityResult result = await userManager.CreateAsync(user, "Senha123"); // Senha padrão
+                userSeedInfo.TenantId = tenant.Id; // Ensure TenantId is set before creation
+                IdentityResult result = await userManager.CreateAsync(userSeedInfo, "Senha123"); // Senha padrão
                 if (result.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(user, user.Role);
+                    await userManager.AddToRoleAsync(userSeedInfo, userSeedInfo.Role);
                 }
                 else
                 {
-                    Console.WriteLine($"Erro ao criar {user.Email}: {String.Join(", ", result.Errors.Select(e => e.Description))}");
+                    Console.WriteLine($"Erro ao criar {userSeedInfo.Email}: {String.Join(", ", result.Errors.Select(e => e.Description))}");
                 }
             }
         }
@@ -269,16 +287,6 @@ public static class DependencyInjection
         String? invoicePath = Path.Combine(configuration.GetValue<String>("Directory:Invoices") ?? "invoices");
         String? budgetPath = Path.Combine(configuration.GetValue<String>("Directory:Budgets") ?? "budgets");
 
-        //if (!Directory.Exists(invoicePath))
-        //{
-        //    Directory.CreateDirectory(invoicePath);
-        //}
-
-        //if (!Directory.Exists(budgetPath))
-        //{
-        //    Directory.CreateDirectory(budgetPath);
-        //}
-
         services.AddSingleton(x => new ServerDirectory
         {
             InvoicePath = invoicePath,
@@ -286,3 +294,4 @@ public static class DependencyInjection
         });
     }
 }
+
