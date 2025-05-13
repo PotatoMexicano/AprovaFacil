@@ -54,7 +54,7 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
 
         if (!updated) return false;
 
-        await context.SaveChangesAsync(cancellation);
+        //await context.SaveCh1angesAsync(cancellation);
         return true;
     }
 
@@ -99,7 +99,7 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
 
         if (!updated) return false;
 
-        await context.SaveChangesAsync(cancellation);
+        //await context.SaveCh1angesAsync(cancellation);
         return true;
     }
 
@@ -113,7 +113,9 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
         request.Level = LevelRequest.Finished;
         request.FinisherId = applicationUserId;
 
-        return await context.SaveChangesAsync(cancellation) > 0;
+        return true;
+
+        //return await context.SaveCh1angesAsync(cancellation) > 0;
     }
 
     public async Task<Request?> ListRequestAsync(Guid request, Int32 tenantId, CancellationToken cancellation)
@@ -332,74 +334,9 @@ public class RequestRepository(ApplicationDbContext context) : RequestInterfaces
         }
 
         context.Requests.Add(request);
-        await context.SaveChangesAsync(cancellation);
+        //await context.SaveCh1angesAsync(cancellation);
 
-        // Recarregar a entidade com as relações
-        return await context.Requests
-            .Select(x => new Request
-            {
-                UUID = x.UUID,
-                CreateAt = x.CreateAt,
-                Amount = x.Amount,
-                Note = x.Note,
-                InvoiceName = x.InvoiceName,
-                BudgetName = x.BudgetName,
-                PaymentDate = x.PaymentDate,
-                Company = new Company
-                {
-                    Address = x.Company.Address,
-                    CNPJ = x.Company.CNPJ,
-                    Email = x.Company.Email,
-                    LegalName = x.Company.LegalName,
-                    Phone = x.Company.Phone,
-                    TradeName = x.Company.TradeName,
-                    Enabled = x.Company.Enabled,
-                    Id = x.Company.Id,
-                    TenantId = x.Company.TenantId,
-                },
-                Requester = new ApplicationUser
-                {
-                    FullName = x.Requester.FullName,
-                    Email = x.Requester.Email,
-                    Id = x.RequesterId,
-                    Enabled = x.Requester.Enabled,
-                    Department = x.Requester.Department,
-                    Role = x.Requester.Role,
-                    PictureUrl = x.Requester.PictureUrl
-                },
-                Directors = x.Directors.Select(d => new RequestDirector
-                {
-                    DirectorId = d.DirectorId,
-                    RequestUUID = d.RequestUUID,
-                    User = new ApplicationUser
-                    {
-                        FullName = d.User.FullName,
-                        Email = d.User.Email,
-                        Id = d.User.Id,
-                        Enabled = d.User.Enabled,
-                        Department = d.User.Department,
-                        Role = d.User.Role,
-                        PictureUrl = d.User.PictureUrl
-                    },
-                }).ToList(),
-                Managers = x.Managers.Select(m => new RequestManager
-                {
-                    ManagerId = m.ManagerId,
-                    RequestUUID = m.RequestUUID,
-                    User = new ApplicationUser
-                    {
-                        FullName = m.User.FullName,
-                        Email = m.User.Email,
-                        Id = m.User.Id,
-                        Enabled = m.User.Enabled,
-                        Department = m.User.Department,
-                        Role = m.User.Role,
-                        PictureUrl = m.User.PictureUrl
-                    },
-                }).ToList(),
-            })
-            .AsNoTracking()
-            .FirstOrDefaultAsync(r => r.UUID == request.UUID, cancellation);
+        return await Task.FromResult(request);
     }
 
     public async Task<Request[]> ListAllAsync(Int32 tenantId, CancellationToken cancellation)

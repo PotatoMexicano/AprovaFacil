@@ -81,11 +81,13 @@ export default function NewUserPage() {
         navigate("/users")
       }, 2000)
 
-    } catch (error) {
-      console.error(`Erro ao registrar usuário:`, errorRegisterUser);
-      if (errorRegisterUser) {
-        toast.error(`Falha ao registrar usuário`)
-      }
+    } catch (error: unknown) {
+      console.error("Erro ao registrar usuário:", error);
+
+      const errorMessage = error?.data?.detail || "Erro desconhecido ao registrar usuário";
+
+      toast.error(errorMessage);
+
     }
   }
 

@@ -25,8 +25,8 @@ function getApprovalIcon(approved: number | null) {
 
 export function Timeline({ item, className }: TimelineProps) {
   // Check for rejections at each level
-  const isRejectedByManager = item.first_level_at && item.approved_first_level === 0;
-  const isRejectedByDirector = item.second_level_at && item.approved_second_level === 0;
+  const isRejectedByManager = item.first_level_at && item.approved_first_level === -1;
+  const isRejectedByDirector = item.second_level_at && item.approved_second_level === -1;
 
   return (
     <div className={cn("relative space-y-8 pb-4", className)}>
@@ -45,22 +45,21 @@ export function Timeline({ item, className }: TimelineProps) {
           isActive={true}
         />
 
-        {!isRejectedByManager && (
-          <>
-            <Separator className="ml-[11px] bg-primary/20" />
-            {/* Gerente */}
-            <TimelinePoint
-              title="Gerente"
-              date={item.first_level_at}
-              actor={item.first_level_at ? item.managers[0]?.full_name : undefined}
-              approved={item.first_level_at ? item.approved_first_level : null}
-              showIcon={true}
-              isActive={!!item.first_level_at}
-            />
-          </>
-        )}
+        <>
+          <Separator className="ml-[11px] bg-primary/20" />
+          {/* Gerente */}
+          <TimelinePoint
+            title="Gerente"
+            date={item.first_level_at}
+            actor={item.first_level_at ? item.managers[0]?.full_name : undefined}
+            approved={item.first_level_at ? item.approved_first_level : null}
+            showIcon={true}
+            isActive={!!item.first_level_at}
+          />
+        </>
 
-        {!isRejectedByManager && !isRejectedByDirector && item.directors.length > 0 && (
+
+        {item.directors.length > 0 && (
           <>
             <Separator className="ml-[11px] bg-primary/20" />
             {/* Diretor */}
@@ -111,10 +110,10 @@ function TimelinePoint({ title, date, actor, approved, showIcon, iconText, isAct
       <div className="absolute left-[1px] top-1.5 flex h-5 w-5 items-center justify-center">
         <div className={cn(
           "h-3 w-3 rounded-full",
-          isActive ? (approved === 0 ? "bg-red-500" 
+          isActive ? (approved === 0 ? "bg-red-500"
             : approved === 1 ? "bg-green-500"
-            : approved === -1 ? "bg-red-500"
-             : "bg-green-500") : "bg-gray-300"
+              : approved === -1 ? "bg-red-500"
+                : "bg-green-500") : "bg-gray-300"
         )} />
       </div>
 
@@ -134,7 +133,7 @@ function TimelinePoint({ title, date, actor, approved, showIcon, iconText, isAct
                 {getApprovalIcon(approved)}
                 <span className="text-sm">
                   {!isActive ? (
-                      <p>Aguardando</p>
+                    <p>Aguardando</p>
                   ) : (
                     iconText || (approved === 1 ? "Aprovado" : "Rejeitado")
                   )}

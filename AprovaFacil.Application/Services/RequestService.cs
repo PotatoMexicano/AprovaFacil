@@ -1,4 +1,4 @@
-﻿using AprovaFacil.Domain.Constants;
+using AprovaFacil.Domain.Constants;
 using AprovaFacil.Domain.DTOs;
 using AprovaFacil.Domain.Filters;
 using AprovaFacil.Domain.Interfaces;
@@ -9,21 +9,116 @@ using System.Net.Http.Headers;
 
 namespace AprovaFacil.Application.Services;
 
-public class RequestService(RequestInterfaces.IRequestRepository repository, UserInterfaces.IUserRepository userRepository, ServerDirectory serverDirectory, NotificationInterfaces.INotificationService notificationService, NotificationInterfaces.INotificationRepository notificationRepository, ITenantProvider tenant, IHttpClientFactory httpClientFactory) : RequestInterfaces.IRequestService
+public class RequestService(RequestInterfaces.IRequestRepository repository, UserInterfaces.IUserRepository userRepository, ServerDirectory serverDirectory, NotificationInterfaces.INotificationService notificationService, NotificationInterfaces.INotificationRepository notificationRepository, ITenantProvider tenantProvider, ITenantRepository tenantRepository, IUnitOfWorkInterface unitOfWork, IHttpClientFactory httpClientFactory) : RequestInterfaces.IRequestService
 {
+    public async Task<Result> RegisterRequest(RequestRegisterDTO request, CancellationToken cancellation)
+    {
+        try
+        {
+            Int32? tenantId = tenantProvider.GetTenantId();
+            if (!tenantId.HasValue)
+            {
+                return Result.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
+            }
+
+            Tenant? currentTenant = await tenantRepository.GetByIdAsync(tenantId.Value, cancellation);
+            if (currentTenant == null)
+            {
+                return Result.Failure(ErrorType.NotFound, "Informações do tenant não encontradas.");
+            }
+
+            currentTenant.SetLimitsBasedOnPlan();
+
+            if (ShouldResetRequests(currentTenant.LastRequestResetDate))
+            {
+                currentTenant.CurrentRequestsThisMonth = 0;
+                currentTenant.LastRequestResetDate = new DateTime(
+                    DateTime.UtcNow.Year,
+                    DateTime.UtcNow.Month,
+                    1,
+                    0, 0, 0,
+                    DateTimeKind.Utc);
+            }
+
+            if (currentTenant.CurrentRequestsThisMonth >= currentTenant.MaxRequestsPerMonth)
+            {
+                return Result.Failure(ErrorType.Forbidden, $"Você atingiu o limite de {currentTenant.MaxRequestsPerMonth} requisições para o seu plano este mês.");
+            }
+
+            Int32[] usersId = [.. request.ManagersId, .. request.DirectorsIds, request.RequesterId];
+            Dictionary<Int32, IApplicationUser> users = await userRepository.GetUsersDictionary(usersId, cancellation);
+
+            Request? newRequest = new Request
+            {
+                InvoiceName = Guid.NewGuid(),
+                BudgetName = Guid.NewGuid(),
+                CompanyId = request.CompanyId,
+                Amount = request.Amount,
+                UUID = request.UUID,
+                PaymentDate = request.PaymentDate,
+                CreateAt = request.CreateAt,
+                Note = request.Note,
+                RequesterId = request.RequesterId,
+                TenantId = tenantId.Value,
+                Level = LevelRequest.Pending,
+            };
+
+            foreach (Int32 manager in request.ManagersId)
+            {
+                newRequest.Managers.Add(new RequestManager { ManagerId = manager, RequestUUID = newRequest.UUID });
+            }
+
+            foreach (Int32 director in request.DirectorsIds)
+            {
+                newRequest.Directors.Add(new RequestDirector { DirectorId = director, RequestUUID = newRequest.UUID });
+            }
+
+            newRequest.HasInvoice = request.Invoice.Length > 0;
+            newRequest.HasBudget = request.Budget.Length > 0;
+
+            await repository.RegisterRequestAsync(newRequest, cancellation);
+
+            currentTenant.CurrentRequestsThisMonth++;
+            await tenantRepository.UpdateAsync(currentTenant, cancellation);
+
+            //await UploadFile(newRequestDTO, request);
+
+            await unitOfWork.SaveChangesAsync(cancellation);
+
+            Request? registeredRequest = await repository.ListRequestAsync(newRequest.UUID, tenantId.Value, cancellation);
+
+            if (registeredRequest is null)
+            {
+                return Result.Failure(ErrorType.Validation, "Falha ao registrar solicitação.");
+            }
+
+            await notificationService.NotifyUsers(new NotificationRequest(request.UUID, [.. request.ManagersId, request.RequesterId]), cancellation);
+            await notificationRepository.SaveNotifyAsync(new NotificationRequest(request.UUID, [.. request.ManagersId], "Você foi mencionado em uma solicitação !"));
+
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, ex.Message);
+            return Result.Failure(ErrorType.InternalError, "Ocorreu um erro ao registrar a solicitação.");
+        }
+    }
+
     public async Task<Result> ApproveRequest(Guid requestGuid, Int32 applicationUserId, CancellationToken cancellation)
     {
         try
         {
-            Int32? tenantId = tenant.GetTenantId();
+            Int32? tenantId = tenantProvider.GetTenantId();
 
-            if (!tenantId.HasValue) return Result.Failure("TenantId não encontrado.");
+            if (!tenantId.HasValue) return Result.Failure(ErrorType.NotFound, "TenantId não encontrado.");
 
             Boolean result = await repository.ApproveRequestAsync(requestGuid, applicationUserId, cancellation);
 
+            await unitOfWork.SaveChangesAsync(cancellation);
+
             Request? request = await repository.ListRequestAsync(requestGuid, tenantId.Value, cancellation);
 
-            if (request is null) return Result.Failure("Não foi possível buscar a solicitação.");
+            if (request is null) return Result.Failure(ErrorType.NotFound, "Não foi possível buscar a solicitação.");
 
             // Has directors?
             if (request.Directors.Count > 0)
@@ -48,12 +143,12 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
                 await notificationRepository.SaveNotifyAsync(new NotificationRequest(request.UUID, request.RequesterId, "Sua solicitação foi aprovada !"));
             }
 
-            return result ? Result.Success() : Result.Failure("Não foi possível aprovar a solicitação.");
+            return result ? Result.Success() : Result.Failure(ErrorType.InternalError, "Não foi possível aprovar a solicitação.");
         }
         catch (Exception ex)
         {
             Log.Error(ex, ex.Message);
-            return Result.Failure("Ocorreu um erro ao aprovar a solicitação.");
+            return Result.Failure(ErrorType.InternalError, "Ocorreu um erro ao aprovar a solicitação.");
         }
     }
 
@@ -61,15 +156,17 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
-            Int32? tenantId = tenant.GetTenantId();
+            Int32? tenantId = tenantProvider.GetTenantId();
 
-            if (!tenantId.HasValue) return Result.Failure("TenantId não encontrado.");
+            if (!tenantId.HasValue) return Result.Failure(ErrorType.NotFound, "TenantId não encontrado.");
 
             Boolean result = await repository.RejectRequestAsync(requestGuid, applicationUserId, cancellation);
 
+            await unitOfWork.SaveChangesAsync(cancellation);
+
             Request? request = await repository.ListRequestAsync(requestGuid, tenantId.Value, cancellation);
 
-            if (request is null) return Result.Failure("Não foi possível buscar a solicitação.");
+            if (request is null) return Result.Failure(ErrorType.NotFound, "Não foi possível buscar a solicitação.");
 
             if (request.Status == StatusRequest.Reject)
             {
@@ -78,12 +175,12 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
                 await notificationRepository.SaveNotifyAsync(new NotificationRequest(request.UUID, request.RequesterId, "Sua solicitação foi rejeitada."));
             }
 
-            return result ? Result.Success() : Result.Failure("Não foi possível rejeitar a solicitação.");
+            return result ? Result.Success() : Result.Failure(ErrorType.InternalError, "Não foi possível rejeitar a solicitação.");
         }
         catch (Exception ex)
         {
             Log.Error(ex, ex.Message);
-            return Result.Failure("Não foi possível rejeitar a solicitação.");
+            return Result.Failure(ErrorType.InternalError, "Não foi possível rejeitar a solicitação.");
         }
     }
 
@@ -91,25 +188,27 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
-            Int32? tenantId = tenant.GetTenantId();
+            Int32? tenantId = tenantProvider.GetTenantId();
 
-            if (!tenantId.HasValue) return Result.Failure("TenantId não encontrado.");
+            if (!tenantId.HasValue) return Result.Failure(ErrorType.NotFound, "TenantId não encontrado.");
 
             Boolean result = await repository.FinishRequestAsync(requestGuid, applicationUserId, cancellation);
 
+            await unitOfWork.SaveChangesAsync(cancellation);
+
             Request? request = await repository.ListRequestAsync(requestGuid, tenantId.Value, cancellation);
 
-            if (request is null) return Result.Failure("Não foi possível buscar a solicitação.");
+            if (request is null) return Result.Failure(ErrorType.NotFound, "Não foi possível buscar a solicitação.");
 
             await notificationService.NotifyUsers(new NotificationRequest(request.UUID, [request.RequesterId, request.FinisherId!.Value, applicationUserId]), cancellation);
             await notificationRepository.SaveNotifyAsync(new NotificationRequest(request.UUID, request.RequesterId, "Sua solicitação foi faturada !"));
 
-            return result ? Result.Success() : Result.Failure("Não foi possível finalizar a solicitação.");
+            return result ? Result.Success() : Result.Failure(ErrorType.NotFound, "Não foi possível finalizar a solicitação.");
         }
         catch (Exception ex)
         {
             Log.Error(ex, ex.Message);
-            return Result.Failure("Não foi possível finalizar a solicitação.");
+            return Result.Failure(ErrorType.InternalError, "Não foi possível finalizar a solicitação.");
         }
     }
 
@@ -117,7 +216,7 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
-            Int32? tenantId = tenant.GetTenantId();
+            Int32? tenantId = tenantProvider.GetTenantId();
 
             if (!tenantId.HasValue) return Result<RequestDTO[]>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
 
@@ -145,7 +244,7 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
-            Int32? tenantId = tenant.GetTenantId();
+            Int32? tenantId = tenantProvider.GetTenantId();
 
             if (!tenantId.HasValue) return Result<Byte[]>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
 
@@ -194,130 +293,11 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
         }
     }
 
-    public async Task<Result<RequestDTO>> RegisterRequest(RequestRegisterDTO request, CancellationToken cancellation)
-    {
-        try
-        {
-            Int32? tenantId = tenant.GetTenantId();
-
-            if (!tenantId.HasValue) return Result<RequestDTO>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
-
-            Int32[] usersId = [.. request.ManagersId, .. request.DirectorsIds, request.RequesterId];
-
-            Dictionary<Int32, IApplicationUser> users = await userRepository.GetUsersDictionary(usersId, cancellation);
-
-            Int32 level = request.DirectorsIds.Length > 0 ? LevelRequest.Pending : LevelRequest.Pending;
-
-            Request? newRequest = new Request
-            {
-                InvoiceName = Guid.NewGuid(),
-                BudgetName = Guid.NewGuid(),
-                CompanyId = request.CompanyId,
-                Amount = request.Amount,
-                UUID = request.UUID,
-                PaymentDate = request.PaymentDate,
-                CreateAt = request.CreateAt,
-                Note = request.Note,
-                RequesterId = request.RequesterId,
-                TenantId = tenantId.Value,
-                Level = level,
-            };
-
-            foreach (Int32 manager in request.ManagersId)
-            {
-                RequestManager requestManager = new RequestManager
-                {
-                    ManagerId = manager,
-                    RequestUUID = newRequest.UUID,
-                };
-
-                newRequest.Managers.Add(requestManager);
-            }
-
-            foreach (Int32 director in request.DirectorsIds)
-            {
-                RequestDirector requestDirector = new RequestDirector
-                {
-                    DirectorId = director,
-                    RequestUUID = newRequest.UUID,
-                };
-
-                newRequest.Directors.Add(requestDirector);
-            }
-
-            newRequest.HasInvoice = request.Invoice.Length > 0;
-            newRequest.HasBudget = request.Budget.Length > 0;
-
-            newRequest = await repository.RegisterRequestAsync(newRequest, cancellation);
-
-            if (newRequest is null) return Result<RequestDTO>.Failure(ErrorType.Validation, "Falha ao registrar solicitação.");
-
-            RequestDTO? newRequestDTO = newRequest;
-
-            if (newRequestDTO is null) return Result<RequestDTO>.Failure(ErrorType.Validation, "Falha ao validar solicitação.");
-
-            try
-            {
-                String folderName = newRequestDTO.UUID; ;
-                String pathForFile = Path.Combine(serverDirectory.InvoicePath, folderName);
-
-                if (!Directory.Exists(pathForFile))
-                {
-                    Directory.CreateDirectory(pathForFile);
-                }
-
-                String filePath = Path.Combine(pathForFile, newRequestDTO.InvoiceName) + ".pdf";
-
-                if (request.Invoice.Length > 0)
-                {
-                    await UploadFile(newRequestDTO, request);
-                    //await File.WriteAllBytesAsync(filePath, request.Invoice, cancellation);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Exception raise when try save invoice file.");
-            }
-
-            try
-            {
-                String folderName = newRequestDTO.UUID;
-                String pathForFile = Path.Combine(serverDirectory.BudgetPath, folderName);
-
-                if (!Directory.Exists(pathForFile))
-                {
-                    Directory.CreateDirectory(pathForFile);
-                }
-
-                String filePath = Path.Combine(pathForFile, newRequestDTO.BudgetName) + ".pdf";
-
-                if (request.Budget.Length > 0)
-                {
-                    await File.WriteAllBytesAsync(filePath, request.Budget, cancellation);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Exception raise when try save budget file.");
-            }
-
-            await notificationService.NotifyUsers(new NotificationRequest(request.UUID, [.. request.ManagersId, request.RequesterId]), cancellation);
-            await notificationRepository.SaveNotifyAsync(new NotificationRequest(request.UUID, [.. request.ManagersId], "Você foi mencionado em uma solicitação !"));
-
-            return Result<RequestDTO>.Success(newRequestDTO);
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, ex.Message);
-            return Result<RequestDTO>.Failure(ErrorType.InternalError, "Ocorreu um erro ao registrar a solicitação.");
-        }
-    }
-
     public async Task<Result<RequestDTO[]>> ListAll(CancellationToken cancellation)
     {
         try
         {
-            Int32? tenantId = tenant.GetTenantId();
+            Int32? tenantId = tenantProvider.GetTenantId();
 
             if (!tenantId.HasValue) return Result<RequestDTO[]>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
 
@@ -342,7 +322,7 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
-            Int32? tenantId = tenant.GetTenantId();
+            Int32? tenantId = tenantProvider.GetTenantId();
 
             if (!tenantId.HasValue) return Result<Object>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
 
@@ -367,7 +347,7 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
-            Int32? tenantId = tenant.GetTenantId();
+            Int32? tenantId = tenantProvider.GetTenantId();
 
             if (!tenantId.HasValue) return Result<Object>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
 
@@ -392,7 +372,7 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
-            Int32? tenantId = tenant.GetTenantId();
+            Int32? tenantId = tenantProvider.GetTenantId();
 
             if (!tenantId.HasValue) return Result<RequestDTO>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
 
@@ -417,7 +397,7 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
-            Int32? tenantId = tenant.GetTenantId();
+            Int32? tenantId = tenantProvider.GetTenantId();
 
             if (!tenantId.HasValue) return Result<RequestDTO[]>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
 
@@ -456,7 +436,7 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
-            Int32? tenantId = tenant.GetTenantId();
+            Int32? tenantId = tenantProvider.GetTenantId();
 
             if (!tenantId.HasValue) return Result<RequestDTO[]>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
 
@@ -481,7 +461,7 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
-            Int32? tenantId = tenant.GetTenantId();
+            Int32? tenantId = tenantProvider.GetTenantId();
 
             if (!tenantId.HasValue) return Result<RequestDTO[]>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
 
@@ -504,7 +484,7 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
     {
         try
         {
-            Int32? tenantId = tenant.GetTenantId();
+            Int32? tenantId = tenantProvider.GetTenantId();
 
             if (!tenantId.HasValue) return Result<RequestDTO[]>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
 
@@ -559,7 +539,7 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
                 if (!response.IsSuccessStatusCode)
                 {
                     String body = await response.Content.ReadAsStringAsync(CancellationToken.None);
-                    return Result.Failure($"Falha ao salvar {bucketName}.");
+                    return Result.Failure(ErrorType.InternalError, $"Falha ao salvar {bucketName}.");
                 }
 
                 return Result.Success();
@@ -568,7 +548,7 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
             catch (Exception ex)
             {
                 Log.Error(ex, ex.Message);
-                return Result.Failure(ex.Message);
+                return Result.Failure(ErrorType.InternalError, ex.Message);
             }
         }
 
@@ -577,34 +557,55 @@ public class RequestService(RequestInterfaces.IRequestRepository repository, Use
 
         if (register.Invoice?.Length > 0)
         {
-            String folderName = request.UUID;
-            String pathForFile = Path.Combine(serverDirectory.InvoicePath, folderName);
-            String filePath = Path.Combine(pathForFile, request.InvoiceName) + ".pdf";
+            try
+            {
+                String folderName = request.UUID;
+                String pathForFile = Path.Combine(serverDirectory.InvoicePath, folderName);
+                String filePath = Path.Combine(pathForFile, request.InvoiceName) + ".pdf";
 
-            resultInvoice = await UploadToSupabaseAsync(
-                bucketName: serverDirectory.InvoicePath,
-                objectPath: filePath,
-                fileBytes: register.Invoice);
+                resultInvoice = await UploadToSupabaseAsync(
+                    bucketName: serverDirectory.InvoicePath,
+                    objectPath: filePath,
+                    fileBytes: register.Invoice);
+            }
+            catch (Exception ex)
+            {
+                resultInvoice = Result.Failure(ErrorType.InternalError, ex.Message);
+            }
         }
 
         if (register.Budget?.Length > 0)
         {
-            String folderName = request.UUID;
-            String pathForFile = Path.Combine(serverDirectory.BudgetPath, folderName);
-            String filePath = Path.Combine(pathForFile, request.BudgetName) + ".pdf";
+            try
+            {
+                String folderName = request.UUID;
+                String pathForFile = Path.Combine(serverDirectory.BudgetPath, folderName);
+                String filePath = Path.Combine(pathForFile, request.BudgetName) + ".pdf";
 
-            resultBudget = await UploadToSupabaseAsync(
-                bucketName: serverDirectory.BudgetPath,
-                objectPath: filePath,
-                fileBytes: register.Budget);
+                resultBudget = await UploadToSupabaseAsync(
+                    bucketName: serverDirectory.BudgetPath,
+                    objectPath: filePath,
+                    fileBytes: register.Budget);
+            }
+            catch (Exception ex)
+            {
+                resultInvoice = Result.Failure(ErrorType.InternalError, ex.Message);
+            }
         }
 
         if (resultInvoice.IsFailure || resultBudget.IsFailure)
         {
-            return Result.Failure("Falha ao salvar arquivos.");
+            return Result.Failure(ErrorType.InternalError, "Falha ao salvar arquivos.");
         }
 
         return Result.Success();
+    }
+
+    private static Boolean ShouldResetRequests(DateTime lastResetDate)
+    {
+        DateTime currentDate = DateTime.UtcNow;
+
+        return lastResetDate.Year != currentDate.Year || lastResetDate.Month != currentDate.Month;
     }
 }
 

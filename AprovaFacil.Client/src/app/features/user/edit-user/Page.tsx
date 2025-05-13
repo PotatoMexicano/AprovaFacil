@@ -97,14 +97,14 @@ export default function EditUserPage() {
         navigate("/users")
       }, 2000)
 
-    } catch {
+    } catch(error: unknown) {
       setUpdateSuccess(false);
-      console.error(`Erro ao registrar usuário:`, error);
-      if (error && "data" in error && "detail" in error.data) {
-        toast.error(String(error.data.detail));
-      } else {
-        toast.error("Erro ao atualizar usuário.");
-      }
+
+      console.error("Erro ao atualizar usuário:", error);
+
+      const errorMessage = error?.data?.detail || "Erro desconhecido ao atualizar usuário";
+
+      toast.error(errorMessage);
     }
   }
 

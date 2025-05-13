@@ -45,11 +45,11 @@ public class UserController(UserInterfaces.IUserService service) : ControllerBas
 
         if (result.IsSuccess)
         {
-            return StatusCode(StatusCodes.Status202Accepted);
+            return Ok(StatusCodes.Status202Accepted);
         }
         else
         {
-            return StatusCode(StatusCodes.Status304NotModified);
+            return BadRequest(new ProblemDetails { Detail = result.Error?.Message, Status = 400 });
         }
     }
 
@@ -61,11 +61,11 @@ public class UserController(UserInterfaces.IUserService service) : ControllerBas
 
         if (result.IsSuccess)
         {
-            return StatusCode(StatusCodes.Status202Accepted);
+            return Ok(StatusCodes.Status202Accepted);
         }
         else
         {
-            return StatusCode(StatusCodes.Status304NotModified);
+            return BadRequest(new ProblemDetails { Detail = result.Error?.Message, Status = 400 });
         }
     }
 

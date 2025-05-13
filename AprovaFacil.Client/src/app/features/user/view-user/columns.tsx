@@ -28,14 +28,18 @@ const ActionMenu = ({ user, usuario }: Props) => {
   const [enableUser] = useEnableUserMutation();
 
   const onDisable = (usuario: UserResponse) => {
-    disableUser(usuario.id).unwrap().catch(() => {
-      toast.error("Falha ao desativar usuário");
+    disableUser(usuario.id).unwrap().catch((error: unknown) => {
+      console.error("Erro ao atualizar usuário:", error);
+      const errorMessage = error?.data?.detail || "Erro desconhecido ao atualizar usuário";
+      toast.error(errorMessage);
     });
   }
 
   const onEnable = (usuario: UserResponse) => {
-    enableUser(usuario.id).unwrap().catch(() => {
-      toast.error("Falha ao desativar usuário");
+    enableUser(usuario.id).unwrap().catch((error: unknown) => {
+      console.error("Erro ao atualizar usuário:", error);
+      const errorMessage = error?.data?.detail || "Erro desconhecido ao atualizar usuário";
+      toast.error(errorMessage);
     });
   }
 

@@ -15,11 +15,11 @@ public class CompanyService(CompanyInterfaces.ICompanyRepository repository, ITe
         {
             Int32? tenantId = tenant.GetTenantId();
 
-            if (!tenantId.HasValue) return Result.Failure("TenantId não encontrado.");
+            if (!tenantId.HasValue) return Result.Failure(ErrorType.NotFound, "TenantId não encontrado.");
 
             Company? company = await repository.GetCompanyAsync(id, tenantId.Value, cancellation);
 
-            if (company is null) return Result.Failure("Não foi possível deletar a empresa.");
+            if (company is null) return Result.Failure(ErrorType.InternalError, "Não foi possível deletar a empresa.");
 
             company.Enabled = false;
 
@@ -30,7 +30,7 @@ public class CompanyService(CompanyInterfaces.ICompanyRepository repository, ITe
         catch (Exception ex)
         {
             Log.Error(ex, ex.Message);
-            return Result.Failure("Ocorreu um erro ao deletar a empresa.");
+            return Result.Failure(ErrorType.InternalError, "Ocorreu um erro ao deletar a empresa.");
         }
     }
 

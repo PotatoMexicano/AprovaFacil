@@ -366,7 +366,7 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
             });
         }
 
-        Result<RequestDTO> result = await service.RegisterRequest(new RequestRegisterDTO
+        Result result = await service.RegisterRequest(new RequestRegisterDTO
         {
             Budget = budgetBytes ?? [],
             Invoice = invoiceBytes ?? [],
@@ -380,11 +380,6 @@ public class RequestController(RequestInterfaces.IRequestService service) : Cont
             InvoiceFileName = request.Invoice?.FileName,
             BudgetFileName = request.Budget?.FileName
         }, cancellation);
-
-        if (result.IsFailure)
-        {
-            return result.ToActionResult();
-        }
 
         return result.ToActionResult();
     }
