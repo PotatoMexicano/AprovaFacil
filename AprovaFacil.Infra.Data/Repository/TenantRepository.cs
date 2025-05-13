@@ -2,7 +2,6 @@ using AprovaFacil.Domain.Interfaces;
 using AprovaFacil.Domain.Models;
 using AprovaFacil.Infra.Data.Context;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
 
 namespace AprovaFacil.Infra.Data.Repository;
 
@@ -15,15 +14,30 @@ public class TenantRepository : ITenantRepository
         _context = context;
     }
 
-    public async Task<Tenant?> GetByIdAsync(int tenantId, CancellationToken cancellationToken = default)
+    private Int32 CountUsersEnabled(Int32 tenantId)
     {
-        return await _context.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+        Int32 count = _context.Users.Where(u => u.TenantId == tenantId && u.Enabled == true).Count();
+        return count;
     }
 
-    public async Task UpdateAsync(Tenant tenant, CancellationToken cancellationToken = default)
+    public async Task<Tenant?> GetByIdAsync(Int32 tenantId, CancellationToken cancellation)
+    {
+        Tenant? result = await _context.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, cancellation);
+
+        if (result == null)
+        {
+            return result;
+        }
+
+        result.CurrentUserCount = this.CountUsersEnabled(tenantId);
+
+        return result;
+    }
+
+    public Task UpdateAsync(Tenant tenant, CancellationToken cancellation)
     {
         _context.Tenants.Update(tenant);
-        await _context.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 }
 

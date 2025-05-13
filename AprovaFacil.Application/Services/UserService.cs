@@ -3,28 +3,20 @@ using AprovaFacil.Domain.Extensions;
 using AprovaFacil.Domain.Interfaces;
 using AprovaFacil.Domain.Models;
 using AprovaFacil.Domain.Results;
-using AprovaFacil.Domain.Constants; // Added for ErrorType
 using Microsoft.AspNetCore.Http;
 using Serilog;
 using System.Security.Claims;
-using System.Threading.Tasks;
-using System.Threading;
-using System;
-using System.Linq; // Added for Select
 
 namespace AprovaFacil.Application.Services;
 
-public class UserService(UserInterfaces.IUserRepository repository, 
-                       IHttpContextAccessor httpContextAccessor, 
-                       ITenantProvider tenantProvider, // Renamed for clarity
-                       ITenantRepository tenantRepository) : UserInterfaces.IUserService // Added ITenantRepository
+public class UserService(UserInterfaces.IUserRepository repository, IUnitOfWorkInterface unitOfWork, IHttpContextAccessor httpContextAccessor, ITenantProvider tenantProvider, ITenantRepository tenantRepository) : UserInterfaces.IUserService
 {
     public async Task<Result<UserDTO>> RegisterUser(UserRegisterDTO request, CancellationToken cancellation)
     {
         try
         {
             Int32? tenantId = tenantProvider.GetTenantId();
-            if (!tenantId.HasValue) 
+            if (!tenantId.HasValue)
             {
                 return Result<UserDTO>.Failure(ErrorType.Unathorized, "TenantId não encontrado.");
             }
@@ -39,10 +31,6 @@ public class UserService(UserInterfaces.IUserRepository repository,
             // Ensure limits are set (might be redundant if constructor always called, but safe)
             currentTenant.SetLimitsBasedOnPlan();
 
-            // Check user limit
-            // Note: CurrentUserCount should ideally be updated when users are actually confirmed/created
-            // and decremented if a user is disabled/deleted. For simplicity, we check against MaxUsers here.
-            // A more robust solution would query the actual number of active users for the tenant.
             // For now, we rely on the CurrentUserCount property of the Tenant object.
             if (currentTenant.CurrentUserCount >= currentTenant.MaxUsers)
             {
@@ -52,7 +40,7 @@ public class UserService(UserInterfaces.IUserRepository repository,
             request.TenantId = tenantId.Value;
             IApplicationUser? entity = await repository.RegisterUserAsync(request, cancellation);
 
-            if (entity is null) 
+            if (entity is null)
             {
                 // It's possible the repository.RegisterUserAsync itself failed due to other reasons (e.g., email exists)
                 // The original code returned NotFound, which might be misleading if the user limit was fine but registration failed.
@@ -63,6 +51,7 @@ public class UserService(UserInterfaces.IUserRepository repository,
             // Increment user count and update tenant
             currentTenant.CurrentUserCount++;
             await tenantRepository.UpdateAsync(currentTenant, cancellation);
+            await unitOfWork.SaveChangesAsync(cancellation);
 
             UserDTO result = entity.ToDTO();
             return Result<UserDTO>.Success(result);
@@ -79,47 +68,48 @@ public class UserService(UserInterfaces.IUserRepository repository,
         try
         {
             Int32? tenantId = tenantProvider.GetTenantId();
-            if (!tenantId.HasValue) return Result.Failure("TenantId não encontrado.");
+            if (!tenantId.HasValue) return Result.Failure(ErrorType.NotFound, "TenantId não encontrado.");
 
             ClaimsPrincipal? currentUserClaims = httpContextAccessor.HttpContext?.User;
             if (currentUserClaims == null)
             {
-                return Result.Failure("Falha ao obter dados do usuário atual.");
+                return Result.Failure(ErrorType.NotFound, "Falha ao obter dados do usuário atual.");
             }
 
             if (!Int32.TryParse(currentUserClaims.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? String.Empty, out Int32 idUserAuthenticated))
             {
-                return Result.Failure("Falha ao obter dados do usuário atual.");
+                return Result.Failure(ErrorType.NotFound, "Falha ao obter dados do usuário atual.");
             }
 
             if (idUser == idUserAuthenticated)
             {
-                return Result.Failure("Você não pode desativar o seu usuário.");
+                return Result.Failure(ErrorType.Unathorized, "Você não pode desativar o seu usuário.");
             }
 
-            // Before disabling, get the tenant to decrement user count
             Tenant? currentTenant = await tenantRepository.GetByIdAsync(tenantId.Value, cancellation);
             if (currentTenant == null)
             {
-                // This should ideally not happen if tenantId is valid
                 Log.Warning($"Tenant não encontrado ({tenantId.Value}) ao tentar desabilitar usuário {idUser}.");
             }
 
             Boolean result = await repository.DisableUserAsync(idUser, cancellation);
             if (result && currentTenant != null)
             {
-                if (currentTenant.CurrentUserCount > 0) // Prevent going below zero
+                if (currentTenant.CurrentUserCount > 0)
                 {
                     currentTenant.CurrentUserCount--;
                     await tenantRepository.UpdateAsync(currentTenant, cancellation);
                 }
             }
-            return result ? Result.Success() : Result.Failure("Não foi possível desabilitar o usuário.");
+
+            await unitOfWork.SaveChangesAsync(cancellation);
+
+            return result ? Result.Success() : Result.Failure(ErrorType.InternalError, "Não foi possível desabilitar o usuário.");
         }
         catch (Exception ex)
         {
             Log.Error(ex, ex.Message);
-            return Result.Failure("Ocorreu um erro ao desativar o usuário.");
+            return Result.Failure(ErrorType.InternalError, "Ocorreu um erro ao desativar o usuário.");
         }
     }
 
@@ -128,15 +118,15 @@ public class UserService(UserInterfaces.IUserRepository repository,
         try
         {
             Int32? tenantId = tenantProvider.GetTenantId();
-            if (!tenantId.HasValue) return Result.Failure("TenantId não encontrado.");
+            if (!tenantId.HasValue) return Result.Failure(ErrorType.NotFound, "TenantId não encontrado.");
 
-             ClaimsPrincipal? currentUserClaims = httpContextAccessor.HttpContext?.User;
-            if (currentUserClaims == null) return Result.Failure("Falha ao obter dados do usuário atual.");
+            ClaimsPrincipal? currentUserClaims = httpContextAccessor.HttpContext?.User;
+            if (currentUserClaims == null) return Result.Failure(ErrorType.NotFound, "Falha ao obter dados do usuário atual.");
             if (!Int32.TryParse(currentUserClaims.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? String.Empty, out Int32 idUserAuthenticated))
             {
-                return Result.Failure("Falha ao obter dados do usuário atual.");
+                return Result.Failure(ErrorType.NotFound, "Falha ao obter dados do usuário atual.");
             }
-            if (idUser == idUserAuthenticated) return Result.Failure("Você não pode ativar o seu usuário.");
+            if (idUser == idUserAuthenticated) return Result.Failure(ErrorType.Unathorized, "Você não pode ativar o seu usuário.");
 
             // Get Tenant to check limits before enabling, if enabling counts towards the limit again
             Tenant? currentTenant = await tenantRepository.GetByIdAsync(tenantId.Value, cancellation);
@@ -146,31 +136,30 @@ public class UserService(UserInterfaces.IUserRepository repository,
             }
             currentTenant.SetLimitsBasedOnPlan(); // Ensure limits are current
 
-            // Check if enabling this user would exceed the plan limit
-            // This assumes that enabling a previously disabled user should count towards the limit.
-            // If CurrentUserCount already reflects active users, this check might need adjustment.
-            // For now, let's assume enabling increments the count if they were previously not counted.
             IApplicationUser? userToEnable = await repository.GetUserAsync(idUser, tenantId.Value, cancellation);
-            if (userToEnable != null && !userToEnable.Active) // Only proceed if user is currently inactive
+            if (userToEnable != null && !userToEnable.Enabled) // Only proceed if user is currently inactive
             {
-                 if (currentTenant.CurrentUserCount >= currentTenant.MaxUsers)
-                 {
+                if (currentTenant.CurrentUserCount >= currentTenant.MaxUsers)
+                {
                     return Result.Failure(ErrorType.Forbidden, $"Não é possível ativar o usuário. Limite de {currentTenant.MaxUsers} usuários para o plano atual seria excedido.");
-                 }
+                }
             }
 
             Boolean result = await repository.EnableUserAsync(idUser, cancellation);
-            if (result && currentTenant != null && userToEnable != null && !userToEnable.Active) // If successfully enabled and was inactive
+            if (result && currentTenant != null && userToEnable != null && !userToEnable.Enabled) // If successfully enabled and was inactive
             {
                 currentTenant.CurrentUserCount++;
                 await tenantRepository.UpdateAsync(currentTenant, cancellation);
             }
-            return result ? Result.Success() : Result.Failure("Não foi possível ativar o usuário.");
+
+            await unitOfWork.SaveChangesAsync(cancellation);
+
+            return result ? Result.Success() : Result.Failure(ErrorType.InternalError, "Não foi possível ativar o usuário.");
         }
         catch (Exception ex)
         {
             Log.Error(ex, ex.Message);
-            return Result.Failure("Ocorreu um erro ao ativar o usuário.");
+            return Result.Failure(ErrorType.InternalError, "Ocorreu um erro ao ativar o usuário.");
         }
     }
 

@@ -110,11 +110,11 @@ export default function NewRequestPage() {
       setIdPopoverCompany(null);
       setIdPopoverUser(null);
 
-    } catch (err) {
-      console.error(`Erro ao registrar solicitação:`, error);
-      if (error) {
-        toast.error(`Falha ao registrar solicitação`)
-      }
+    } catch (error: unknown) {
+      setRegisterSuccess(false);
+      console.error("Erro ao atualizar usuário:", error);
+      const errorMessage = error?.data?.detail || "Erro desconhecido ao atualizar usuário";
+      toast.error(errorMessage);
     }
   }
 

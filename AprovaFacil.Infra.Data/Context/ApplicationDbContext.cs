@@ -28,6 +28,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<Tenant>().HasMany(t => t.Requests).WithOne(r => r.Tenant).OnDelete(DeleteBehavior.Cascade);
         builder.Entity<Tenant>().HasMany<ApplicationUser>().WithOne(u => u.Tenant).HasForeignKey(u => u.TenantId).OnDelete(DeleteBehavior.Cascade);
 
+        builder.Entity<Tenant>().Property(t => t.LastRequestResetDate).HasConversion(v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc)).HasColumnType("timestamp without time zone");
+        builder.Entity<Tenant>().Property(t => t.SubscriptionEnd).HasConversion(v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc)).HasColumnType("timestamp without time zone");
+        builder.Entity<Tenant>().Property(t => t.CreateAt).HasConversion(v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc)).HasColumnType("timestamp without time zone"); ;
+
         builder.Entity<Company>().HasKey(c => c.Id);
         builder.Entity<Company>().OwnsOne(c => c.Address);
 

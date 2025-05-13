@@ -7,6 +7,7 @@ public enum ErrorType
     Conflict,
     Unathorized,
     InternalError,
+    Forbidden,
 }
 
 public class ErrorDetail
@@ -38,16 +39,19 @@ public class Result<T>
 public class Result
 {
     public Boolean IsSuccess { get; }
-    public String? Error { get; }
+    public ErrorDetail? Error { get; }
 
     public Boolean IsFailure => !IsSuccess;
 
-    private Result(Boolean isSuccess, String? error)
+    private Result(Boolean isSuccess, ErrorDetail? error)
     {
         IsSuccess = isSuccess;
         Error = error;
     }
 
     public static Result Success() => new(true, null);
-    public static Result Failure(String error) => new(false, error);
+
+    public static Result Failure(ErrorType type, String message) => new(false, new ErrorDetail { Type = type, Message = message });
+
+    public static Result Failure(ErrorDetail errorDetail) => new(false, errorDetail);
 }

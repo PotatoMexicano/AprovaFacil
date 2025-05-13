@@ -62,7 +62,8 @@ public static class DependencyInjection
         services.AddScoped<CompanyInterfaces.ICompanyRepository, CompanyRepository>();
         services.AddScoped<UserInterfaces.IUserRepository, UserRepository>();
         services.AddScoped<RequestInterfaces.IRequestRepository, RequestRepository>();
-        services.AddScoped<ITenantRepository, TenantRepository>(); // Added TenantRepository
+        services.AddScoped<ITenantRepository, TenantRepository>();
+        services.AddScoped<IUnitOfWorkInterface, UnitOfWorkRepository>();
         return services;
     }
 
@@ -151,7 +152,7 @@ public static class DependencyInjection
 
         //await context.Database.MigrateAsync();
 
-        Tenant? tenant = await tenantRepository.GetByIdAsync(1); // Check if tenant exists
+        Tenant? tenant = await tenantRepository.GetByIdAsync(1, CancellationToken.None); // Check if tenant exists
         if (tenant == null)
         {
             tenant = new Tenant
@@ -172,7 +173,7 @@ public static class DependencyInjection
                     Complement = String.Empty
                 },
                 ContactPerson = "Luciano Cordeiro",
-                Plan = PlanType.Business // Example: Set a plan
+                Plan = PlanType.Free // Example: Set a plan
             };
             tenant.SetLimitsBasedOnPlan(); // Set limits based on the plan
             await context.Tenants.AddAsync(tenant);
@@ -182,9 +183,8 @@ public static class DependencyInjection
         {
             // If tenant exists, ensure limits are set (e.g., if this code runs after model changes)
             tenant.SetLimitsBasedOnPlan();
-            await tenantRepository.UpdateAsync(tenant);
+            await tenantRepository.UpdateAsync(tenant, CancellationToken.None);
         }
-
 
         List<Company> companies = new List<Company>
     {

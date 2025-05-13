@@ -1,6 +1,4 @@
 using AprovaFacil.Domain.Constants;
-using System;
-using System.Collections.Generic;
 
 namespace AprovaFacil.Domain.Models;
 
@@ -18,13 +16,13 @@ public class Tenant
 
     public Boolean Active { get; set; } = true;
 
-    public PlanType Plan { get; set; } = PlanType.Basic;
+    public PlanType Plan { get; set; } = PlanType.Free;
 
-    // New properties for plan limits and usage tracking
-    public int MaxRequestsPerMonth { get; private set; }
-    public int MaxUsers { get; private set; }
-    public int CurrentRequestsThisMonth { get; set; } = 0;
-    public int CurrentUserCount { get; set; } = 0;
+    public Int32 MaxRequestsPerMonth { get; private set; }
+    public Int32 MaxUsers { get; private set; }
+
+    public Int32 CurrentRequestsThisMonth { get; set; } = 0;
+    public Int32 CurrentUserCount { get; set; } = 0;
     public DateTime LastRequestResetDate { get; set; }
 
     public DateTime CreateAt { get; set; } = DateTime.UtcNow;
@@ -33,47 +31,43 @@ public class Tenant
     public List<Company> Companies { get; set; } = new();
     public List<Request> Requests { get; set; } = new();
 
-    // Constructor to initialize limits based on plan
     public Tenant()
     {
         SetLimitsBasedOnPlan();
-        // Initialize reset date if it's a new tenant or first time setting limits
+
         if (this.LastRequestResetDate == default(DateTime))
         {
             this.LastRequestResetDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
         }
     }
 
-    // Method to set limits based on plan type - should be called when plan is set or changed, or tenant is loaded.
     public void SetLimitsBasedOnPlan()
     {
         switch (this.Plan)
         {
-            case PlanType.Gratis:
+            case PlanType.Free:
                 this.MaxRequestsPerMonth = 10;
                 this.MaxUsers = 5;
                 break;
-            case PlanType.Basico:
+            case PlanType.Basic:
                 this.MaxRequestsPerMonth = 30;
                 this.MaxUsers = 7;
                 break;
-            case PlanType.Intermediario:
+            case PlanType.Intermidiate:
                 this.MaxRequestsPerMonth = 100;
                 this.MaxUsers = 20;
                 break;
             case PlanType.Business:
-                this.MaxRequestsPerMonth = int.MaxValue; // Represents unlimited
+                this.MaxRequestsPerMonth = Int32.MaxValue; // Represents unlimited
                 this.MaxUsers = 50;
                 break;
             default:
-                // Default to a restricted plan (e.g., free or no access) or throw an exception
-                this.MaxRequestsPerMonth = 10; // Defaulting to Gratis limits as a fallback
+                this.MaxRequestsPerMonth = 10;
                 this.MaxUsers = 5;
                 break;
         }
     }
 
-    // Call this method when the plan is changed
     public void UpdatePlan(PlanType newPlan)
     {
         this.Plan = newPlan;

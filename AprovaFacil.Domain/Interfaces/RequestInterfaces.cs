@@ -21,7 +21,7 @@ public static class RequestInterfaces
         Task<Result<RequestDTO[]>> ListPendingRequests(FilterRequest filter, CancellationToken cancellation);
         Task<Result<RequestDTO[]>> ListFinishedRequests(FilterRequest filter, CancellationToken cancellation);
 
-        Task<Result<RequestDTO>> RegisterRequest(RequestRegisterDTO request, CancellationToken cancellation);
+        Task<Result> RegisterRequest(RequestRegisterDTO request, CancellationToken cancellation);
         Task<Result<Byte[]>> LoadFileRequest(String type, Guid requestGuid, Guid fileGuid, CancellationToken cancellation);
 
         Task<Result> ApproveRequest(Guid requestGuid, Int32 applicationUserId, CancellationToken cancellation);
